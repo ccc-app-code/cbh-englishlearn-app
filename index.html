@@ -85,7 +85,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">点击句子即预加载语音，拖动进度条松手即播放</p>
+    <p class="subtitle">点击句子即预加载语音，自动选择最佳发音人</p>
 
     <div class="btn-row">
         <button class="btn-play" onclick="playSentence()">▶ 播放</button>
@@ -123,11 +123,11 @@
         const STORAGE_KEY_DONE = 'doneSentences';
 
         const defaultSentences = [
-            "The racing tire connects the racing car to the track surface by only the footprints of its four tires. Through the tires, the driver receives most of the sensory information needed to maintain or regain control of the race car at high force levels",
-            "The objective of this chapter is to provide a thorough understanding of the pneumatic tire's force and moment generating properties, as these form the fundamental input to the vehicle dynamics problem",
-            "The Moment Method provides a systematic framework for analyzing the complete vehicle, treating it as a single rigid body with lateral, longitudinal, and yaw degrees of freedom",
-            "Suspension kinematics and compliance have a first-order effect on vehicle handling because they control the orientation of the tire relative to the road surface during cornering, braking, and acceleration",
-            "Steering response to be fast and well damped, with the car showing minimum roll angle and roll/yaw coupling"
+            "The cat is on the mat.",
+            "I like to play football.",
+            "She goes to school every day.",
+            "What time do you get up?",
+            "My favorite color is blue."
         ];
 
         function loadSentencePool() {
@@ -163,16 +163,63 @@
 
         let preloadTimer = null;
 
+        // 高质量语音
+        let bestVoice = null;
+
+        // 选择最佳英语语音（优先 Google US English，其次是 Microsoft 或 en-US 本地语音）
+        function selectBestVoice() {
+            return new Promise((resolve) => {
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    // 优先选择 Google 英语
+                    let voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
+                    if (!voice) voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en'));
+                    if (!voice) voice = voices.find(v => v.lang.startsWith('en-US'));
+                    if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
+                    bestVoice = voice || voices[0];
+                }
+                // 如果 voices 为空，监听 voiceschanged 事件（可能异步加载）
+                if (!bestVoice) {
+                    const voicesChanged = () => {
+                        const newVoices = window.speechSynthesis.getVoices();
+                        if (newVoices.length > 0) {
+                            let voice = newVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
+                            if (!voice) voice = newVoices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en'));
+                            if (!voice) voice = newVoices.find(v => v.lang.startsWith('en-US'));
+                            if (!voice) voice = newVoices.find(v => v.lang.startsWith('en'));
+                            bestVoice = voice || newVoices[0];
+                            window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
+                            resolve();
+                        }
+                    };
+                    window.speechSynthesis.addEventListener('voiceschanged', voicesChanged);
+                } else {
+                    resolve();
+                }
+            });
+        }
+
+        // 创建带有最佳语音的 utterance
+        function createUtterance(text, volume = 1) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = volume;
+            if (bestVoice) utterance.voice = bestVoice;
+            return utterance;
+        }
+
         function clearInputAndResult() {
             document.getElementById('userInput').value = '';
             document.getElementById('resultArea').innerHTML = '<span class="result-empty">输入答案后点击"检查"查看对比结果</span>';
             answerShown = false;
         }
 
+        // 预热引擎并使用高质量语音
         function warmUpSpeechSynthesis() {
-            const dummy = new SpeechSynthesisUtterance('');
-            dummy.volume = 0;
-            dummy.rate = 0.9;
+            const dummy = createUtterance('', 0);
+            dummy.onstart = () => window.speechSynthesis.cancel();
             window.speechSynthesis.speak(dummy);
             window.speechSynthesis.cancel();
         }
@@ -182,10 +229,7 @@
             if (preloadTimer) clearTimeout(preloadTimer);
             preloadTimer = setTimeout(() => {
                 const text = sentencePool[currentIndex];
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                utterance.volume = 0;
+                const utterance = createUtterance(text, 0); // 无声预加载
                 utterance.onstart = () => {
                     window.speechSynthesis.cancel();
                     utterance.onstart = null;
@@ -333,9 +377,7 @@
             if (startChar >= totalCharCount) startChar = 0;
             const textToSpeak = sentence.substring(startChar);
 
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.9;
+            const utterance = createUtterance(textToSpeak); // 使用高质量语音
             currentUtterance = utterance;
 
             estimatedDuration = Math.max(1, (totalCharCount - startChar) / 12) + (startChar / 12);
@@ -446,18 +488,13 @@
             btn.textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
         }
 
-        // ---- 优化后的进度条事件 ----
         const progressBar = document.getElementById('progressBar');
-        
-        // 拖动过程中实时更新时间预览
         progressBar.addEventListener('input', (e) => {
             const percent = parseFloat(e.target.value);
             if (estimatedDuration > 0) {
                 document.getElementById('currentTimeDisplay').textContent = formatTime((percent / 100) * estimatedDuration);
             }
         });
-
-        // 松手或点击时立即跳转播放
         progressBar.addEventListener('change', (e) => {
             const percent = parseFloat(e.target.value);
             if (currentIndex !== null && totalCharCount > 0) {
@@ -518,7 +555,8 @@
             preloadCurrentSentence();
         }
 
-        window.onload = function() {
+        window.onload = async function() {
+            await selectBestVoice();      // 等待高质量语音选择完毕
             warmUpSpeechSynthesis();
             if (sentencePool.length === 0) {
                 document.getElementById('sentenceDisplay').innerHTML = '⚠️ 句子池为空，请添加练习句子。';
