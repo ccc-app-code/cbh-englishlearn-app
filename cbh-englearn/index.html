@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语听写练习</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
+            max-width: 700px;
+            margin: auto;
+            background: #f5f7fa;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        h2 { text-align: center; color: #333; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 20px; }
+        .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 8px; }
+        button {
+            padding: 12px 18px; font-size: 15px; border-radius: 10px; border: none; cursor: pointer;
+            font-weight: 600; letter-spacing: 0.5px; transition: all 0.15s ease; white-space: nowrap;
+            background: #e0e0e0; color: #333;
+        }
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-play { background: #4CAF50; color: #fff; }
+        .btn-pause { background: #FF9800; color: #fff; }
+        .btn-check { background: #2196F3; color: #fff; }
+        .btn-answer { background: #9c27b0; color: #fff; }
+        .btn-add { background: #009688; color: #fff; width: 100%; margin-top: 6px; }
+
+        #sentenceDisplay {
+            font-size: 1.05em; margin: 16px 0 10px; color: #555; text-align: center;
+            background: #fff; padding: 12px 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .badge-done { background: #e8f5e9; color: #2e7d32; font-size: 0.8em; padding: 3px 10px; border-radius: 20px; margin-left: 8px; font-weight: 600; }
+        .badge-todo { background: #fff3e0; color: #e65100; font-size: 0.8em; padding: 3px 10px; border-radius: 20px; margin-left: 8px; font-weight: 600; }
+
+        input[type="text"] {
+            width: 100%; padding: 13px 14px; font-size: 16px; border-radius: 10px; border: 2px solid #ddd;
+            box-sizing: border-box; transition: border-color 0.2s; background: #fff; margin-bottom: 6px;
+        }
+        input[type="text"]:focus { outline: none; border-color: #5b8def; box-shadow: 0 0 0 3px rgba(91,141,239,0.1); }
+
+        .progress-container {
+            width: 100%; margin: 8px 0 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .progress-container input[type="range"] {
+            flex: 1; height: 6px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 3px;
+            outline: none; cursor: pointer;
+        }
+        .progress-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #4CAF50;
+            cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .progress-time { font-size: 0.85em; color: #555; white-space: nowrap; min-width: 70px; text-align: center; }
+
+        .result {
+            margin-top: 16px; padding: 16px; background: #fff; border-radius: 10px; white-space: pre-wrap;
+            line-height: 1.8; font-size: 0.95em; box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-height: 20px; margin-bottom: 20px;
+        }
+        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
+        .result-empty { color: #bbb; text-align: center; }
+
+        .list-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .list-title { font-weight: 700; font-size: 1rem; margin-bottom: 10px; }
+        .sentence-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+        .sentence-item {
+            display: flex; align-items: center; padding: 8px 4px; cursor: pointer; transition: background 0.1s; border-radius: 8px;
+        }
+        .sentence-item:hover { background: #f0f0f0; }
+        .sentence-item.active { background: #e3f2fd; font-weight: 600; box-shadow: 0 0 0 2px #5b8def; }
+        .sentence-number {
+            display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+            background: #e0e0e0; border-radius: 50%; font-weight: 700; font-size: 0.9em; margin-right: 4px; flex-shrink: 0;
+        }
+        .sentence-item.active .sentence-number { background: #bbdefb; color: #0d47a1; }
+        .remove-btn { background: none; border: none; color: #c62828; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px; margin-left: 2px; }
+        .remove-btn:hover { background: #ffebee; }
+        .empty-message { color: #aaa; font-style: italic; padding: 12px; text-align: center; width: 100%; }
+        .add-section { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    </style>
+</head>
+<body>
+    <h2>🎧 英语听写练习</h2>
+    <p class="subtitle">点击句子即预加载语音，拖动进度条松手即播放</p>
+
+    <div class="btn-row">
+        <button class="btn-play" onclick="playSentence()">▶ 播放</button>
+        <button class="btn-pause" id="pauseBtn" onclick="togglePause()">⏸️ 暂停</button>
+        <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
+        <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
+    </div>
+
+    <div class="progress-container">
+        <span class="progress-time" id="currentTimeDisplay">00:00</span>
+        <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1" disabled>
+        <span class="progress-time" id="totalTimeDisplay">00:00</span>
+    </div>
+
+    <p id="sentenceDisplay"></p>
+    <input type="text" id="userInput" placeholder="在这里默写..." autocomplete="off">
+    <div class="result" id="resultArea"><span class="result-empty">输入答案后点击"检查"查看对比结果</span></div>
+
+    <div class="list-section">
+        <div class="list-title">📋 未完成列表</div>
+        <div id="uncompletedList" class="sentence-list"></div>
+    </div>
+    <div class="list-section">
+        <div class="list-title">✅ 已完成列表</div>
+        <div id="completedList" class="sentence-list"></div>
+    </div>
+    <div class="add-section">
+        <div class="list-title">➕ 添加新句子</div>
+        <input type="text" id="newSentenceInput" placeholder="输入英语句子">
+        <button class="btn-add" onclick="addNewSentence()">添加句子</button>
+    </div>
+
+    <script>
+        const STORAGE_KEY_SENTENCES = 'sentencePool';
+        const STORAGE_KEY_DONE = 'doneSentences';
+
+        const defaultSentences = [
+            "The racing tire connects the racing car to the track surface by only the footprints of its four tires. Through the tires, the driver receives most of the sensory information needed to maintain or regain control of the race car at high force levels",
+            "The objective of this chapter is to provide a thorough understanding of the pneumatic tire's force and moment generating properties, as these form the fundamental input to the vehicle dynamics problem",
+            "The Moment Method provides a systematic framework for analyzing the complete vehicle, treating it as a single rigid body with lateral, longitudinal, and yaw degrees of freedom",
+            "Suspension kinematics and compliance have a first-order effect on vehicle handling because they control the orientation of the tire relative to the road surface during cornering, braking, and acceleration",
+            "Steering response to be fast and well damped, with the car showing minimum roll angle and roll/yaw coupling"
+        ];
+
+        function loadSentencePool() {
+            const stored = localStorage.getItem(STORAGE_KEY_SENTENCES);
+            if (stored) {
+                try { const arr = JSON.parse(stored); if (Array.isArray(arr) && arr.length > 0) return arr; } catch (e) {}
+            }
+            localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(defaultSentences));
+            return [...defaultSentences];
+        }
+        function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
+
+        let sentencePool = loadSentencePool();
+
+        function getCompletedSet() {
+            const data = localStorage.getItem(STORAGE_KEY_DONE);
+            return data ? new Set(JSON.parse(data)) : new Set();
+        }
+        function saveCompletedSet(setObj) { localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify([...setObj])); }
+
+        let currentIndex = null;
+        let answerShown = false;
+
+        // 播放状态
+        let currentUtterance = null;
+        let progressInterval = null;
+        let totalCharCount = 0;
+        let currentCharIndex = 0;
+        let estimatedDuration = 0;
+        let playStartTime = 0;
+        let baseCharIndex = 0;
+        let isPaused = false;
+
+        let preloadTimer = null;
+
+        function clearInputAndResult() {
+            document.getElementById('userInput').value = '';
+            document.getElementById('resultArea').innerHTML = '<span class="result-empty">输入答案后点击"检查"查看对比结果</span>';
+            answerShown = false;
+        }
+
+        function warmUpSpeechSynthesis() {
+            const dummy = new SpeechSynthesisUtterance('');
+            dummy.volume = 0;
+            dummy.rate = 0.9;
+            window.speechSynthesis.speak(dummy);
+            window.speechSynthesis.cancel();
+        }
+
+        function preloadCurrentSentence() {
+            if (currentIndex === null || sentencePool.length === 0) return;
+            if (preloadTimer) clearTimeout(preloadTimer);
+            preloadTimer = setTimeout(() => {
+                const text = sentencePool[currentIndex];
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.volume = 0;
+                utterance.onstart = () => {
+                    window.speechSynthesis.cancel();
+                    utterance.onstart = null;
+                };
+                utterance.onerror = () => {};
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        }
+
+        function switchToSentence(index) {
+            if (index < 0 || index >= sentencePool.length) return;
+            if (currentIndex === index) return;
+            stopPlayback(true);
+            currentIndex = index;
+            clearInputAndResult();
+            updateAll();
+            resetProgressBar();
+            updatePauseButton(false);
+            preloadCurrentSentence();
+        }
+
+        function removeFromCompleted(index) {
+            if (index < 0 || index >= sentencePool.length) return;
+            stopPlayback(true);
+            sentencePool.splice(index, 1);
+            saveSentencePool(sentencePool);
+            
+            const oldDone = getCompletedSet();
+            const newDone = new Set();
+            oldDone.forEach(i => {
+                if (i < index) newDone.add(i);
+                else if (i > index) newDone.add(i - 1);
+            });
+            saveCompletedSet(newDone);
+
+            if (currentIndex !== null) {
+                if (currentIndex === index) {
+                    if (sentencePool.length === 0) currentIndex = null;
+                    else if (currentIndex >= sentencePool.length) currentIndex = sentencePool.length - 1;
+                    clearInputAndResult();
+                } else if (currentIndex > index) {
+                    currentIndex--;
+                }
+            }
+            updateAll();
+            resetProgressBar();
+            preloadCurrentSentence();
+        }
+
+        function addNewSentence() {
+            const input = document.getElementById('newSentenceInput');
+            const text = input.value.trim();
+            if (!text) { alert('请输入有效的英语句子。'); return; }
+            sentencePool.push(text);
+            saveSentencePool(sentencePool);
+            input.value = '';
+            if (currentIndex !== null && currentIndex >= sentencePool.length) currentIndex = sentencePool.length - 1;
+            updateAll();
+        }
+
+        function updateStatusDisplay() {
+            const displayEl = document.getElementById('sentenceDisplay');
+            if (currentIndex === null || sentencePool.length === 0) {
+                displayEl.innerHTML = '⚠️ 句子池为空，请添加练习句子。';
+                return;
+            }
+            const done = getCompletedSet();
+            const isDone = done.has(currentIndex);
+            const uncompletedCount = getUncompletedIndices().length;
+            let html = `📖 第 <strong>${currentIndex + 1}</strong> / <strong>${sentencePool.length}</strong> 句`;
+            html += isDone ? ' <span class="badge-done">✅ 已完成</span>' : ' <span class="badge-todo">⬜ 待练习</span>';
+            html += `<br>📊 剩余未练：<strong>${uncompletedCount}</strong> 句`;
+            displayEl.innerHTML = html;
+        }
+
+        function getUncompletedIndices() {
+            const done = getCompletedSet();
+            const uncompleted = [];
+            for (let i = 0; i < sentencePool.length; i++) if (!done.has(i)) uncompleted.push(i);
+            return uncompleted;
+        }
+
+        function renderLists() {
+            const done = getCompletedSet();
+            const uncompleted = [], completed = [];
+            for (let i = 0; i < sentencePool.length; i++) {
+                if (done.has(i)) completed.push(i); else uncompleted.push(i);
+            }
+            const uncompletedDiv = document.getElementById('uncompletedList');
+            if (uncompleted.length === 0) uncompletedDiv.innerHTML = '<div class="empty-message">🎉 全部完成！</div>';
+            else {
+                let html = '';
+                uncompleted.forEach(idx => html += `<div class="sentence-item${idx === currentIndex ? ' active' : ''}" onclick="switchToSentence(${idx})"><span class="sentence-number">${idx+1}</span></div>`);
+                uncompletedDiv.innerHTML = html;
+            }
+            const completedDiv = document.getElementById('completedList');
+            if (completed.length === 0) completedDiv.innerHTML = '<div class="empty-message">暂无已完成句子</div>';
+            else {
+                let html = '';
+                completed.forEach(idx => html += `<div class="sentence-item${idx === currentIndex ? ' active' : ''}" onclick="switchToSentence(${idx})"><span class="sentence-number">${idx+1}</span><button class="remove-btn" onclick="event.stopPropagation(); removeFromCompleted(${idx})">✕</button></div>`);
+                completedDiv.innerHTML = html;
+            }
+        }
+
+        function updateAll() { updateStatusDisplay(); renderLists(); }
+
+        function resetProgressBar() {
+            const bar = document.getElementById('progressBar');
+            bar.value = 0; bar.disabled = true;
+            document.getElementById('currentTimeDisplay').textContent = '00:00';
+            document.getElementById('totalTimeDisplay').textContent = '00:00';
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60), secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
+        function stopPlayback(fullStop = false) {
+            if (currentUtterance) {
+                currentUtterance.onstart = currentUtterance.onend = currentUtterance.onboundary = currentUtterance.onerror = null;
+                window.speechSynthesis.cancel();
+                currentUtterance = null;
+            }
+            if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+            if (fullStop) isPaused = false;
+        }
+
+        function updateProgressUI(charIdx) {
+            const bar = document.getElementById('progressBar');
+            const percent = Math.min(100, (charIdx / totalCharCount) * 100);
+            bar.value = percent;
+            document.getElementById('currentTimeDisplay').textContent = formatTime((charIdx / totalCharCount) * estimatedDuration);
+        }
+
+        function playFromPosition(startChar) {
+            if (currentIndex === null || sentencePool.length === 0) return;
+            stopPlayback();
+            isPaused = false;
+            updatePauseButton(false);
+
+            const sentence = sentencePool[currentIndex];
+            totalCharCount = sentence.length;
+            if (startChar >= totalCharCount) startChar = 0;
+            const textToSpeak = sentence.substring(startChar);
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            currentUtterance = utterance;
+
+            estimatedDuration = Math.max(1, (totalCharCount - startChar) / 12) + (startChar / 12);
+            const bar = document.getElementById('progressBar');
+            bar.disabled = false; bar.max = 100;
+            document.getElementById('totalTimeDisplay').textContent = formatTime(estimatedDuration);
+
+            currentCharIndex = startChar;
+            baseCharIndex = startChar;
+            playStartTime = Date.now();
+            updateProgressUI(startChar);
+
+            let boundaryReceived = false;
+            let boundaryTimer = null;
+
+            utterance.onboundary = (e) => {
+                if (isPaused) return;
+                if (e.charIndex !== undefined) {
+                    const abs = startChar + e.charIndex;
+                    if (abs > currentCharIndex) {
+                        currentCharIndex = abs;
+                        baseCharIndex = abs;
+                        playStartTime = Date.now();
+                        updateProgressUI(abs);
+                        boundaryReceived = true;
+                        if (boundaryTimer) clearTimeout(boundaryTimer);
+                        boundaryTimer = setTimeout(() => {
+                            if (!boundaryReceived && !isPaused) {
+                                if (!progressInterval) {
+                                    progressInterval = setInterval(() => {
+                                        if (isPaused || !currentUtterance) return;
+                                        const elapsed = (Date.now() - playStartTime) / 1000;
+                                        const remaining = totalCharCount - baseCharIndex;
+                                        if (remaining <= 0) return;
+                                        const estTime = Math.max(0.1, remaining / 12);
+                                        const progress = Math.min(1, elapsed / estTime);
+                                        const newIdx = Math.floor(baseCharIndex + progress * remaining);
+                                        if (newIdx > currentCharIndex) {
+                                            currentCharIndex = newIdx;
+                                            updateProgressUI(newIdx);
+                                        }
+                                    }, 200);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
+            };
+
+            boundaryTimer = setTimeout(() => {
+                if (!boundaryReceived && !isPaused) {
+                    if (!progressInterval) {
+                        progressInterval = setInterval(() => {
+                            if (isPaused || !currentUtterance) return;
+                            const elapsed = (Date.now() - playStartTime) / 1000;
+                            const remaining = totalCharCount - baseCharIndex;
+                            if (remaining <= 0) return;
+                            const estTime = Math.max(0.1, remaining / 12);
+                            const progress = Math.min(1, elapsed / estTime);
+                            const newIdx = Math.floor(baseCharIndex + progress * remaining);
+                            if (newIdx > currentCharIndex) {
+                                currentCharIndex = newIdx;
+                                updateProgressUI(newIdx);
+                            }
+                        }, 200);
+                    }
+                }
+            }, 500);
+
+            utterance.onstart = () => {};
+            utterance.onend = () => {
+                stopPlayback();
+                if (boundaryTimer) clearTimeout(boundaryTimer);
+                document.getElementById('progressBar').value = 100;
+                document.getElementById('currentTimeDisplay').textContent = formatTime(estimatedDuration);
+                document.getElementById('progressBar').disabled = true;
+                updatePauseButton(false);
+            };
+            utterance.onerror = () => { 
+                stopPlayback(); 
+                if (boundaryTimer) clearTimeout(boundaryTimer);
+                resetProgressBar(); 
+                updatePauseButton(false); 
+            };
+
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function playSentence() { playFromPosition(0); }
+
+        function togglePause() {
+            if (!currentUtterance) return;
+            if (isPaused) {
+                window.speechSynthesis.resume();
+                isPaused = false;
+                playStartTime = Date.now();
+            } else {
+                window.speechSynthesis.pause();
+                isPaused = true;
+                if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+            }
+            updatePauseButton(isPaused);
+        }
+
+        function updatePauseButton(paused) {
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+        }
+
+        // ---- 优化后的进度条事件 ----
+        const progressBar = document.getElementById('progressBar');
+        
+        // 拖动过程中实时更新时间预览
+        progressBar.addEventListener('input', (e) => {
+            const percent = parseFloat(e.target.value);
+            if (estimatedDuration > 0) {
+                document.getElementById('currentTimeDisplay').textContent = formatTime((percent / 100) * estimatedDuration);
+            }
+        });
+
+        // 松手或点击时立即跳转播放
+        progressBar.addEventListener('change', (e) => {
+            const percent = parseFloat(e.target.value);
+            if (currentIndex !== null && totalCharCount > 0) {
+                const targetChar = Math.floor((percent / 100) * totalCharCount);
+                playFromPosition(targetChar);
+            }
+        });
+
+        function showAnswer() {
+            if (currentIndex === null || answerShown) return;
+            const correct = sentencePool[currentIndex].trim();
+            const resultDiv = document.getElementById('resultArea');
+            if (resultDiv.querySelector('.result-empty')) resultDiv.innerHTML = `✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            else resultDiv.innerHTML += `<br><br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            answerShown = true;
+        }
+
+        function checkAnswer() {
+            if (currentIndex === null) return;
+            const userInput = document.getElementById('userInput').value.trim();
+            const correct = sentencePool[currentIndex].trim();
+            const resultDiv = document.getElementById('resultArea');
+            if (!userInput) { resultDiv.innerHTML = '⚠️ 请先输入你的答案。'; answerShown = false; return; }
+
+            const userWords = userInput.split(/\s+/);
+            const correctWords = correct.split(/\s+/);
+            let ci = 0, styled = '';
+            for (let uj = 0; uj < userWords.length; uj++) {
+                const uWord = userWords[uj];
+                if (ci < correctWords.length && uWord.toLowerCase() === correctWords[ci].toLowerCase()) {
+                    styled += `<span class="correct">${escapeHtml(uWord)}</span> `; ci++;
+                } else {
+                    let found = -1;
+                    for (let k = ci; k < correctWords.length; k++) if (uWord.toLowerCase() === correctWords[k].toLowerCase()) { found = k; break; }
+                    if (found !== -1) { styled += `<span class="correct">${escapeHtml(uWord)}</span> `; ci = found + 1; }
+                    else styled += `<span class="wrong">${escapeHtml(uWord)}</span> `;
+                }
+            }
+            const isFullyCorrect = userInput.toLowerCase() === correct.toLowerCase();
+            resultDiv.innerHTML = `📝 <strong>你的答案：</strong><br>${styled.trim()}<br><br>${isFullyCorrect ? '🎉 完全正确！' : '💡 还有差距，继续修改吧。'}`;
+            answerShown = false;
+            const done = getCompletedSet();
+            if (isFullyCorrect) done.add(currentIndex); else done.delete(currentIndex);
+            saveCompletedSet(done);
+            updateAll();
+        }
+
+        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+
+        function initialSelect() {
+            const uncompleted = getUncompletedIndices();
+            currentIndex = uncompleted.length > 0 ? uncompleted[0] : (sentencePool.length > 0 ? 0 : null);
+            clearInputAndResult();
+            stopPlayback(true);
+            resetProgressBar();
+            updateAll();
+            updatePauseButton(false);
+            preloadCurrentSentence();
+        }
+
+        window.onload = function() {
+            warmUpSpeechSynthesis();
+            if (sentencePool.length === 0) {
+                document.getElementById('sentenceDisplay').innerHTML = '⚠️ 句子池为空，请添加练习句子。';
+                document.getElementById('uncompletedList').innerHTML = '<div class="empty-message">无句子</div>';
+                document.getElementById('completedList').innerHTML = '<div class="empty-message">无句子</div>';
+                return;
+            }
+            initialSelect();
+        };
+
+        document.getElementById('userInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
+        document.getElementById('newSentenceInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); } });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').then(() => console.log('SW 注册成功')).catch(err => console.log('SW 注册失败', err));
+        }
+    </script>
+</body>
+</html>
