@@ -81,17 +81,36 @@
         .remove-btn:hover { background: #ffebee; }
         .empty-message { color: #aaa; font-style: italic; padding: 12px; text-align: center; width: 100%; }
         .add-section { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+
+        .voice-selector {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .voice-selector select {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">点击句子即预加载语音，自动选择最佳发音人</p>
+    <p class="subtitle">点击句子即预加载，还可自选发音人</p>
 
     <div class="btn-row">
         <button class="btn-play" onclick="playSentence()">▶ 播放</button>
         <button class="btn-pause" id="pauseBtn" onclick="togglePause()">⏸️ 暂停</button>
         <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
         <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
+    </div>
+
+    <div class="voice-selector">
+        <label for="voiceSelect">🎙️ 发音人：</label>
+        <select id="voiceSelect"></select>
     </div>
 
     <div class="progress-container">
@@ -121,13 +140,14 @@
     <script>
         const STORAGE_KEY_SENTENCES = 'sentencePool';
         const STORAGE_KEY_DONE = 'doneSentences';
+        const STORAGE_KEY_VOICE = 'selectedVoiceURI';
 
         const defaultSentences = [
-            "The cat is on the mat.",
-            "I like to play football.",
-            "She goes to school every day.",
-            "What time do you get up?",
-            "My favorite color is blue."
+            "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
+            "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
+            "The faster a car is going at the point it starts to spin, the faster it will be at all points during deceleration, as it always stops in the same place. Therefore ... before the spin. Hence, says Mosley, reduced grip equals increased safety, everything else being equal",
+            "On the macro level RCVD deals with general principles of vehicle dynamics but on the micro level was specifically geared towards racing; it synthesizes fundamental theory and practical application",
+            "Handling is really the sum of the driver and the vehicle. The driver provides the input and the vehicle responds with feedback. ... we are left to study the vehicle response, or the vehicle dynamics"
         ];
 
         function loadSentencePool() {
@@ -162,44 +182,53 @@
         let isPaused = false;
 
         let preloadTimer = null;
+        let bestVoice = null;          // 当前使用的语音对象
+        const voiceSelect = document.getElementById('voiceSelect');
 
-        // 高质量语音
-        let bestVoice = null;
+        // 初始化语音选择器
+        function populateVoiceList() {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) return;
 
-        // 选择最佳英语语音（优先 Google US English，其次是 Microsoft 或 en-US 本地语音）
-        function selectBestVoice() {
-            return new Promise((resolve) => {
-                const voices = window.speechSynthesis.getVoices();
-                if (voices.length > 0) {
-                    // 优先选择 Google 英语
-                    let voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
-                    if (!voice) voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en'));
-                    if (!voice) voice = voices.find(v => v.lang.startsWith('en-US'));
-                    if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
-                    bestVoice = voice || voices[0];
-                }
-                // 如果 voices 为空，监听 voiceschanged 事件（可能异步加载）
-                if (!bestVoice) {
-                    const voicesChanged = () => {
-                        const newVoices = window.speechSynthesis.getVoices();
-                        if (newVoices.length > 0) {
-                            let voice = newVoices.find(v => v.name.includes('Google') && v.lang.startsWith('en'));
-                            if (!voice) voice = newVoices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en'));
-                            if (!voice) voice = newVoices.find(v => v.lang.startsWith('en-US'));
-                            if (!voice) voice = newVoices.find(v => v.lang.startsWith('en'));
-                            bestVoice = voice || newVoices[0];
-                            window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
-                            resolve();
-                        }
-                    };
-                    window.speechSynthesis.addEventListener('voiceschanged', voicesChanged);
-                } else {
-                    resolve();
-                }
+            // 筛选出英语语音
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            voiceSelect.innerHTML = '';
+            englishVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
             });
+
+            // 恢复上次选择的语音
+            const savedURI = localStorage.getItem(STORAGE_KEY_VOICE);
+            if (savedURI) {
+                const savedIndex = englishVoices.findIndex(v => v.voiceURI === savedURI);
+                if (savedIndex !== -1) voiceSelect.selectedIndex = savedIndex;
+            }
+            applySelectedVoice();
         }
 
-        // 创建带有最佳语音的 utterance
+        function applySelectedVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            const selectedURI = voiceSelect.value;
+            const voice = voices.find(v => v.voiceURI === selectedURI);
+            bestVoice = voice || voices.find(v => v.lang.startsWith('en')) || voices[0];
+            localStorage.setItem(STORAGE_KEY_VOICE, voiceSelect.value);
+        }
+
+        voiceSelect.addEventListener('change', () => {
+            applySelectedVoice();
+            // 预加载新语音
+            preloadCurrentSentence();
+        });
+
+        // 监听 voiceschanged 以防语音列表异步加载
+        window.speechSynthesis.addEventListener('voiceschanged', () => {
+            populateVoiceList();
+        });
+
+        // 创建高质量 utterance
         function createUtterance(text, volume = 1) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
@@ -216,7 +245,6 @@
             answerShown = false;
         }
 
-        // 预热引擎并使用高质量语音
         function warmUpSpeechSynthesis() {
             const dummy = createUtterance('', 0);
             dummy.onstart = () => window.speechSynthesis.cancel();
@@ -229,7 +257,7 @@
             if (preloadTimer) clearTimeout(preloadTimer);
             preloadTimer = setTimeout(() => {
                 const text = sentencePool[currentIndex];
-                const utterance = createUtterance(text, 0); // 无声预加载
+                const utterance = createUtterance(text, 0);
                 utterance.onstart = () => {
                     window.speechSynthesis.cancel();
                     utterance.onstart = null;
@@ -377,7 +405,7 @@
             if (startChar >= totalCharCount) startChar = 0;
             const textToSpeak = sentence.substring(startChar);
 
-            const utterance = createUtterance(textToSpeak); // 使用高质量语音
+            const utterance = createUtterance(textToSpeak);
             currentUtterance = utterance;
 
             estimatedDuration = Math.max(1, (totalCharCount - startChar) / 12) + (startChar / 12);
@@ -555,9 +583,11 @@
             preloadCurrentSentence();
         }
 
-        window.onload = async function() {
-            await selectBestVoice();      // 等待高质量语音选择完毕
+        window.onload = function() {
+            populateVoiceList(); // 初始填充语音列表
+            applySelectedVoice();
             warmUpSpeechSynthesis();
+
             if (sentencePool.length === 0) {
                 document.getElementById('sentenceDisplay').innerHTML = '⚠️ 句子池为空，请添加练习句子。';
                 document.getElementById('uncompletedList').innerHTML = '<div class="empty-message">无句子</div>';
