@@ -533,8 +533,9 @@
     <div class="tts-engine-card">
         <label for="ttsEngine">🔊 语音引擎：</label>
         <select id="ttsEngine">
-            <option value="google">🌐 Google TTS（高质量）</option>
-            <option value="browser">📱 系统语音（备选）</option>
+            <option value="voicerss">🌐 VoiceRSS（在线·稳定）</option>
+            <option value="google">🔍 Google TTS（备选）</option>
+            <option value="browser">📱 系统语音（离线）</option>
         </select>
         <span id="ttsStatusBadge" class="tts-badge online">✨ 加载中…</span>
         <div class="speed-slider" title="播放语速">
@@ -665,8 +666,8 @@
         let currentIndex = null;
         let answerShown = false;
 
-        // TTS引擎: 'google' | 'browser'
-        let currentTTSEngine = 'google'; // 默认使用Google TTS，音质更好
+        // TTS引擎: 'voicerss' | 'google' | 'browser'
+        let currentTTSEngine = 'voicerss'; // 默认使用VoiceRSS，更稳定
         let playbackSpeed = 0.85;
 
         // 浏览器TTS相关
@@ -698,7 +699,9 @@
         let googleSegmentCharOffsets = [];
 
         // 统一的播放状态引用
-        function isGoogleEngine() { return currentTTSEngine === 'google'; }
+        function isGoogleEngine() { 
+            return currentTTSEngine === 'google' || currentTTSEngine === 'voicerss'; 
+        }
 
         function getIsPaused() { return isGoogleEngine() ? googleIsPaused : browserIsPaused; }
 
@@ -746,8 +749,13 @@
 
         // ==================== 语音引擎切换 ====================
         function updateTTSEngineUI() {
-            if (currentTTSEngine === 'google') {
+            if (currentTTSEngine === 'voicerss') {
                 ttsStatusBadge.textContent = '✨ 加载中…';
+                ttsStatusBadge.className = 'tts-badge online';
+                browserVoiceRow.style.display = 'none';
+                speedSlider.disabled = false;
+            } else if (currentTTSEngine === 'google') {
+                ttsStatusBadge.textContent = '🔍 加载中…';
                 ttsStatusBadge.className = 'tts-badge online';
                 browserVoiceRow.style.display = 'none';
                 speedSlider.disabled = false;
@@ -760,11 +768,56 @@
             stopAllPlayback(true);
             resetProgressBar();
             updatePlayPauseButton();
-            if (currentTTSEngine === 'google') {
+            if (currentTTSEngine === 'voicerss') {
+                preloadVoiceRssAudio();
+            } else if (currentTTSEngine === 'google') {
                 preloadGoogleAudio();
             } else {
                 preloadCurrentSentenceBrowser();
             }
+        }
+
+        function initialSelect() {
+            if (sentencePool.length === 0) {
+                currentIndex = null;
+                console.log('⚠️ 句子库为空，请添加练习句子。');
+                resetProgressBar();
+                updatePlayPauseButton();
+                return;
+            }
+            const dailyIdx = getDailyRecommendedIndex();
+            currentIndex = (dailyIdx !== null && dailyIdx < sentencePool.length) ? dailyIdx : 0;
+            clearInputAndResult();
+            stopAllPlayback(true);
+            resetProgressBar();
+            updatePlayPauseButton();
+            if (currentTTSEngine === 'voicerss') {
+                preloadVoiceRssAudio();
+            } else if (currentTTSEngine === 'google') {
+                preloadGoogleAudio();
+            } else {
+                preloadCurrentSentenceBrowser();
+            }
+        }
+
+        function switchToSentence(index) {
+            if (index < 0 || index >= sentencePool.length) return;
+            if (currentIndex === index) return;
+            stopAllPlayback(true);
+            currentIndex = index;
+            clearInputAndResult();
+            resetProgressBar();
+            updatePlayPauseButton();
+            if (currentTTSEngine === 'voicerss') {
+                cleanupAllGoogleResources();
+                preloadVoiceRssAudio();
+            } else if (currentTTSEngine === 'google') {
+                cleanupAllGoogleResources();
+                preloadGoogleAudio();
+            } else {
+                preloadCurrentSentenceBrowser();
+            }
+            userInputEl.focus();
         }
 
         speedSlider.addEventListener('input', () => {
@@ -933,6 +986,65 @@
             throw new Error('腾讯云TTS需配合后端服务使用，为避免API密钥泄露，暂不直接支持前端调用');
         }
 
+        // ==================== VoiceRSS TTS 音频获取与播放 ====================
+        function getVoiceRssUrl(text, lang = 'en-us') {
+            // VoiceRSS 免费API，无需密钥（有每日限额，此处使用示例Key，实际使用建议替换或提示用户）
+            // 注意：公开分享 Key 可能会被限流，生产环境应使用后端代理或用户自有 Key
+            const apiKey = 'd8014935e6d94f5a9b5c7e8f2a1c3b4d'; 
+            const encoded = encodeURIComponent(text);
+            return `https://api.voicerss.org/?key=${apiKey}&hl=${lang}&src=${encoded}&r=-1&f=44khz_16bit_stereo`;
+        }
+
+        async function fetchVoiceRssAudio(text, lang = 'en-us') {
+            const url = getVoiceRssUrl(text, lang);
+            
+            const maxRetries = 2;
+            let lastError = null;
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: { 
+                            'Accept': 'audio/*'
+                        },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('text/html') || contentType.includes('application/json')) {
+                        throw new Error('VoiceRSS returned non-audio content');
+                    }
+                    
+                    const blob = await response.blob();
+                    
+                    if (blob.size < 100) {
+                        throw new Error('Response too small');
+                    }
+                    
+                    return blob;
+                } catch (err) {
+                    lastError = err;
+                    console.warn(`VoiceRSS attempt ${attempt} failed:`, err.message);
+                    
+                    if (attempt < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+                    }
+                }
+            }
+            
+            throw lastError || new Error('Failed to fetch VoiceRSS audio');
+        }
+
         // ==================== Google TTS 音频获取与播放 ====================
         function getGoogleTtsUrl(text, lang = 'en-US') {
             const encoded = encodeURIComponent(text);
@@ -1024,7 +1136,7 @@
                     if (commaMatch) {
                         splitPos = searchStart + commaMatch.index + commaMatch[0].length;
                     } else {
-                        const spaceMatch = /\s+/.exec(remaining.substring(maxSize - 30, maxChunkSize + 30));
+                        const spaceMatch = /\s+/.exec(remaining.substring(maxChunkSize - 30, maxChunkSize + 30));
                         if (spaceMatch) {
                             splitPos = maxChunkSize - 30 + spaceMatch.index + spaceMatch[0].length;
                         }
@@ -1048,6 +1160,51 @@
             return offsets;
         }
 
+        async function preloadVoiceRssAudio() {
+            if (currentIndex === null || sentencePool.length === 0 || currentTTSEngine !== 'voicerss') return;
+            cleanupGoogleAudio(); // VoiceRSS也使用相同的音频播放机制
+            if (googlePreloadAbortController) {
+                googlePreloadAbortController.abort();
+            }
+            googlePreloadAbortController = new AbortController();
+            const text = sentencePool[currentIndex];
+            const chunks = splitLongText(text, 350);
+            googleSegmentCharOffsets = computeSegmentCharOffsets(chunks);
+            googleSegments = [];
+            googleCurrentSegmentIndex = 0;
+
+            updatePreloadBadge(true);
+
+            try {
+                for (let i = 0; i < chunks.length; i++) {
+                    const blob = await fetchVoiceRssAudio(chunks[i], 'en-us');
+                    googleSegments.push(blob);
+                }
+                updatePreloadBadge(false);
+                setupGoogleAudioFromSegments();
+                showToast('✅ VoiceRSS语音加载成功', 1500);
+            } catch (err) {
+                console.warn('VoiceRSS preload failed:', err.message);
+                updatePreloadBadge(false);
+                googleSegments = [];
+                googleSegmentCharOffsets = [];
+                if (err.name !== 'AbortError') {
+                    const shouldSwitch = confirm(`VoiceRSS加载失败：${err.message}\n\n是否切换到其他语音引擎？`);
+                    if (shouldSwitch) {
+                        // 尝试切换到Google，如果也失败再切换到浏览器
+                        currentTTSEngine = 'google';
+                        const ttsEngineSelect = document.getElementById('ttsEngine');
+                        if (ttsEngineSelect) ttsEngineSelect.value = 'google';
+                        localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'google');
+                        updateTTSEngineUI();
+                        showToast('已切换到Google TTS', 2000);
+                    } else {
+                        showToast('你可以稍后重试或手动切换引擎', 3000);
+                    }
+                }
+            }
+        }
+
         async function preloadGoogleAudio() {
             if (currentIndex === null || sentencePool.length === 0 || currentTTSEngine !== 'google') return;
             cleanupGoogleAudio();
@@ -1069,7 +1226,6 @@
                     googleSegments.push(blob);
                 }
                 updatePreloadBadge(false);
-                // 创建合并播放器
                 setupGoogleAudioFromSegments();
                 showToast('✅ Google语音加载成功', 1500);
             } catch (err) {
@@ -1078,11 +1234,11 @@
                 googleSegments = [];
                 googleSegmentCharOffsets = [];
                 if (err.name !== 'AbortError') {
-                    // 显示更友好的错误提示，并询问是否切换
                     const shouldSwitch = confirm(`Google语音加载失败：${err.message}\n\n是否切换到系统内置语音？`);
                     if (shouldSwitch) {
                         currentTTSEngine = 'browser';
-                        ttsEngineSelect.value = 'browser';
+                        const ttsEngineSelect = document.getElementById('ttsEngine');
+                        if (ttsEngineSelect) ttsEngineSelect.value = 'browser';
                         localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
                         updateTTSEngineUI();
                         showToast('已切换到系统语音', 2000);
@@ -1095,11 +1251,17 @@
 
         function updatePreloadBadge(loading) {
             const badge = document.getElementById('ttsStatusBadge');
-            if (loading && currentTTSEngine === 'google') {
+            if (loading && currentTTSEngine === 'voicerss') {
+                badge.textContent = '⏳ 加载中…';
+                badge.className = 'tts-badge online';
+            } else if (currentTTSEngine === 'voicerss') {
+                badge.textContent = '✨ 高质量';
+                badge.className = 'tts-badge online';
+            } else if (loading && currentTTSEngine === 'google') {
                 badge.textContent = '⏳ 加载中…';
                 badge.className = 'tts-badge online';
             } else if (currentTTSEngine === 'google') {
-                badge.textContent = '✨ 高质量';
+                badge.textContent = '🔍 Google';
                 badge.className = 'tts-badge online';
             } else {
                 badge.textContent = '📱 系统语音';
@@ -1233,15 +1395,8 @@
         // ==================== 统一播放控制 ====================
         function handlePlayPause() {
             if (currentIndex === null || sentencePool.length === 0) return;
-            if (currentTTSEngine === 'google') {
-                handleGooglePlayPause();
-            } else if (currentTTSEngine === 'baidu') {
-                // 百度TTS播放控制
-                showToast('百度TTS需配合后端服务使用，已切换回浏览器内置语音', 3000);
-                currentTTSEngine = 'browser';
-                ttsEngineSelect.value = 'browser';
-                localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
-                updateTTSEngineUI();
+            if (currentTTSEngine === 'voicerss' || currentTTSEngine === 'google') {
+                handleGooglePlayPause(); // VoiceRSS和Google使用相同的播放机制
             } else {
                 handleBrowserPlayPause();
             }
@@ -1581,9 +1736,9 @@
             // 不再调用updateStatusDisplay，因为已经隐藏了状态框
             resetProgressBar();
             updatePlayPauseButton();
-            if (isGoogleEngine()) {
+            if (isGoogleEngine() || currentTTSEngine === 'voicerss') {
                 cleanupAllGoogleResources();
-                preloadGoogleAudio();
+                preloadOnlineAudio();
             } else {
                 preloadCurrentSentenceBrowser();
             }
@@ -1615,19 +1770,24 @@
         // ==================== 状态显示 ====================
         function updateStatusDisplay() {
             if (currentIndex === null || sentencePool.length === 0) {
-                // 不再显示在页面上，只在控制台记录
                 console.log('⚠️ 句子库为空，请添加练习句子。');
                 return;
             }
             const isToday = isTodayRecommended(currentIndex);
-            const engineLabel = currentTTSEngine === 'google' ? '🎵 在线语音' : '📱 系统语音';
+            let engineLabel = '';
+            if (currentTTSEngine === 'voicerss') {
+                engineLabel = '🎵 VoiceRSS';
+            } else if (currentTTSEngine === 'google') {
+                engineLabel = '🎵 Google';
+            } else {
+                engineLabel = '📱 系统语音';
+            }
             let html = `📖 第 <strong>${currentIndex + 1}</strong> / <strong>${sentencePool.length}</strong> 句 · ${engineLabel}`;
             if (isToday) {
                 html += ' <span class="badge-today">📅 今日推荐</span>';
             } else {
                 html += ' <span class="badge-info">📝 自由练习</span>';
             }
-            // 不再更新页面显示，只保留在内存中
             console.log('Current sentence info:', html);
         }
 
@@ -1714,7 +1874,9 @@
                 currentIndex = 0;
                 clearInputAndResult();
                 resetProgressBar();
-                if (isGoogleEngine()) {
+                if (currentTTSEngine === 'voicerss') {
+                    preloadVoiceRssAudio();
+                } else if (currentTTSEngine === 'google') {
                     preloadGoogleAudio();
                 } else {
                     preloadCurrentSentenceBrowser();
@@ -1742,8 +1904,8 @@
             resetProgressBar();
             // 不再调用updateStatusDisplay，因为已经隐藏了状态框
             updatePlayPauseButton();
-            if (isGoogleEngine()) {
-                preloadGoogleAudio();
+            if (isGoogleEngine() || currentTTSEngine === 'voicerss') {
+                preloadOnlineAudio();
             } else {
                 preloadCurrentSentenceBrowser();
             }
@@ -1755,9 +1917,13 @@
             if (savedEngine === 'browser') {
                 currentTTSEngine = 'browser';
                 ttsEngineSelect.value = 'browser';
-            } else {
+            } else if (savedEngine === 'google') {
                 currentTTSEngine = 'google';
                 ttsEngineSelect.value = 'google';
+            } else {
+                // 默认使用VoiceRSS
+                currentTTSEngine = 'voicerss';
+                ttsEngineSelect.value = 'voicerss';
             }
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (savedSpeed) {
