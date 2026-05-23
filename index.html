@@ -123,7 +123,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">系统默认语音 · 自动扩展书写区</p>
+    <p class="subtitle">移动端完美体验 · 键盘不收回 · 暂停/继续流畅</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -134,7 +134,11 @@
     </div>
 
     <div class="btn-row">
-        <button type="button" class="btn-play" id="playPauseBtn" onclick="handlePlayPause()">▶ 播放</button>
+        <!-- 关键：使用 onpointerdown 并阻止默认行为，防止按钮抢走焦点 -->
+        <button type="button" class="btn-play" id="playPauseBtn"
+            onpointerdown="handlePlayPause(); event.preventDefault();">
+            ▶ 播放
+        </button>
     </div>
 
     <div class="progress-container">
@@ -218,6 +222,7 @@
         let startTime = 0, pausedCharPos = 0;
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
+        let currentUtterance = null;   // 保存当前的 utterance 引用，用于暂停时清除回调
 
         // ========== 自动扩展文本框 ==========
         function autoResizeTextarea() {
@@ -262,24 +267,28 @@
             return 0;
         }
 
-        // ========== 语音预热（解决首次播放无声问题） ==========
-        function warmUpSpeech() {
-            const dummy = new SpeechSynthesisUtterance('');
-            dummy.volume = 0;
-            dummy.rate = 1;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(dummy);
+        // 清理当前 utterance 的回调，防止 cancel 时触发 end/error
+        function detachUtterance() {
+            if (currentUtterance) {
+                currentUtterance.onstart = null;
+                currentUtterance.onend = null;
+                currentUtterance.onerror = null;
+                currentUtterance = null;
+            }
         }
 
-        function stopPlayback() {
+        function stopPlayback(keepPaused = false) {
+            detachUtterance();
             window.speechSynthesis.cancel();
-            if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
             isPlaying = false;
-            isPaused = false;
+            if (!keepPaused) {
+                isPaused = false;
+            }
         }
 
         function resetAll() {
-            stopPlayback();
+            stopPlayback(false);
             pausedCharPos = 0;
             progressBar.value = 0;
             progressBar.disabled = true;
@@ -289,7 +298,7 @@
         }
 
         function startPlayback(fromChar) {
-            stopPlayback();
+            stopPlayback(false);  // 完全停止之前的播放
             if(currentIndex === null || !sentencePool[currentIndex]) return;
 
             fullText = sentencePool[currentIndex];
@@ -317,26 +326,31 @@
             utterance.lang = 'en-US';
 
             utterance.onstart = () => {
-                if(!isPlaying) return;
-                if(progressTimer) clearInterval(progressTimer);
+                if (!isPlaying) return;
+                if (progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
-                // 保持焦点在输入框
-                setTimeout(() => userInputEl.focus(), 50);
+                // 保持键盘可见：重新聚焦输入框，同时保持选区
+                const start = userInputEl.selectionStart;
+                const end = userInputEl.selectionEnd;
+                userInputEl.focus();
+                userInputEl.setSelectionRange(start, end);
             };
             utterance.onend = () => {
-                if(!isPlaying) return;
+                if (!isPlaying) return;
                 isPlaying = false;
-                if(progressTimer) clearInterval(progressTimer);
+                if (progressTimer) clearInterval(progressTimer);
                 progressBar.value = 100;
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
                 updatePlayPauseButton();
             };
             utterance.onerror = () => {
                 isPlaying = false;
-                if(progressTimer) clearInterval(progressTimer);
+                if (progressTimer) clearInterval(progressTimer);
                 showToast('播放出错', 2000);
                 updatePlayPauseButton();
             };
+
+            currentUtterance = utterance;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         }
@@ -351,7 +365,7 @@
             progressBar.value = percent;
             currentTimeDisplay.textContent = formatTime((curChar / totalChars) * estimatedDuration);
             if(curChar >= totalChars) {
-                stopPlayback();
+                stopPlayback(false);
                 progressBar.value = 100;
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
             }
@@ -361,25 +375,27 @@
             if(currentIndex === null || !sentencePool.length) {
                 showToast('没有句子', 2000); return;
             }
-            // 每次播放前先预热，确保 iOS 能正常播放
-            warmUpSpeech();
-            
+
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
+                // 暂停：记录当前位置，然后取消语音并置为暂停状态
                 const elapsed = (Date.now() - startTime) / 1000;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * rate));
+                // 清理回调后取消，避免触发 onend 改变状态
+                detachUtterance();
                 window.speechSynthesis.cancel();
-                if(progressTimer) clearInterval(progressTimer);
+                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
                 isPlaying = false;
                 isPaused = true;
                 updatePlayPauseButton();
+                // 保持键盘
+                userInputEl.focus();
             } else if(isPaused) {
+                // 继续播放
                 startPlayback(pausedCharPos);
             }
-            // 保持焦点，防止键盘收起
-            setTimeout(() => userInputEl.focus(), 150);
         }
 
         function updatePlayPauseButton() {
@@ -598,8 +614,11 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
-            // 页面加载时预热语音引擎
-            warmUpSpeech();
+            // 预热语音引擎
+            const warmUp = new SpeechSynthesisUtterance('');
+            warmUp.volume = 0;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(warmUp);
 
             if(!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
@@ -619,6 +638,7 @@
         };
 
         window.addEventListener('beforeunload', () => {
+            detachUtterance();
             window.speechSynthesis.cancel();
         });
     </script>
