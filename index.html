@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 智能缺词 · 全屏书写</title>
+    <title>英语听写练习 · 智能缺词 · 固定书写区</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -11,27 +11,24 @@
             --shadow: 0 1px 4px rgba(0,0,0,0.06); --radius-sm: 10px; --radius-xs: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            display: flex;
-            flex-direction: column;
             background: var(--bg);
             color: var(--text);
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
-            padding: 20px 20px 0 20px;
+            padding: 20px 20px 30px;
             max-width: 700px;
             margin: 0 auto;
         }
-        h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; flex-shrink: 0; }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; flex-shrink: 0; }
+        h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; }
 
         .speed-card {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); flex-shrink: 0;
+            box-shadow: var(--shadow);
         }
         .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
         .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
@@ -42,7 +39,7 @@
         }
         .speed-value { font-size: 0.8em; font-weight: 700; color: var(--teal); min-width: 36px; text-align: center; }
 
-        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none;
             cursor: pointer; font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
@@ -53,13 +50,13 @@
         .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
         .btn-check { background: var(--green); color: #fff; }
         .btn-answer { background: #66bb6a; color: #fff; }
-        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; flex-shrink: 0; }
-        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; flex-shrink: 0; }
+        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
+        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
 
         .progress-container {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); flex-shrink: 0;
+            box-shadow: var(--shadow);
         }
         .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
         .progress-container input[type="range"]::-webkit-slider-thumb {
@@ -68,17 +65,15 @@
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
-        /* 弹性书写区 */
+        /* 固定高度书写区：占屏幕约 1/3 */
         .writing-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0; /* 允许收缩 */
             margin-bottom: 8px;
         }
         #userInput {
-            flex: 1;
             width: 100%;
+            height: 30vh;
+            min-height: 150px;
+            max-height: 50vh;
             padding: 14px 16px;
             font-size: 16px;
             border-radius: var(--radius-sm);
@@ -87,7 +82,6 @@
             resize: vertical;
             font-family: inherit;
             line-height: 1.7;
-            min-height: 150px; /* 最小高度保障 */
         }
         #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
         #userInput::placeholder { color: #bbb; }
@@ -102,19 +96,18 @@
             box-shadow: var(--shadow);
             min-height: 20px;
             margin-bottom: 8px;
-            flex-shrink: 0;
         }
         .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .missing { color: #888; font-weight: bold; background: #f0f0f0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; border: 1px dashed #bbb; }
         .result-empty { color: #bbb; text-align: center; display: block; }
 
-        .action-row { display: flex; gap: 8px; margin-bottom: 4px; flex-shrink: 0; }
+        .action-row { display: flex; gap: 8px; margin-bottom: 4px; }
         .action-row button { flex: 1; }
 
         .add-section {
             background: #fff; border-radius: var(--radius-sm); padding: 16px;
-            box-shadow: var(--shadow); margin-top: 8px; flex-shrink: 0;
+            box-shadow: var(--shadow); margin-top: 8px;
         }
         .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; }
         .add-section input[type="text"] {
@@ -131,11 +124,11 @@
         .toast.show { opacity: 1; pointer-events: auto; }
 
         @media (max-width: 480px) {
-            body { padding: 12px 12px 0 12px; }
+            body { padding: 12px 12px 30px; }
             h2 { font-size: 1.2em; }
             button { padding: 10px 14px; font-size: 14px; }
             .btn-play, .btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
-            #userInput { min-height: 120px; font-size: 15px; }
+            #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
             .action-row button { font-size: 14px; padding: 11px 10px; }
             .progress-container { padding: 6px 10px; gap: 4px; }
             .progress-time { font-size: 0.72em; min-width: 34px; }
@@ -146,7 +139,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">系统默认语音 · 全屏书写 · 智能缺词提示</p>
+    <p class="subtitle">系统默认语音 · 固定书写区 · 智能缺词提示</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -158,9 +151,10 @@
 
     <div class="btn-row">
         <button class="btn-play" id="playPauseBtn" 
-            onmousedown="event.preventDefault()" 
-            ontouchstart="event.preventDefault()"
-            onclick="handlePlayPause()">▶ 播放</button>
+            onmousedown="handlePlayPause(); event.preventDefault()" 
+            ontouchstart="handlePlayPause(); event.preventDefault()">
+            ▶ 播放
+        </button>
     </div>
 
     <div class="progress-container">
@@ -169,7 +163,7 @@
         <span class="progress-time" id="totalTimeDisplay">00:00</span>
     </div>
 
-    <!-- 弹性书写区 -->
+    <!-- 固定高度书写区 -->
     <div class="writing-area">
         <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
     </div>
@@ -317,7 +311,7 @@
                 if(!isPlaying) return;
                 if(progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
-                // 确保键盘可见
+                // 保持键盘可见（桌面端有效，移动端因焦点策略可能仍需手动点击）
                 setTimeout(() => userInputEl.focus(), 50);
             };
             utterance.onend = () => {
@@ -336,8 +330,6 @@
             };
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
-            // 再次强制焦点
-            setTimeout(() => userInputEl.focus(), 100);
         }
 
         function updateProgress() {
@@ -473,9 +465,8 @@
 
         // ========== 智能答案检查（忽略标点 + 缺词占位符） ==========
         function normalizeWord(word) {
-            // 移除单词两端的所有非字母数字字符，保留内部连字符
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
-            return cleaned || ''; // 如果单词全是标点，返回空字符串
+            return cleaned || '';
         }
 
         function escapeHtml(s) {
@@ -492,8 +483,6 @@
 
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
-
-            // 使用去除标点的词进行比对，但保留原始显示
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
 
@@ -510,7 +499,6 @@
                     cIdx++;
                     uIdx++;
                 } else {
-                    // 检查用户当前词是否能在正确序列后面匹配（缺失情况）
                     let foundFuture = false;
                     for (let k = cIdx + 1; k < normCorrect.length; k++) {
                         if (userClean === normCorrect[k]) {
@@ -519,34 +507,31 @@
                         }
                     }
                     if (foundFuture) {
-                        // 缺失正确词，显示占位符
                         html += `<span class="missing">⏺</span> `;
                         cIdx++;
                     } else {
-                        // 用户词错误
                         html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
                         uIdx++;
                     }
                 }
             }
 
-            // 剩余正确词缺失
             while (cIdx < normCorrect.length) {
                 html += `<span class="missing">⏺</span> `;
                 cIdx++;
             }
-            // 多余用户词标红
             while (uIdx < normUser.length) {
                 html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
                 uIdx++;
             }
 
-            // 完全匹配判断（忽略标点后）
             const perfect = normUser.join(' ') === normCorrect.join(' ');
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
             answerShown = false;
-            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // 滚动回输入框
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.focus();
         }
 
         function showAnswer() {
@@ -558,7 +543,7 @@
                 resultArea.innerHTML += `<br><br>✅ <strong>正确答案：</strong>${escapeHtml(c)}`;
             }
             answerShown = true;
-            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function addNewSentence() {
