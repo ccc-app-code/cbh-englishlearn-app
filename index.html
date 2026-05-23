@@ -6,142 +6,598 @@
     <title>英语听写练习</title>
     <link rel="manifest" href="manifest.json">
     <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: #fff;
+            --text: #333;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --border: #ddd;
+            --accent: #5b8def;
+            --green: #4CAF50;
+            --orange: #FF9800;
+            --blue: #2196F3;
+            --purple: #9c27b0;
+            --teal: #009688;
+            --red: #c62828;
+            --shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             padding: 20px;
             max-width: 700px;
             margin: auto;
-            background: #f5f7fa;
+            background: var(--bg);
             min-height: 100vh;
-            box-sizing: border-box;
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        h2 { text-align: center; color: #333; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 20px; }
-        .btn-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 8px; }
-        button {
-            padding: 12px 18px; font-size: 15px; border-radius: 10px; border: none; cursor: pointer;
-            font-weight: 600; letter-spacing: 0.5px; transition: all 0.15s ease; white-space: nowrap;
-            background: #e0e0e0; color: #333;
-        }
-        button:active { transform: scale(0.95); opacity: 0.8; }
-        .btn-play { background: #4CAF50; color: #fff; }
-        .btn-pause { background: #FF9800; color: #fff; }
-        .btn-check { background: #2196F3; color: #fff; }
-        .btn-answer { background: #9c27b0; color: #fff; }
-        .btn-add { background: #009688; color: #fff; width: 100%; margin-top: 6px; }
 
+        h2 {
+            text-align: center;
+            color: var(--text);
+            margin-bottom: 4px;
+            font-size: 1.4em;
+            letter-spacing: 0.3px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85em;
+            margin-bottom: 14px;
+        }
+
+        /* TTS 引擎选择卡片 */
+        .tts-engine-card {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            background: var(--card);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+        }
+        .tts-engine-card label {
+            font-weight: 600;
+            font-size: 0.85em;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+        .tts-engine-card select {
+            padding: 8px 10px;
+            border-radius: var(--radius-xs);
+            border: 1px solid #ccc;
+            font-size: 13px;
+            background: #fafafa;
+            cursor: pointer;
+            flex: 1;
+            min-width: 100px;
+        }
+        .tts-engine-card select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.08);
+        }
+        .tts-badge {
+            font-size: 0.7em;
+            padding: 4px 9px;
+            border-radius: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .tts-badge.online {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .tts-badge.offline {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .speed-slider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 120px;
+        }
+        .speed-slider input[type="range"] {
+            flex: 1;
+            height: 5px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            min-width: 0;
+        }
+        .speed-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--teal);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .speed-value {
+            font-size: 0.8em;
+            font-weight: 700;
+            color: var(--teal);
+            min-width: 36px;
+            text-align: center;
+        }
+
+        /* 句子显示卡片 */
         #sentenceDisplay {
-            font-size: 1.05em; margin: 16px 0 10px; color: #555; text-align: center;
-            background: #fff; padding: 12px 16px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            font-size: 1em;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            text-align: center;
+            background: var(--card);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            line-height: 1.6;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            transition: all 0.2s;
         }
-        .badge-done { background: #e8f5e9; color: #2e7d32; font-size: 0.8em; padding: 3px 10px; border-radius: 20px; margin-left: 8px; font-weight: 600; }
-        .badge-todo { background: #fff3e0; color: #e65100; font-size: 0.8em; padding: 3px 10px; border-radius: 20px; margin-left: 8px; font-weight: 600; }
-
-        input[type="text"] {
-            width: 100%; padding: 13px 14px; font-size: 16px; border-radius: 10px; border: 2px solid #ddd;
-            box-sizing: border-box; transition: border-color 0.2s; background: #fff; margin-bottom: 6px;
+        .badge-today {
+            background: #fff8e1;
+            color: #e65100;
+            font-size: 0.78em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+            animation: pulse-badge 2s ease-in-out infinite;
         }
-        input[type="text"]:focus { outline: none; border-color: #5b8def; box-shadow: 0 0 0 3px rgba(91,141,239,0.1); }
+        @keyframes pulse-badge {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.35);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+            }
+        }
+        .badge-info {
+            background: #e8eaf6;
+            color: #283593;
+            font-size: 0.78em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-loading {
+            background: #fce4ec;
+            color: #880e4f;
+            font-size: 0.75em;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+            animation: blink 1s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
 
+        /* 按钮 */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        button {
+            padding: 12px 18px;
+            font-size: 15px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            background: #e0e0e0;
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        button:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-play {
+            background: var(--green);
+            color: #fff;
+            font-size: 1.05em;
+            padding: 14px 28px;
+            letter-spacing: 1px;
+            min-width: 130px;
+        }
+        .btn-pause {
+            background: var(--orange);
+            color: #fff;
+            font-size: 1.05em;
+            padding: 14px 28px;
+            letter-spacing: 1px;
+            min-width: 130px;
+        }
+        .btn-check {
+            background: var(--blue);
+            color: #fff;
+        }
+        .btn-answer {
+            background: var(--purple);
+            color: #fff;
+        }
+        .btn-next {
+            background: #ff6f00;
+            color: #fff;
+            width: 100%;
+            margin-top: 4px;
+            font-size: 1em;
+            padding: 14px;
+            letter-spacing: 0.8px;
+        }
+        .btn-add {
+            background: var(--teal);
+            color: #fff;
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        /* 进度条 */
         .progress-container {
-            width: 100%; margin: 8px 0 16px; display: flex; align-items: center; gap: 8px;
-        }
-        .progress-container input[type="range"] {
-            flex: 1; height: 6px; -webkit-appearance: none; appearance: none; background: #ddd; border-radius: 3px;
-            outline: none; cursor: pointer;
-        }
-        .progress-container input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #4CAF50;
-            cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .progress-time { font-size: 0.85em; color: #555; white-space: nowrap; min-width: 70px; text-align: center; }
-
-        .result {
-            margin-top: 16px; padding: 16px; background: #fff; border-radius: 10px; white-space: pre-wrap;
-            line-height: 1.8; font-size: 0.95em; box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-height: 20px; margin-bottom: 20px;
-        }
-        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
-        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 6px; border-radius: 4px; margin: 0 2px; }
-        .result-empty { color: #bbb; text-align: center; }
-
-        .list-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .list-title { font-weight: 700; font-size: 1rem; margin-bottom: 10px; }
-        .sentence-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 6px; }
-        .sentence-item {
-            display: flex; align-items: center; padding: 8px 4px; cursor: pointer; transition: background 0.1s; border-radius: 8px;
-        }
-        .sentence-item:hover { background: #f0f0f0; }
-        .sentence-item.active { background: #e3f2fd; font-weight: 600; box-shadow: 0 0 0 2px #5b8def; }
-        .sentence-number {
-            display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
-            background: #e0e0e0; border-radius: 50%; font-weight: 700; font-size: 0.9em; margin-right: 4px; flex-shrink: 0;
-        }
-        .sentence-item.active .sentence-number { background: #bbdefb; color: #0d47a1; }
-        .remove-btn { background: none; border: none; color: #c62828; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px; margin-left: 2px; }
-        .remove-btn:hover { background: #ffebee; }
-        .empty-message { color: #aaa; font-style: italic; padding: 12px; text-align: center; width: 100%; }
-        .add-section { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-
-        .voice-selector {
-            margin: 10px 0;
+            width: 100%;
+            margin: 6px 0 10px;
             display: flex;
             align-items: center;
             gap: 8px;
+            background: var(--card);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
         }
-        .voice-selector select {
+        .progress-container input[type="range"] {
             flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            min-width: 0;
+        }
+        .progress-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+        }
+        .progress-container input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
+        .progress-time {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            min-width: 42px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+        }
+
+        /* 默写输入框 */
+        #userInput {
+            width: 100%;
+            height: 25vh;
+            min-height: 150px;
+            max-height: 45vh;
+            padding: 14px 16px;
+            font-size: 16px;
+            border-radius: var(--radius-sm);
+            border: 2px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+            margin-bottom: 6px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.7;
+            letter-spacing: 0.3px;
+        }
+        #userInput:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.08);
+        }
+        #userInput::placeholder {
+            color: #bbb;
+            font-style: italic;
+        }
+
+        /* 结果区域 */
+        .result {
+            margin-top: 10px;
+            padding: 16px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            white-space: pre-wrap;
+            line-height: 1.9;
+            font-size: 0.95em;
+            box-shadow: var(--shadow);
+            min-height: 20px;
+            margin-bottom: 8px;
+            word-break: break-word;
+            transition: all 0.25s;
+        }
+        .correct {
+            color: #2e7d32;
+            font-weight: bold;
+            background: #e8f5e9;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+        .wrong {
+            color: #c62828;
+            text-decoration: underline;
+            font-weight: bold;
+            background: #ffebee;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin: 0 2px;
+            text-decoration-color: #ef5350;
+            text-underline-offset: 3px;
+        }
+        .result-empty {
+            color: #bbb;
+            text-align: center;
+            display: block;
+        }
+        .result-icon {
+            font-size: 1.2em;
+        }
+
+        /* 底部操作行 */
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .action-row button {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        /* 添加句子区域 */
+        .add-section {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 14px;
+        }
+        .add-section .list-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .add-section input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border-radius: var(--radius-xs);
+            border: 2px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            background: #fff;
+            margin-bottom: 4px;
+        }
+        .add-section input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.08);
+        }
+
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 24px;
+            font-size: 0.9em;
+            font-weight: 600;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateX(-50%) translateY(20px);
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            button {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+            .btn-play,
+            .btn-pause {
+                padding: 12px 22px;
+                font-size: 1em;
+                min-width: 110px;
+            }
+            #userInput {
+                height: 22vh;
+                min-height: 130px;
+                font-size: 15px;
+            }
+            .action-row button {
+                font-size: 14px;
+                padding: 11px 10px;
+            }
+            .btn-next {
+                font-size: 0.95em;
+                padding: 12px;
+            }
+            .progress-container {
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            .progress-time {
+                font-size: 0.72em;
+                min-width: 34px;
+            }
+            .tts-engine-card {
+                padding: 8px 10px;
+                gap: 5px;
+            }
+            .tts-engine-card label {
+                font-size: 0.75em;
+            }
+            .tts-engine-card select {
+                font-size: 12px;
+                padding: 7px 8px;
+            }
+            .speed-slider {
+                min-width: 90px;
+            }
         }
     </style>
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">点击句子即预加载，还可自选发音人</p>
+    <p class="subtitle">每日随机一句 · 高质量在线语音 · 精听默写</p>
 
+    <!-- TTS引擎 & 语音配置 -->
+    <div class="tts-engine-card">
+        <label for="ttsEngine">🔊 语音引擎：</label>
+        <select id="ttsEngine">
+            <option value="browser">📱 系统语音（推荐）</option>
+            <option value="google">🌐 Google TTS（在线）</option>
+        </select>
+        <span id="ttsStatusBadge" class="tts-badge online">📱 系统语音</span>
+        <div class="speed-slider" title="播放语速">
+            <span style="font-size:0.75em;">🐢</span>
+            <input type="range" id="speedSlider" min="0.6" max="1.2" step="0.05" value="0.85">
+            <span style="font-size:0.75em;">🐇</span>
+            <span class="speed-value" id="speedValue">0.85x</span>
+        </div>
+    </div>
+
+    <!-- 浏览器内置语音选择器（仅浏览器引擎时可见） -->
+    <div class="tts-engine-card" id="browserVoiceRow" style="display:none;">
+        <!-- 移除语音选择器，直接使用系统默认语音 -->
+    </div>
+
+    <!-- 句子状态显示 -->
+    <p id="sentenceDisplay"></p>
+
+    <!-- 播放/暂停合并按钮 -->
     <div class="btn-row">
-        <button class="btn-play" onclick="playSentence()">▶ 播放</button>
-        <button class="btn-pause" id="pauseBtn" onclick="togglePause()">⏸️ 暂停</button>
-        <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
-        <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
+        <button class="btn-play" id="playPauseBtn" onclick="handlePlayPause()">▶ 播放</button>
     </div>
 
-    <div class="voice-selector">
-        <label for="voiceSelect">🎙️ 发音人：</label>
-        <select id="voiceSelect"></select>
-    </div>
-
+    <!-- 进度条 -->
     <div class="progress-container">
         <span class="progress-time" id="currentTimeDisplay">00:00</span>
         <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1" disabled>
         <span class="progress-time" id="totalTimeDisplay">00:00</span>
     </div>
 
-    <p id="sentenceDisplay"></p>
-    <input type="text" id="userInput" placeholder="在这里默写..." autocomplete="off">
-    <div class="result" id="resultArea"><span class="result-empty">输入答案后点击"检查"查看对比结果</span></div>
+    <!-- 默写输入框 -->
+    <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
 
-    <div class="list-section">
-        <div class="list-title">📋 未完成列表</div>
-        <div id="uncompletedList" class="sentence-list"></div>
+    <!-- 检查 & 显示答案按钮 -->
+    <div class="action-row">
+        <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
+        <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
     </div>
-    <div class="list-section">
-        <div class="list-title">✅ 已完成列表</div>
-        <div id="completedList" class="sentence-list"></div>
-    </div>
+
+    <!-- 结果展示区域 -->
+    <div class="result" id="resultArea"><span class="result-empty">👆 输入答案后点击"检查"查看对比结果</span></div>
+
+    <!-- 下一句按钮 -->
+    <button class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 添加句子区域 -->
     <div class="add-section">
-        <div class="list-title">➕ 添加新句子</div>
-        <input type="text" id="newSentenceInput" placeholder="输入英语句子">
+        <div class="list-title">➕ 添加新句子到句库</div>
+        <input type="text" id="newSentenceInput" placeholder="输入英语句子，按 Enter 添加">
         <button class="btn-add" onclick="addNewSentence()">添加句子</button>
     </div>
 
     <script>
-        const STORAGE_KEY_SENTENCES = 'sentencePool';
-        const STORAGE_KEY_DONE = 'doneSentences';
-        const STORAGE_KEY_VOICE = 'selectedVoiceURI';
+        // ==================== 存储键 ====================
+        const STORAGE_KEY_SENTENCES = 'sentencePool_v3';
+        const STORAGE_KEY_VOICE = 'selectedVoiceURI_v3';
+        const STORAGE_KEY_TTS_ENGINE = 'ttsEngine_v3';
+        const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
 
+        // ==================== 默认句子库 ====================
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
             "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
@@ -150,6 +606,7 @@
             "Handling is really the sum of the driver and the vehicle. The driver provides the input and the vehicle responds with feedback. ... we are left to study the vehicle response, or the vehicle dynamics"
         ];
 
+        // ==================== 句子池管理 ====================
         function loadSentencePool() {
             const stored = localStorage.getItem(STORAGE_KEY_SENTENCES);
             if (stored) {
@@ -158,53 +615,229 @@
             localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(defaultSentences));
             return [...defaultSentences];
         }
-        function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
+
+        function saveSentencePool(pool) {
+            localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool));
+        }
 
         let sentencePool = loadSentencePool();
 
-        function getCompletedSet() {
-            const data = localStorage.getItem(STORAGE_KEY_DONE);
-            return data ? new Set(JSON.parse(data)) : new Set();
+        // ==================== 每日种子 ====================
+        function getDateString() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         }
-        function saveCompletedSet(setObj) { localStorage.setItem(STORAGE_KEY_DONE, JSON.stringify([...setObj])); }
 
+        function hashDateToIndex(dateStr, poolLength) {
+            if (poolLength <= 0) return 0;
+            let hash = 5381;
+            for (let i = 0; i < dateStr.length; i++) {
+                hash = ((hash << 5) + hash) + dateStr.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash) % poolLength;
+        }
+
+        function getDailyRecommendedIndex() {
+            if (sentencePool.length === 0) return null;
+            return hashDateToIndex(getDateString(), sentencePool.length);
+        }
+
+        function isTodayRecommended(index) {
+            if (index === null || sentencePool.length === 0) return false;
+            return index === getDailyRecommendedIndex();
+        }
+
+        // ==================== DOM引用 ====================
+        const ttsStatusBadge = document.getElementById('ttsStatusBadge');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValueEl = document.getElementById('speedValue');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const progressBar = document.getElementById('progressBar');
+        const userInputEl = document.getElementById('userInput');
+        const resultArea = document.getElementById('resultArea');
+        const sentenceDisplay = document.getElementById('sentenceDisplay');
+        const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+        const totalTimeDisplay = document.getElementById('totalTimeDisplay');
+        const toastEl = document.getElementById('toast');
+
+        // ==================== 状态变量 ====================
         let currentIndex = null;
         let answerShown = false;
 
-        // 播放状态
-        let currentUtterance = null;
-        let progressInterval = null;
-        let totalCharCount = 0;
-        let currentCharIndex = 0;
-        let estimatedDuration = 0;
-        let playStartTime = 0;
-        let baseCharIndex = 0;
-        let isPaused = false;
+        // TTS引擎: 'google' | 'browser' - 移除多余选项，只保留Google和浏览器内置
+        let currentTTSEngine = 'browser'; // 默认使用浏览器内置，更适合移动端
+        let playbackSpeed = 0.85;
 
+        // 浏览器TTS相关
+        let bestVoice = null;
+        let browserUtterance = null;
+        let browserProgressInterval = null;
+        let browserTotalCharCount = 0;
+        let browserCurrentCharIndex = 0;
+        let browserEstimatedDuration = 0;
+        let browserPlayStartTime = 0;
+        let browserBaseCharIndex = 0;
+        let browserIsPaused = false;
+        let browserBoundaryTimer = null;
+        let browserBoundaryReceived = false;
         let preloadTimer = null;
-        let bestVoice = null;          // 当前使用的语音对象
-        const voiceSelect = document.getElementById('voiceSelect');
 
-        // 初始化语音选择器
+        // Google TTS (Audio元素) 相关
+        let googleAudio = null;
+        let googleAudioBlobUrl = null;
+        let googleAudioDuration = 0;
+        let googleAudioTimeUpdateHandler = null;
+        let googleAudioEndedHandler = null;
+        let googleAudioErrorHandler = null;
+        let googleAudioLoadedHandler = null;
+        let googleIsPaused = false;
+        let googlePreloadAbortController = null;
+        let googleCurrentSegmentIndex = 0;
+        let googleSegments = [];
+        let googleSegmentCharOffsets = [];
+
+        // 统一的播放状态引用
+        function isGoogleEngine() { return currentTTSEngine === 'google'; }
+
+        function getIsPaused() { return isGoogleEngine() ? googleIsPaused : browserIsPaused; }
+
+        function setIsPaused(val) {
+            if (isGoogleEngine()) googleIsPaused = val;
+            else browserIsPaused = val;
+        }
+
+        function isAnythingPlaying() {
+            if (isGoogleEngine()) {
+                return googleAudio && !googleAudio.paused && !googleAudio.ended;
+            } else {
+                return !!browserUtterance && !browserIsPaused;
+            }
+        }
+
+        function isInPausedState() {
+            if (isGoogleEngine()) {
+                return googleAudio && googleAudio.paused && !googleAudio.ended && googleAudio.currentTime > 0;
+            } else {
+                return !!browserUtterance && browserIsPaused;
+            }
+        }
+
+        function isIdle() {
+            if (isGoogleEngine()) {
+                return !googleAudio || googleAudio.ended || (googleAudio.paused && googleAudio.currentTime === 0);
+            } else {
+                return !browserUtterance;
+            }
+        }
+
+        // ==================== Toast ====================
+        let toastTimer = null;
+
+        function showToast(msg, duration = 2500) {
+            if (toastTimer) clearTimeout(toastTimer);
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            toastTimer = setTimeout(() => {
+                toastEl.classList.remove('show');
+                toastTimer = null;
+            }, duration);
+        }
+
+        // ==================== 语音引擎切换 ====================
+        function updateTTSEngineUI() {
+            if (currentTTSEngine === 'google') {
+                ttsStatusBadge.textContent = '🌐 Google';
+                ttsStatusBadge.className = 'tts-badge online';
+                browserVoiceRow.style.display = 'none';
+                speedSlider.disabled = false;
+            } else { // browser
+                ttsStatusBadge.textContent = '📱 系统语音';
+                ttsStatusBadge.className = 'tts-badge online'; // 移动端语音也是在线获取的
+                browserVoiceRow.style.display = 'none'; // 隐藏语音选择器
+                speedSlider.disabled = false; // 保留语速调节
+            }
+            stopAllPlayback(true);
+            resetProgressBar();
+            updatePlayPauseButton();
+            if (currentTTSEngine === 'google') {
+                preloadGoogleAudio();
+            } else {
+                preloadCurrentSentenceBrowser();
+            }
+        }
+
+        speedSlider.addEventListener('input', () => {
+            playbackSpeed = parseFloat(speedSlider.value);
+            speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
+            if (googleAudio && !googleAudio.ended) {
+                googleAudio.playbackRate = playbackSpeed;
+            }
+        });
+        speedSlider.addEventListener('change', () => {
+            localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
+        });
+
+        // ==================== 浏览器语音选择器 ====================
         function populateVoiceList() {
             const voices = window.speechSynthesis.getVoices();
-            if (voices.length === 0) return;
-
-            // 筛选出英语语音
-            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            if (voices.length === 0) {
+                // 如果没有立即获得语音列表，等待一会再试
+                setTimeout(populateVoiceList, 100);
+                return;
+            }
+            // 根据语言筛选语音
+            const allVoices = voices.filter(v => v.lang);
             voiceSelect.innerHTML = '';
-            englishVoices.forEach((voice, index) => {
-                const option = document.createElement('option');
-                option.value = voice.voiceURI;
-                option.textContent = `${voice.name} (${voice.lang})`;
-                voiceSelect.appendChild(option);
-            });
-
-            // 恢复上次选择的语音
+            
+            // 首先添加英语语音
+            const englishVoices = allVoices.filter(v => v.lang.startsWith('en'));
+            if (englishVoices.length > 0) {
+                const englishGroup = document.createElement('optgroup');
+                englishGroup.label = 'English Voices';
+                englishVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voiceURI;
+                    option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '(Default)' : ''}`;
+                    englishGroup.appendChild(option);
+                });
+                voiceSelect.appendChild(englishGroup);
+            }
+            
+            // 添加中文语音
+            const chineseVoices = allVoices.filter(v => v.lang.startsWith('zh'));
+            if (chineseVoices.length > 0) {
+                const chineseGroup = document.createElement('optgroup');
+                chineseGroup.label = '中文语音';
+                chineseVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voiceURI;
+                    option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '(默认)' : ''}`;
+                    chineseGroup.appendChild(option);
+                });
+                voiceSelect.appendChild(chineseGroup);
+            }
+            
+            // 添加其他语言
+            const otherVoices = allVoices.filter(v => !v.lang.startsWith('en') && !v.lang.startsWith('zh'));
+            if (otherVoices.length > 0) {
+                const otherGroup = document.createElement('optgroup');
+                otherGroup.label = 'Other Voices';
+                otherVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voiceURI;
+                    option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? '(Default)' : ''}`;
+                    otherGroup.appendChild(option);
+                });
+                voiceSelect.appendChild(otherGroup);
+            }
+            
             const savedURI = localStorage.getItem(STORAGE_KEY_VOICE);
             if (savedURI) {
-                const savedIndex = englishVoices.findIndex(v => v.voiceURI === savedURI);
-                if (savedIndex !== -1) voiceSelect.selectedIndex = savedIndex;
+                const savedIndex = allVoices.findIndex(v => v.voiceURI === savedURI);
+                if (savedIndex !== -1) {
+                    voiceSelect.value = savedURI;
+                }
             }
             applySelectedVoice();
         }
@@ -212,52 +845,68 @@
         function applySelectedVoice() {
             const voices = window.speechSynthesis.getVoices();
             const selectedURI = voiceSelect.value;
-            const voice = voices.find(v => v.voiceURI === selectedURI);
-            bestVoice = voice || voices.find(v => v.lang.startsWith('en')) || voices[0];
-            localStorage.setItem(STORAGE_KEY_VOICE, voiceSelect.value);
+            // 寻找匹配的语音，优先英语，其次中文，最后任意
+            let voice = voices.find(v => v.voiceURI === selectedURI);
+            
+            if (!voice && selectedURI) {
+                // 如果保存的语音不可用，尝试找到最接近的语音
+                if (selectedURI.includes('Google')) {
+                    voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) ||
+                           voices.find(v => v.name.includes('Google'));
+                } else if (selectedURI.includes('Microsoft')) {
+                    voice = voices.find(v => v.name.includes('Microsoft') && v.lang.startsWith('en')) ||
+                           voices.find(v => v.name.includes('Microsoft'));
+                }
+            }
+            
+            // 如果仍然找不到，尝试默认英语语音
+            if (!voice) {
+                voice = voices.find(v => v.lang.startsWith('en-US')) ||
+                       voices.find(v => v.lang.startsWith('en-')) ||
+                       voices.find(v => v.lang.startsWith('en')) ||
+                       voices.find(v => v.default) ||
+                       voices[0] || null;
+            }
+            
+            bestVoice = voice;
+            if (voiceSelect.value && voice) {
+                localStorage.setItem(STORAGE_KEY_VOICE, voiceSelect.value);
+            }
         }
 
         voiceSelect.addEventListener('change', () => {
             applySelectedVoice();
-            // 预加载新语音
-            preloadCurrentSentence();
+            if (currentTTSEngine === 'browser') preloadCurrentSentenceBrowser();
         });
 
-        // 监听 voiceschanged 以防语音列表异步加载
         window.speechSynthesis.addEventListener('voiceschanged', () => {
             populateVoiceList();
         });
 
-        // 创建高质量 utterance
-        function createUtterance(text, volume = 1) {
+        // ==================== 浏览器TTS utterance ====================
+        function createBrowserUtterance(text, volume = 1) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
-            utterance.rate = 0.9;
+            utterance.rate = playbackSpeed; // 使用用户设置的播放速度
             utterance.pitch = 1;
             utterance.volume = volume;
-            if (bestVoice) utterance.voice = bestVoice;
+            // 不指定特定语音，让系统使用默认语音（iOS/Android的系统语音）
             return utterance;
         }
 
-        function clearInputAndResult() {
-            document.getElementById('userInput').value = '';
-            document.getElementById('resultArea').innerHTML = '<span class="result-empty">输入答案后点击"检查"查看对比结果</span>';
-            answerShown = false;
-        }
-
         function warmUpSpeechSynthesis() {
-            const dummy = createUtterance('', 0);
+            const dummy = createBrowserUtterance('', 0);
             dummy.onstart = () => window.speechSynthesis.cancel();
             window.speechSynthesis.speak(dummy);
             window.speechSynthesis.cancel();
         }
 
-        function preloadCurrentSentence() {
-            if (currentIndex === null || sentencePool.length === 0) return;
+        function preloadCurrentSentenceBrowser() {
+            if (currentIndex === null || sentencePool.length === 0 || currentTTSEngine !== 'browser') return;
             if (preloadTimer) clearTimeout(preloadTimer);
             preloadTimer = setTimeout(() => {
                 const text = sentencePool[currentIndex];
-                const utterance = createUtterance(text, 0);
+                const utterance = createBrowserUtterance(text, 0);
                 utterance.onstart = () => {
                     window.speechSynthesis.cancel();
                     utterance.onstart = null;
@@ -268,340 +917,887 @@
             }, 50);
         }
 
-        function switchToSentence(index) {
-            if (index < 0 || index >= sentencePool.length) return;
-            if (currentIndex === index) return;
-            stopPlayback(true);
-            currentIndex = index;
-            clearInputAndResult();
-            updateAll();
-            resetProgressBar();
-            updatePauseButton(false);
-            preloadCurrentSentence();
+        // ==================== 百度TTS 音频获取与播放 ====================
+        async function fetchBaiduAudio(text, lang = 'en-US') {
+            // 百度AI语音合成API需要先注册获得APP_ID和SECRET_KEY
+            // 这里是示例代码，实际使用时需要替换为真实的API凭据
+            
+            // 注意：由于安全原因，这里不能直接在前端暴露API密钥
+            // 实际部署时建议通过自己的后端代理调用百度API
+            throw new Error('百度TTS需配合后端服务使用，为避免API密钥泄露，暂不直接支持前端调用');
         }
 
-        function removeFromCompleted(index) {
-            if (index < 0 || index >= sentencePool.length) return;
-            stopPlayback(true);
-            sentencePool.splice(index, 1);
-            saveSentencePool(sentencePool);
-            
-            const oldDone = getCompletedSet();
-            const newDone = new Set();
-            oldDone.forEach(i => {
-                if (i < index) newDone.add(i);
-                else if (i > index) newDone.add(i - 1);
-            });
-            saveCompletedSet(newDone);
+        // 备选方案：使用腾讯云语音合成（需要后端代理）
+        async function fetchTencentAudio(text, lang = 'en-US') {
+            // 同样需要后端服务代理调用
+            throw new Error('腾讯云TTS需配合后端服务使用，为避免API密钥泄露，暂不直接支持前端调用');
+        }
 
-            if (currentIndex !== null) {
-                if (currentIndex === index) {
-                    if (sentencePool.length === 0) currentIndex = null;
-                    else if (currentIndex >= sentencePool.length) currentIndex = sentencePool.length - 1;
-                    clearInputAndResult();
-                } else if (currentIndex > index) {
-                    currentIndex--;
+        // ==================== Google TTS 音频获取与播放 ====================
+        function getGoogleTtsUrl(text, lang = 'en-US') {
+            const encoded = encodeURIComponent(text);
+            // 添加更多备用端点
+            const endpoints = [
+                `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&q=${encoded}&client=tw-ob`,
+                `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&q=${encoded}&client=webapp`,
+                `https://speech.googleapis.com/v1/synthesize?key=YOUR_API_KEY&voice.languageCode=${lang}&ssmlGender=NEUTRAL&audioConfig.audioEncoding=MP3&ttsInput.text=${encoded}` // 示例，实际需API密钥
+            ];
+            // 返回第一个作为主要端点
+            return endpoints[0];
+        }
+
+        async function fetchGoogleAudio(text, lang = 'en-US') {
+            // 尝试不同的端点直到成功或全部失败
+            const endpoints = [
+                `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&q=${encodeURIComponent(text)}&client=tw-ob`,
+                `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&q=${encodeURIComponent(text)}&client=webapp`
+            ];
+            
+            for (let i = 0; i < endpoints.length; i++) {
+                try {
+                    const response = await fetch(endpoints[i], {
+                        method: 'GET',
+                        headers: { 
+                            'Accept': 'audio/*',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                        },
+                        signal: googlePreloadAbortController ? googlePreloadAbortController.signal : undefined,
+                    });
+                    
+                    if (!response.ok) {
+                        console.warn(`Endpoint ${i+1} failed: HTTP ${response.status}`);
+                        continue; // 尝试下一个端点
+                    }
+                    
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('text/html') || contentType.includes('application/json')) {
+                        console.warn(`Endpoint ${i+1} returned non-audio content`);
+                        continue; // 尝试下一个端点
+                    }
+                    
+                    return await response.blob();
+                } catch (err) {
+                    console.warn(`Endpoint ${i+1} request failed:`, err.message);
+                    // 继续尝试下一个端点
+                    continue;
                 }
             }
-            updateAll();
-            resetProgressBar();
-            preloadCurrentSentence();
+            
+            // 如果所有端点都失败，则抛出错误
+            throw new Error('所有Google TTS端点都无法访问，可能是网络问题或服务限制');
         }
 
-        function addNewSentence() {
-            const input = document.getElementById('newSentenceInput');
-            const text = input.value.trim();
-            if (!text) { alert('请输入有效的英语句子。'); return; }
-            sentencePool.push(text);
-            saveSentencePool(sentencePool);
-            input.value = '';
-            if (currentIndex !== null && currentIndex >= sentencePool.length) currentIndex = sentencePool.length - 1;
-            updateAll();
+        function splitLongText(text, maxChunkSize = 350) {
+            const chunks = [];
+            let remaining = text.trim();
+            while (remaining.length > 0) {
+                if (remaining.length <= maxChunkSize) {
+                    chunks.push(remaining);
+                    break;
+                }
+                let splitPos = maxChunkSize;
+                const searchStart = Math.max(0, maxChunkSize - 60);
+                const punctuationRegex = /[.!?;:]\s+/g;
+                let bestPos = -1;
+                let match;
+                punctuationRegex.lastIndex = searchStart;
+                while ((match = punctuationRegex.exec(remaining)) !== null) {
+                    if (match.index + match[0].length <= maxChunkSize + 40) {
+                        bestPos = match.index + match[0].length;
+                    } else {
+                        break;
+                    }
+                }
+                if (bestPos > 0 && bestPos <= maxChunkSize + 40) {
+                    splitPos = bestPos;
+                } else {
+                    const commaMatch = /,\s+/.exec(remaining.substring(searchStart, maxChunkSize + 40));
+                    if (commaMatch) {
+                        splitPos = searchStart + commaMatch.index + commaMatch[0].length;
+                    } else {
+                        const spaceMatch = /\s+/.exec(remaining.substring(maxChunkSize - 30, maxChunkSize + 30));
+                        if (spaceMatch) {
+                            splitPos = maxChunkSize - 30 + spaceMatch.index + spaceMatch[0].length;
+                        }
+                    }
+                }
+                splitPos = Math.min(splitPos, remaining.length);
+                splitPos = Math.max(splitPos, 50);
+                chunks.push(remaining.substring(0, splitPos).trim());
+                remaining = remaining.substring(splitPos).trim();
+            }
+            return chunks;
         }
 
-        function updateStatusDisplay() {
-            const displayEl = document.getElementById('sentenceDisplay');
-            if (currentIndex === null || sentencePool.length === 0) {
-                displayEl.innerHTML = '⚠️ 句子池为空，请添加练习句子。';
+        function computeSegmentCharOffsets(chunks) {
+            const offsets = [0];
+            let cumulative = 0;
+            for (let i = 0; i < chunks.length - 1; i++) {
+                cumulative += chunks[i].length;
+                offsets.push(cumulative);
+            }
+            return offsets;
+        }
+
+        async function preloadGoogleAudio() {
+            if (currentIndex === null || sentencePool.length === 0 || currentTTSEngine !== 'google') return;
+            cleanupGoogleAudio();
+            if (googlePreloadAbortController) {
+                googlePreloadAbortController.abort();
+            }
+            googlePreloadAbortController = new AbortController();
+            const text = sentencePool[currentIndex];
+            const chunks = splitLongText(text, 350);
+            googleSegmentCharOffsets = computeSegmentCharOffsets(chunks);
+            googleSegments = [];
+            googleCurrentSegmentIndex = 0;
+
+            updatePreloadBadge(true);
+
+            try {
+                for (let i = 0; i < chunks.length; i++) {
+                    const blob = await fetchGoogleAudio(chunks[i], 'en-US');
+                    googleSegments.push(blob);
+                }
+                updatePreloadBadge(false);
+                // 创建合并播放器
+                setupGoogleAudioFromSegments();
+            } catch (err) {
+                console.warn('Google TTS preload failed:', err.message);
+                updatePreloadBadge(false);
+                googleSegments = [];
+                googleSegmentCharOffsets = [];
+                if (err.name !== 'AbortError') {
+                    // 尝试使用浏览器内置语音作为备选
+                    showToast(`⚠️ 在线语音加载失败：${err.message}，已切换为浏览器内置语音`, 4000);
+                    currentTTSEngine = 'browser';
+                    ttsEngineSelect.value = 'browser';
+                    localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
+                    updateTTSEngineUI();
+                }
+            }
+        }
+
+        function updatePreloadBadge(loading) {
+            const badge = document.getElementById('ttsStatusBadge');
+            if (loading && currentTTSEngine === 'google') {
+                badge.textContent = '⏳ 加载中…';
+                badge.className = 'tts-badge badge-loading';
+            } else if (currentTTSEngine === 'google') {
+                badge.textContent = '✨ 就绪';
+                badge.className = 'tts-badge online';
+            }
+        }
+
+        function setupGoogleAudioFromSegments() {
+            cleanupGoogleAudio();
+            if (googleSegments.length === 0) return;
+            // 使用第一个segment创建Audio
+            const blob = googleSegments[0];
+            googleAudioBlobUrl = URL.createObjectURL(blob);
+            googleAudio = new Audio(googleAudioBlobUrl);
+            googleAudio.playbackRate = playbackSpeed;
+            googleCurrentSegmentIndex = 0;
+
+            googleAudioLoadedHandler = () => {
+                googleAudioDuration = googleAudio.duration || estimateAudioDuration(googleSegments[0]);
+                progressBar.disabled = false;
+                progressBar.max = 100;
+                totalTimeDisplay.textContent = formatTime(googleAudioDuration);
+            };
+
+            googleAudioTimeUpdateHandler = () => {
+                if (!googleAudio || googleIsPaused) return;
+                const ct = googleAudio.currentTime;
+                const dur = googleAudio.duration || googleAudioDuration || 1;
+                const percent = Math.min(100, (ct / dur) * 100);
+                progressBar.value = percent;
+                currentTimeDisplay.textContent = formatTime(ct);
+            };
+
+            googleAudioEndedHandler = () => {
+                // 尝试播放下一个segment
+                googleCurrentSegmentIndex++;
+                if (googleCurrentSegmentIndex < googleSegments.length) {
+                    playNextGoogleSegment();
+                } else {
+                    onGooglePlaybackComplete();
+                }
+            };
+
+            googleAudioErrorHandler = (e) => {
+                console.error('Google Audio error:', e);
+                onGooglePlaybackComplete();
+            };
+
+            googleAudio.addEventListener('loadedmetadata', googleAudioLoadedHandler);
+            googleAudio.addEventListener('timeupdate', googleAudioTimeUpdateHandler);
+            googleAudio.addEventListener('ended', googleAudioEndedHandler);
+            googleAudio.addEventListener('error', googleAudioErrorHandler);
+
+            if (googleAudio.readyState >= 2) {
+                googleAudioDuration = googleAudio.duration || estimateAudioDuration(googleSegments[0]);
+                progressBar.disabled = false;
+                progressBar.max = 100;
+                totalTimeDisplay.textContent = formatTime(googleAudioDuration);
+            }
+        }
+
+        function playNextGoogleSegment() {
+            if (googleCurrentSegmentIndex >= googleSegments.length) {
+                onGooglePlaybackComplete();
                 return;
             }
-            const done = getCompletedSet();
-            const isDone = done.has(currentIndex);
-            const uncompletedCount = getUncompletedIndices().length;
-            let html = `📖 第 <strong>${currentIndex + 1}</strong> / <strong>${sentencePool.length}</strong> 句`;
-            html += isDone ? ' <span class="badge-done">✅ 已完成</span>' : ' <span class="badge-todo">⬜ 待练习</span>';
-            html += `<br>📊 剩余未练：<strong>${uncompletedCount}</strong> 句`;
-            displayEl.innerHTML = html;
+            const blob = googleSegments[googleCurrentSegmentIndex];
+            const oldUrl = googleAudioBlobUrl;
+            googleAudioBlobUrl = URL.createObjectURL(blob);
+            googleAudio.src = googleAudioBlobUrl;
+            googleAudio.playbackRate = playbackSpeed;
+            googleAudio.load();
+            if (oldUrl) URL.revokeObjectURL(oldUrl);
+            googleIsPaused = false;
+            googleAudio.play().catch(e => console.warn('Segment play error:', e));
+            updatePlayPauseButton();
         }
 
-        function getUncompletedIndices() {
-            const done = getCompletedSet();
-            const uncompleted = [];
-            for (let i = 0; i < sentencePool.length; i++) if (!done.has(i)) uncompleted.push(i);
-            return uncompleted;
+        function estimateAudioDuration(blob) {
+            const avgBitrate = 16000;
+            const sizeBits = blob.size * 8;
+            return Math.max(1, sizeBits / avgBitrate);
         }
 
-        function renderLists() {
-            const done = getCompletedSet();
-            const uncompleted = [], completed = [];
-            for (let i = 0; i < sentencePool.length; i++) {
-                if (done.has(i)) completed.push(i); else uncompleted.push(i);
+        function onGooglePlaybackComplete() {
+            googleIsPaused = false;
+            progressBar.value = 100;
+            currentTimeDisplay.textContent = totalTimeDisplay.textContent || '00:00';
+            progressBar.disabled = true;
+            updatePlayPauseButton();
+        }
+
+        function cleanupGoogleAudio() {
+            if (googleAudio) {
+                googleAudio.pause();
+                if (googleAudioLoadedHandler) googleAudio.removeEventListener('loadedmetadata', googleAudioLoadedHandler);
+                if (googleAudioTimeUpdateHandler) googleAudio.removeEventListener('timeupdate',
+                    googleAudioTimeUpdateHandler);
+                if (googleAudioEndedHandler) googleAudio.removeEventListener('ended', googleAudioEndedHandler);
+                if (googleAudioErrorHandler) googleAudio.removeEventListener('error', googleAudioErrorHandler);
+                googleAudio.src = '';
+                googleAudio.load();
+                googleAudio = null;
             }
-            const uncompletedDiv = document.getElementById('uncompletedList');
-            if (uncompleted.length === 0) uncompletedDiv.innerHTML = '<div class="empty-message">🎉 全部完成！</div>';
-            else {
-                let html = '';
-                uncompleted.forEach(idx => html += `<div class="sentence-item${idx === currentIndex ? ' active' : ''}" onclick="switchToSentence(${idx})"><span class="sentence-number">${idx+1}</span></div>`);
-                uncompletedDiv.innerHTML = html;
+            if (googleAudioBlobUrl) {
+                URL.revokeObjectURL(googleAudioBlobUrl);
+                googleAudioBlobUrl = null;
             }
-            const completedDiv = document.getElementById('completedList');
-            if (completed.length === 0) completedDiv.innerHTML = '<div class="empty-message">暂无已完成句子</div>';
-            else {
-                let html = '';
-                completed.forEach(idx => html += `<div class="sentence-item${idx === currentIndex ? ' active' : ''}" onclick="switchToSentence(${idx})"><span class="sentence-number">${idx+1}</span><button class="remove-btn" onclick="event.stopPropagation(); removeFromCompleted(${idx})">✕</button></div>`);
-                completedDiv.innerHTML = html;
+            googleAudioLoadedHandler = null;
+            googleAudioTimeUpdateHandler = null;
+            googleAudioEndedHandler = null;
+            googleAudioErrorHandler = null;
+            googleAudioDuration = 0;
+            googleCurrentSegmentIndex = 0;
+            googleIsPaused = false;
+        }
+
+        function cleanupAllGoogleResources() {
+            if (googlePreloadAbortController) {
+                googlePreloadAbortController.abort();
+                googlePreloadAbortController = null;
             }
-        }
-
-        function updateAll() { updateStatusDisplay(); renderLists(); }
-
-        function resetProgressBar() {
-            const bar = document.getElementById('progressBar');
-            bar.value = 0; bar.disabled = true;
-            document.getElementById('currentTimeDisplay').textContent = '00:00';
-            document.getElementById('totalTimeDisplay').textContent = '00:00';
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60), secs = Math.floor(seconds % 60);
-            return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-        }
-
-        function stopPlayback(fullStop = false) {
-            if (currentUtterance) {
-                currentUtterance.onstart = currentUtterance.onend = currentUtterance.onboundary = currentUtterance.onerror = null;
-                window.speechSynthesis.cancel();
-                currentUtterance = null;
+            cleanupGoogleAudio();
+            for (const blob of googleSegments) {
+                // blobs will be GC'd
             }
-            if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
-            if (fullStop) isPaused = false;
+            googleSegments = [];
+            googleSegmentCharOffsets = [];
         }
 
-        function updateProgressUI(charIdx) {
-            const bar = document.getElementById('progressBar');
-            const percent = Math.min(100, (charIdx / totalCharCount) * 100);
-            bar.value = percent;
-            document.getElementById('currentTimeDisplay').textContent = formatTime((charIdx / totalCharCount) * estimatedDuration);
-        }
-
-        function playFromPosition(startChar) {
+        // ==================== 统一播放控制 ====================
+        function handlePlayPause() {
             if (currentIndex === null || sentencePool.length === 0) return;
-            stopPlayback();
-            isPaused = false;
-            updatePauseButton(false);
+            if (currentTTSEngine === 'google') {
+                handleGooglePlayPause();
+            } else if (currentTTSEngine === 'baidu') {
+                // 百度TTS播放控制
+                showToast('百度TTS需配合后端服务使用，已切换回浏览器内置语音', 3000);
+                currentTTSEngine = 'browser';
+                ttsEngineSelect.value = 'browser';
+                localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
+                updateTTSEngineUI();
+            } else {
+                handleBrowserPlayPause();
+            }
+        }
+
+        function handleGooglePlayPause() {
+            if (isIdle()) {
+                // 开始播放
+                startGooglePlayback();
+            } else if (isInPausedState()) {
+                // 恢复
+                googleAudio.play().catch(e => console.warn('Resume error:', e));
+                googleIsPaused = false;
+                updatePlayPauseButton();
+            } else if (isAnythingPlaying()) {
+                // 暂停
+                googleAudio.pause();
+                googleIsPaused = true;
+                updatePlayPauseButton();
+            } else if (googleAudio && googleAudio.ended) {
+                // 重新播放
+                startGooglePlayback();
+            }
+        }
+
+        function startGooglePlayback() {
+            if (!googleAudio || googleSegments.length === 0) {
+                // 尝试即时加载
+                preloadGoogleAudio().then(() => {
+                    if (googleAudio) {
+                        googleAudio.currentTime = 0;
+                        googleAudio.playbackRate = playbackSpeed;
+                        googleAudio.play().catch(e => {
+                            console.warn('Play error:', e);
+                            // 如果播放失败，自动切换到浏览器语音
+                            showToast('⚠️ 在线语音播放失败，已切换为浏览器内置语音', 3000);
+                            currentTTSEngine = 'browser';
+                            ttsEngineSelect.value = 'browser';
+                            localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
+                            updateTTSEngineUI();
+                        });
+                        googleIsPaused = false;
+                        updatePlayPauseButton();
+                        progressBar.disabled = false;
+                    }
+                }).catch(() => {
+                    showToast('⚠️ 语音加载失败，请尝试切换引擎', 2500);
+                });
+                return;
+            }
+            if (googleAudio.ended || googleAudio.currentTime >= (googleAudio.duration || googleAudioDuration) - 0.1) {
+                googleAudio.currentTime = 0;
+                googleCurrentSegmentIndex = 0;
+                if (googleSegments.length > 1) {
+                    const blob = googleSegments[0];
+                    const oldUrl = googleAudioBlobUrl;
+                    googleAudioBlobUrl = URL.createObjectURL(blob);
+                    googleAudio.src = googleAudioBlobUrl;
+                    googleAudio.load();
+                    if (oldUrl) URL.revokeObjectURL(oldUrl);
+                }
+            }
+            googleAudio.playbackRate = playbackSpeed;
+            googleAudio.play().catch(e => {
+                console.warn('Play error:', e);
+                // 如果播放失败，自动切换到浏览器语音
+                showToast('⚠️ 在线语音播放失败，已切换为浏览器内置语音', 3000);
+                currentTTSEngine = 'browser';
+                ttsEngineSelect.value = 'browser';
+                localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
+                updateTTSEngineUI();
+            });
+            googleIsPaused = false;
+            progressBar.disabled = false;
+            updatePlayPauseButton();
+        }
+
+        function handleBrowserPlayPause() {
+            if (isIdle()) {
+                playBrowserFromPosition(0);
+            } else if (isInPausedState()) {
+                toggleBrowserPause();
+            } else if (isAnythingPlaying()) {
+                toggleBrowserPause();
+            } else {
+                playBrowserFromPosition(0);
+            }
+        }
+
+        function toggleBrowserPause() {
+            if (!browserUtterance) return;
+            if (browserIsPaused) {
+                window.speechSynthesis.resume();
+                browserIsPaused = false;
+                browserPlayStartTime = Date.now();
+                if (!browserProgressInterval && browserTotalCharCount > 0) {
+                    browserProgressInterval = setInterval(browserProgressTick, 200);
+                }
+            } else {
+                window.speechSynthesis.pause();
+                browserIsPaused = true;
+                if (browserProgressInterval) {
+                    clearInterval(browserProgressInterval);
+                    browserProgressInterval = null;
+                }
+            }
+            updatePlayPauseButton();
+        }
+
+        function playBrowserFromPosition(startChar) {
+            if (currentIndex === null || sentencePool.length === 0) return;
+            stopBrowserPlayback();
+            browserIsPaused = false;
+            updatePlayPauseButton();
 
             const sentence = sentencePool[currentIndex];
-            totalCharCount = sentence.length;
-            if (startChar >= totalCharCount) startChar = 0;
+            browserTotalCharCount = sentence.length;
+            if (startChar >= browserTotalCharCount) startChar = 0;
             const textToSpeak = sentence.substring(startChar);
 
-            const utterance = createUtterance(textToSpeak);
-            currentUtterance = utterance;
+            const utterance = createBrowserUtterance(textToSpeak);
+            browserUtterance = utterance;
 
-            estimatedDuration = Math.max(1, (totalCharCount - startChar) / 12) + (startChar / 12);
-            const bar = document.getElementById('progressBar');
-            bar.disabled = false; bar.max = 100;
-            document.getElementById('totalTimeDisplay').textContent = formatTime(estimatedDuration);
+            // 根据文本长度估算时长（英文平均阅读速度约为每分钟150词，每词约5字符）
+            browserEstimatedDuration = Math.max(1, (browserTotalCharCount - startChar) / (150 * 5 / 60));
+            progressBar.disabled = false;
+            progressBar.max = 100;
+            totalTimeDisplay.textContent = formatTime(browserEstimatedDuration);
 
-            currentCharIndex = startChar;
-            baseCharIndex = startChar;
-            playStartTime = Date.now();
-            updateProgressUI(startChar);
+            browserCurrentCharIndex = startChar;
+            browserBaseCharIndex = startChar;
+            browserPlayStartTime = Date.now();
+            updateBrowserProgressUI(startChar);
 
-            let boundaryReceived = false;
-            let boundaryTimer = null;
+            browserBoundaryReceived = false;
+            if (browserBoundaryTimer) clearTimeout(browserBoundaryTimer);
 
             utterance.onboundary = (e) => {
-                if (isPaused) return;
+                if (browserIsPaused) return;
                 if (e.charIndex !== undefined) {
                     const abs = startChar + e.charIndex;
-                    if (abs > currentCharIndex) {
-                        currentCharIndex = abs;
-                        baseCharIndex = abs;
-                        playStartTime = Date.now();
-                        updateProgressUI(abs);
-                        boundaryReceived = true;
-                        if (boundaryTimer) clearTimeout(boundaryTimer);
-                        boundaryTimer = setTimeout(() => {
-                            if (!boundaryReceived && !isPaused) {
-                                if (!progressInterval) {
-                                    progressInterval = setInterval(() => {
-                                        if (isPaused || !currentUtterance) return;
-                                        const elapsed = (Date.now() - playStartTime) / 1000;
-                                        const remaining = totalCharCount - baseCharIndex;
-                                        if (remaining <= 0) return;
-                                        const estTime = Math.max(0.1, remaining / 12);
-                                        const progress = Math.min(1, elapsed / estTime);
-                                        const newIdx = Math.floor(baseCharIndex + progress * remaining);
-                                        if (newIdx > currentCharIndex) {
-                                            currentCharIndex = newIdx;
-                                            updateProgressUI(newIdx);
-                                        }
-                                    }, 200);
-                                }
+                    if (abs > browserCurrentCharIndex) {
+                        browserCurrentCharIndex = abs;
+                        browserBaseCharIndex = abs;
+                        browserPlayStartTime = Date.now();
+                        updateBrowserProgressUI(abs);
+                        browserBoundaryReceived = true;
+                        if (browserBoundaryTimer) clearTimeout(browserBoundaryTimer);
+                        browserBoundaryTimer = setTimeout(() => {
+                            if (!browserBoundaryReceived && !browserIsPaused && !browserProgressInterval) {
+                                browserProgressInterval = setInterval(browserProgressTick, 200);
                             }
                         }, 500);
                     }
                 }
             };
 
-            boundaryTimer = setTimeout(() => {
-                if (!boundaryReceived && !isPaused) {
-                    if (!progressInterval) {
-                        progressInterval = setInterval(() => {
-                            if (isPaused || !currentUtterance) return;
-                            const elapsed = (Date.now() - playStartTime) / 1000;
-                            const remaining = totalCharCount - baseCharIndex;
-                            if (remaining <= 0) return;
-                            const estTime = Math.max(0.1, remaining / 12);
-                            const progress = Math.min(1, elapsed / estTime);
-                            const newIdx = Math.floor(baseCharIndex + progress * remaining);
-                            if (newIdx > currentCharIndex) {
-                                currentCharIndex = newIdx;
-                                updateProgressUI(newIdx);
-                            }
-                        }, 200);
-                    }
+            browserBoundaryTimer = setTimeout(() => {
+                if (!browserBoundaryReceived && !browserIsPaused && !browserProgressInterval) {
+                    browserProgressInterval = setInterval(browserProgressTick, 200);
                 }
             }, 500);
 
-            utterance.onstart = () => {};
-            utterance.onend = () => {
-                stopPlayback();
-                if (boundaryTimer) clearTimeout(boundaryTimer);
-                document.getElementById('progressBar').value = 100;
-                document.getElementById('currentTimeDisplay').textContent = formatTime(estimatedDuration);
-                document.getElementById('progressBar').disabled = true;
-                updatePauseButton(false);
+            utterance.onstart = () => { 
+                updatePlayPauseButton(); 
             };
-            utterance.onerror = () => { 
-                stopPlayback(); 
-                if (boundaryTimer) clearTimeout(boundaryTimer);
-                resetProgressBar(); 
-                updatePauseButton(false); 
+            utterance.onend = () => {
+                stopBrowserPlayback();
+                if (browserBoundaryTimer) clearTimeout(browserBoundaryTimer);
+                progressBar.value = 100;
+                currentTimeDisplay.textContent = formatTime(browserEstimatedDuration);
+                progressBar.disabled = true;
+                updatePlayPauseButton();
+            };
+            utterance.onerror = (event) => {
+                console.error('Browser TTS error:', event.error);
+                stopBrowserPlayback();
+                if (browserBoundaryTimer) clearTimeout(browserBoundaryTimer);
+                resetProgressBar();
+                updatePlayPauseButton();
+                // 提示用户语音播放失败
+                showToast('语音播放失败，请检查设备语音设置', 2500);
             };
 
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         }
 
-        function playSentence() { playFromPosition(0); }
-
-        function togglePause() {
-            if (!currentUtterance) return;
-            if (isPaused) {
-                window.speechSynthesis.resume();
-                isPaused = false;
-                playStartTime = Date.now();
-            } else {
-                window.speechSynthesis.pause();
-                isPaused = true;
-                if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+        function browserProgressTick() {
+            if (browserIsPaused || !browserUtterance) return;
+            const elapsed = (Date.now() - browserPlayStartTime) / 1000;
+            const remaining = browserTotalCharCount - browserBaseCharIndex;
+            if (remaining <= 0) return;
+            const estTime = Math.max(0.1, remaining / 12);
+            const progress = Math.min(1, elapsed / estTime);
+            const newIdx = Math.floor(browserBaseCharIndex + progress * remaining);
+            if (newIdx > browserCurrentCharIndex) {
+                browserCurrentCharIndex = newIdx;
+                updateBrowserProgressUI(newIdx);
             }
-            updatePauseButton(isPaused);
         }
 
-        function updatePauseButton(paused) {
-            const btn = document.getElementById('pauseBtn');
-            btn.textContent = paused ? '▶️ 继续' : '⏸️ 暂停';
+        function updateBrowserProgressUI(charIdx) {
+            if (browserTotalCharCount <= 0) return;
+            const percent = Math.min(100, (charIdx / browserTotalCharCount) * 100);
+            progressBar.value = percent;
+            currentTimeDisplay.textContent = formatTime((charIdx / browserTotalCharCount) * browserEstimatedDuration);
         }
 
-        const progressBar = document.getElementById('progressBar');
+        function stopBrowserPlayback(fullStop = false) {
+            if (browserUtterance) {
+                browserUtterance.onstart = null;
+                browserUtterance.onend = null;
+                browserUtterance.onboundary = null;
+                browserUtterance.onerror = null;
+                window.speechSynthesis.cancel();
+                browserUtterance = null;
+            }
+            if (browserProgressInterval) {
+                clearInterval(browserProgressInterval);
+                browserProgressInterval = null;
+            }
+            if (browserBoundaryTimer) {
+                clearTimeout(browserBoundaryTimer);
+                browserBoundaryTimer = null;
+            }
+            if (fullStop) {
+                browserIsPaused = false;
+            }
+        }
+
+        function stopAllPlayback(fullStop = false) {
+            if (isGoogleEngine()) {
+                if (googleAudio) {
+                    googleAudio.pause();
+                    if (fullStop) {
+                        googleAudio.currentTime = 0;
+                        googleIsPaused = false;
+                        googleCurrentSegmentIndex = 0;
+                    }
+                }
+            } else {
+                stopBrowserPlayback(fullStop);
+            }
+            if (fullStop) {
+                setIsPaused(false);
+            }
+            updatePlayPauseButton();
+        }
+
+        // ==================== 进度条 ====================
+        function resetProgressBar() {
+            progressBar.value = 0;
+            progressBar.disabled = true;
+            currentTimeDisplay.textContent = '00:00';
+            totalTimeDisplay.textContent = '00:00';
+            if (isGoogleEngine()) {
+                googleAudioDuration = 0;
+            } else {
+                browserEstimatedDuration = 0;
+                browserTotalCharCount = 0;
+                browserCurrentCharIndex = 0;
+                browserBaseCharIndex = 0;
+            }
+        }
+
+        function formatTime(seconds) {
+            const s = Math.max(0, seconds);
+            const mins = Math.floor(s / 60);
+            const secs = Math.floor(s % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
         progressBar.addEventListener('input', (e) => {
             const percent = parseFloat(e.target.value);
-            if (estimatedDuration > 0) {
-                document.getElementById('currentTimeDisplay').textContent = formatTime((percent / 100) * estimatedDuration);
+            if (isGoogleEngine() && googleAudio && (googleAudio.duration || googleAudioDuration) > 0) {
+                const dur = googleAudio.duration || googleAudioDuration;
+                currentTimeDisplay.textContent = formatTime((percent / 100) * dur);
+            } else if (!isGoogleEngine() && browserEstimatedDuration > 0) {
+                currentTimeDisplay.textContent = formatTime((percent / 100) * browserEstimatedDuration);
             }
         });
+
         progressBar.addEventListener('change', (e) => {
             const percent = parseFloat(e.target.value);
-            if (currentIndex !== null && totalCharCount > 0) {
-                const targetChar = Math.floor((percent / 100) * totalCharCount);
-                playFromPosition(targetChar);
+            if (isGoogleEngine()) {
+                if (googleAudio && (googleAudio.duration || googleAudioDuration) > 0) {
+                    const dur = googleAudio.duration || googleAudioDuration;
+                    googleAudio.currentTime = (percent / 100) * dur;
+                    if (googleIsPaused) {
+                        googleIsPaused = false;
+                        updatePlayPauseButton();
+                    }
+                    googleAudio.play().catch(e => console.warn('Seek play error:', e));
+                }
+            } else {
+                if (currentIndex !== null && browserTotalCharCount > 0) {
+                    const targetChar = Math.floor((percent / 100) * browserTotalCharCount);
+                    playBrowserFromPosition(targetChar);
+                }
             }
         });
+
+        // ==================== 播放按钮UI ====================
+        function updatePlayPauseButton() {
+            const disabled = (currentIndex === null || sentencePool.length === 0);
+            playPauseBtn.disabled = disabled;
+
+            if (disabled) {
+                playPauseBtn.textContent = '▶ 播放';
+                playPauseBtn.className = 'btn-play';
+                return;
+            }
+
+            if (isIdle()) {
+                playPauseBtn.textContent = '▶ 播放';
+                playPauseBtn.className = 'btn-play';
+            } else if (isInPausedState()) {
+                playPauseBtn.textContent = '▶ 继续';
+                playPauseBtn.className = 'btn-play';
+            } else if (isAnythingPlaying()) {
+                playPauseBtn.textContent = '⏸ 暂停';
+                playPauseBtn.className = 'btn-pause';
+            } else {
+                playPauseBtn.textContent = '▶ 播放';
+                playPauseBtn.className = 'btn-play';
+            }
+        }
+
+        // ==================== 句子切换 ====================
+        function switchToSentence(index) {
+            if (index < 0 || index >= sentencePool.length) return;
+            if (currentIndex === index) return;
+            stopAllPlayback(true);
+            currentIndex = index;
+            clearInputAndResult();
+            updateStatusDisplay();
+            resetProgressBar();
+            updatePlayPauseButton();
+            if (isGoogleEngine()) {
+                cleanupAllGoogleResources();
+                preloadGoogleAudio();
+            } else {
+                preloadCurrentSentenceBrowser();
+            }
+            userInputEl.focus();
+        }
+
+        function nextSentence() {
+            if (sentencePool.length <= 1) {
+                if (sentencePool.length === 0) {
+                    showToast('📭 句子库为空，请先添加句子', 2500);
+                } else {
+                    resultArea.innerHTML = '<span class="result-empty">📌 句子库中只有1句，请添加更多句子后再试。</span>';
+                }
+                return;
+            }
+            let newIndex;
+            const maxAttempts = 50;
+            let attempts = 0;
+            do {
+                newIndex = Math.floor(Math.random() * sentencePool.length);
+                attempts++;
+            } while (newIndex === currentIndex && attempts < maxAttempts && sentencePool.length > 1);
+
+            switchToSentence(newIndex);
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.focus();
+        }
+
+        // ==================== 状态显示 ====================
+        function updateStatusDisplay() {
+            if (currentIndex === null || sentencePool.length === 0) {
+                sentenceDisplay.innerHTML = '⚠️ 句子库为空，请添加练习句子。';
+                return;
+            }
+            const isToday = isTodayRecommended(currentIndex);
+            const engineLabel = currentTTSEngine === 'google' ? '🎵 在线语音' : '🖥️ 内置语音';
+            let html = `📖 第 <strong>${currentIndex + 1}</strong> / <strong>${sentencePool.length}</strong> 句 · ${engineLabel}`;
+            if (isToday) {
+                html += ' <span class="badge-today">📅 今日推荐</span>';
+            } else {
+                html += ' <span class="badge-info">📝 自由练习</span>';
+            }
+            sentenceDisplay.innerHTML = html;
+        }
+
+        function clearInputAndResult() {
+            userInputEl.value = '';
+            resultArea.innerHTML = '<span class="result-empty">👆 输入答案后点击"检查"查看对比结果</span>';
+            answerShown = false;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ==================== 检查答案 ====================
+        function checkAnswer() {
+            if (currentIndex === null) return;
+            const userInput = userInputEl.value.trim();
+            const correct = sentencePool[currentIndex].trim();
+            if (!userInput) {
+                resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入你的答案。</span>';
+                answerShown = false;
+                return;
+            }
+            const userWords = userInput.split(/\s+/);
+            const correctWords = correct.split(/\s+/);
+            let ci = 0;
+            let styled = '';
+            for (let uj = 0; uj < userWords.length; uj++) {
+                const uWord = userWords[uj];
+                if (ci < correctWords.length && uWord.toLowerCase() === correctWords[ci].toLowerCase()) {
+                    styled += `<span class="correct">${escapeHtml(uWord)}</span> `;
+                    ci++;
+                } else {
+                    let found = -1;
+                    for (let k = ci; k < correctWords.length; k++) {
+                        if (uWord.toLowerCase() === correctWords[k].toLowerCase()) { found = k; break; }
+                    }
+                    if (found !== -1) {
+                        styled += `<span class="correct">${escapeHtml(uWord)}</span> `;
+                        ci = found + 1;
+                    } else {
+                        styled += `<span class="wrong">${escapeHtml(uWord)}</span> `;
+                    }
+                }
+            }
+            const isFullyCorrect = userInput.toLowerCase() === correct.toLowerCase();
+            let resultHTML = `📝 <strong>你的答案：</strong><br>${styled.trim()}<br><br>`;
+            if (isFullyCorrect) {
+                resultHTML += '<span class="result-icon">🎉</span> <strong>完全正确！太棒了！</strong>';
+            } else {
+                resultHTML += '<span class="result-icon">💡</span> 还有差距，继续修改吧。听听原音再试一次～';
+            }
+            resultArea.innerHTML = resultHTML;
+            answerShown = false;
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
         function showAnswer() {
             if (currentIndex === null || answerShown) return;
             const correct = sentencePool[currentIndex].trim();
-            const resultDiv = document.getElementById('resultArea');
-            if (resultDiv.querySelector('.result-empty')) resultDiv.innerHTML = `✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
-            else resultDiv.innerHTML += `<br><br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            if (resultArea.querySelector('.result-empty')) {
+                resultArea.innerHTML = `✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            } else {
+                resultArea.innerHTML += `<br><br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            }
             answerShown = true;
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        function checkAnswer() {
-            if (currentIndex === null) return;
-            const userInput = document.getElementById('userInput').value.trim();
-            const correct = sentencePool[currentIndex].trim();
-            const resultDiv = document.getElementById('resultArea');
-            if (!userInput) { resultDiv.innerHTML = '⚠️ 请先输入你的答案。'; answerShown = false; return; }
-
-            const userWords = userInput.split(/\s+/);
-            const correctWords = correct.split(/\s+/);
-            let ci = 0, styled = '';
-            for (let uj = 0; uj < userWords.length; uj++) {
-                const uWord = userWords[uj];
-                if (ci < correctWords.length && uWord.toLowerCase() === correctWords[ci].toLowerCase()) {
-                    styled += `<span class="correct">${escapeHtml(uWord)}</span> `; ci++;
+        // ==================== 添加句子 ====================
+        function addNewSentence() {
+            const input = document.getElementById('newSentenceInput');
+            const text = input.value.trim();
+            if (!text) {
+                showToast('请输入有效的英语句子', 2000);
+                return;
+            }
+            sentencePool.push(text);
+            saveSentencePool(sentencePool);
+            input.value = '';
+            if (currentIndex === null && sentencePool.length === 1) {
+                currentIndex = 0;
+                clearInputAndResult();
+                resetProgressBar();
+                if (isGoogleEngine()) {
+                    preloadGoogleAudio();
                 } else {
-                    let found = -1;
-                    for (let k = ci; k < correctWords.length; k++) if (uWord.toLowerCase() === correctWords[k].toLowerCase()) { found = k; break; }
-                    if (found !== -1) { styled += `<span class="correct">${escapeHtml(uWord)}</span> `; ci = found + 1; }
-                    else styled += `<span class="wrong">${escapeHtml(uWord)}</span> `;
+                    preloadCurrentSentenceBrowser();
                 }
             }
-            const isFullyCorrect = userInput.toLowerCase() === correct.toLowerCase();
-            resultDiv.innerHTML = `📝 <strong>你的答案：</strong><br>${styled.trim()}<br><br>${isFullyCorrect ? '🎉 完全正确！' : '💡 还有差距，继续修改吧。'}`;
-            answerShown = false;
-            const done = getCompletedSet();
-            if (isFullyCorrect) done.add(currentIndex); else done.delete(currentIndex);
-            saveCompletedSet(done);
-            updateAll();
+            updateStatusDisplay();
+            updatePlayPauseButton();
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast('✅ 句子已添加！', 1800);
         }
 
-        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
-
+        // ==================== 初始化 ====================
         function initialSelect() {
-            const uncompleted = getUncompletedIndices();
-            currentIndex = uncompleted.length > 0 ? uncompleted[0] : (sentencePool.length > 0 ? 0 : null);
+            if (sentencePool.length === 0) {
+                currentIndex = null;
+                sentenceDisplay.innerHTML = '⚠️ 句子库为空，请添加练习句子。';
+                resetProgressBar();
+                updatePlayPauseButton();
+                return;
+            }
+            const dailyIdx = getDailyRecommendedIndex();
+            currentIndex = (dailyIdx !== null && dailyIdx < sentencePool.length) ? dailyIdx : 0;
             clearInputAndResult();
-            stopPlayback(true);
+            stopAllPlayback(true);
             resetProgressBar();
-            updateAll();
-            updatePauseButton(false);
-            preloadCurrentSentence();
+            updateStatusDisplay();
+            updatePlayPauseButton();
+            if (isGoogleEngine()) {
+                preloadGoogleAudio();
+            } else {
+                preloadCurrentSentenceBrowser();
+            }
         }
 
         window.onload = function() {
-            populateVoiceList(); // 初始填充语音列表
+            // 恢复设置
+            // 强制使用浏览器引擎，忽略存储的设置
+            currentTTSEngine = 'browser';
+            
+            const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
+            if (savedSpeed) {
+                playbackSpeed = parseFloat(savedSpeed);
+                if (isNaN(playbackSpeed) || playbackSpeed < 0.6 || playbackSpeed > 1.2) playbackSpeed = 0.85;
+            }
+            speedSlider.value = playbackSpeed;
+            speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
+
+            populateVoiceList();
             applySelectedVoice();
             warmUpSpeechSynthesis();
+            updateTTSEngineUI(); // 这会强制设置为浏览器引擎
 
             if (sentencePool.length === 0) {
-                document.getElementById('sentenceDisplay').innerHTML = '⚠️ 句子池为空，请添加练习句子。';
-                document.getElementById('uncompletedList').innerHTML = '<div class="empty-message">无句子</div>';
-                document.getElementById('completedList').innerHTML = '<div class="empty-message">无句子</div>';
+                sentenceDisplay.innerHTML = '⚠️ 句子库为空，请添加练习句子。';
+                resetProgressBar();
+                updatePlayPauseButton();
                 return;
             }
             initialSelect();
+            setTimeout(() => {
+                userInputEl.focus();
+            }, 400);
         };
 
-        document.getElementById('userInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); } });
-        document.getElementById('newSentenceInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); } });
+        // ==================== 键盘事件 ====================
+        userInputEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                checkAnswer();
+            }
+        });
+        document.getElementById('newSentenceInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewSentence();
+            }
+        });
 
+        // ==================== 页面卸载清理 ====================
+        window.addEventListener('beforeunload', () => {
+            stopAllPlayback(true);
+            cleanupAllGoogleResources();
+            if (googleAudioBlobUrl) URL.revokeObjectURL(googleAudioBlobUrl);
+        });
+
+        // 页面隐藏时暂停（节省资源）
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isAnythingPlaying()) {
+                if (isGoogleEngine() && googleAudio) {
+                    googleAudio.pause();
+                    googleIsPaused = true;
+                    updatePlayPauseButton();
+                } else if (!isGoogleEngine() && browserUtterance && !browserIsPaused) {
+                    toggleBrowserPause();
+                }
+            }
+        });
+
+        // ==================== Service Worker ====================
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js').then(() => console.log('SW 注册成功')).catch(err => console.log('SW 注册失败', err));
+            navigator.serviceWorker.register('service-worker.js')
+                .then(() => console.log('SW 注册成功'))
+                .catch(err => console.log('SW 注册失败', err));
         }
     </script>
 </body>
