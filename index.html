@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 移动端稳定版</title>
+    <title>英语听写练习 · 移动端流畅版</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -13,14 +13,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-            padding: 20px 20px 30px;
-            max-width: 700px;
-            margin: 0 auto;
+            background: var(--bg); color: var(--text);
+            -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+            padding: 20px 20px 30px; max-width: 700px; margin: 0 auto;
         }
         h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; }
         .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; }
@@ -134,11 +129,8 @@
     </div>
 
     <div class="btn-row">
-        <!-- 关键：使用 onpointerdown 并阻止默认行为，防止按钮抢走焦点 -->
-        <button type="button" class="btn-play" id="playPauseBtn"
-            onpointerdown="handlePlayPause(); event.preventDefault();">
-            ▶ 播放
-        </button>
+        <!-- 恢复使用 onclick 以保证移动端语音被允许播放 -->
+        <button type="button" class="btn-play" id="playPauseBtn" onclick="handlePlayPause()">▶ 播放</button>
     </div>
 
     <div class="progress-container">
@@ -222,7 +214,7 @@
         let startTime = 0, pausedCharPos = 0;
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
-        let currentUtterance = null;   // 保存当前的 utterance 引用，用于暂停时清除回调
+        let currentUtterance = null;
 
         // ========== 自动扩展文本框 ==========
         function autoResizeTextarea() {
@@ -267,7 +259,7 @@
             return 0;
         }
 
-        // 清理当前 utterance 的回调，防止 cancel 时触发 end/error
+        // 清理当前 utterance 的回调，防止 cancel 时触发 end/error 改变状态
         function detachUtterance() {
             if (currentUtterance) {
                 currentUtterance.onstart = null;
@@ -282,9 +274,7 @@
             window.speechSynthesis.cancel();
             if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
             isPlaying = false;
-            if (!keepPaused) {
-                isPaused = false;
-            }
+            if (!keepPaused) isPaused = false;
         }
 
         function resetAll() {
@@ -295,6 +285,17 @@
             currentTimeDisplay.textContent = '00:00';
             totalTimeDisplay.textContent = '00:00';
             updatePlayPauseButton();
+        }
+
+        // 保持焦点在输入框（带选区保护）
+        function refocusInput() {
+            const start = userInputEl.selectionStart;
+            const end = userInputEl.selectionEnd;
+            userInputEl.focus();
+            // iOS 可能需要一点延迟才能正确设置选区
+            setTimeout(() => {
+                userInputEl.setSelectionRange(start, end);
+            }, 10);
         }
 
         function startPlayback(fromChar) {
@@ -329,11 +330,8 @@
                 if (!isPlaying) return;
                 if (progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
-                // 保持键盘可见：重新聚焦输入框，同时保持选区
-                const start = userInputEl.selectionStart;
-                const end = userInputEl.selectionEnd;
-                userInputEl.focus();
-                userInputEl.setSelectionRange(start, end);
+                // 恢复键盘焦点
+                refocusInput();
             };
             utterance.onend = () => {
                 if (!isPlaying) return;
@@ -376,6 +374,14 @@
                 showToast('没有句子', 2000); return;
             }
 
+            // 预热语音引擎（保证 iOS 首次点击有效）
+            if (!currentUtterance) {
+                const warmUp = new SpeechSynthesisUtterance('');
+                warmUp.volume = 0;
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(warmUp);
+            }
+
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
@@ -390,8 +396,7 @@
                 isPlaying = false;
                 isPaused = true;
                 updatePlayPauseButton();
-                // 保持键盘
-                userInputEl.focus();
+                refocusInput(); // 保持键盘
             } else if(isPaused) {
                 // 继续播放
                 startPlayback(pausedCharPos);
@@ -614,7 +619,7 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
-            // 预热语音引擎
+            // 预热语音引擎（解决首次无声问题）
             const warmUp = new SpeechSynthesisUtterance('');
             warmUp.volume = 0;
             window.speechSynthesis.cancel();
