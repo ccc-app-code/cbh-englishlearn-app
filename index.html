@@ -109,7 +109,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">ResponsiveVoice 整句流畅 · 进度更贴近真实</p>
+    <p class="subtitle" id="engineHint">正在优化语音质量…</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -149,6 +149,7 @@
     </div>
 
     <script>
+        // ========== 配置与句子库 ==========
         const STORAGE_KEY_SENTENCES = 'sentencePool_v3';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
         const defaultSentences = [
@@ -184,6 +185,7 @@
             return hashDateToIndex(getDateString(),sentencePool.length);
         }
 
+        // ========== DOM 元素 ==========
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -193,6 +195,7 @@
         const currentTimeDisplay = document.getElementById('currentTimeDisplay');
         const totalTimeDisplay = document.getElementById('totalTimeDisplay');
         const toastEl = document.getElementById('toast');
+        const engineHint = document.getElementById('engineHint');
 
         let currentIndex = null, answerShown = false, playbackSpeed = 0.85;
         let isPlaying = false, isPaused = false;
@@ -201,7 +204,10 @@
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
 
-        const BASE_CHAR_RATE = 14; // 基础字符/秒，更接近真实英文语音
+        // 引擎配置
+        let useNativeSpeech = false;       // 是否使用系统语音（移动端）
+        let bestVoice = null;             // 选中的系统语音
+        const BASE_CHAR_RATE = 14;        // 基准字符/秒
 
         let toastTimer;
         function showToast(msg, d=2500) {
@@ -224,6 +230,59 @@
             return 0;
         }
 
+        // ========== 移动端最佳语音选择 ==========
+        function selectBestVoice() {
+            return new Promise((resolve) => {
+                const voices = window.speechSynthesis.getVoices();
+                if (voices.length === 0) {
+                    // 在 Chrome 等浏览器中，首次加载时 voices 可能为空，需要等待 voiceschanged 事件
+                    window.speechSynthesis.addEventListener('voiceschanged', () => {
+                        resolve(window.speechSynthesis.getVoices());
+                    }, { once: true });
+                } else {
+                    resolve(voices);
+                }
+            }).then(voices => {
+                // 优先选择 en-US 的高质量语音
+                const preferredVoices = [
+                    'Samantha',          // iOS 美式英语
+                    'Google US English', // Android Chrome
+                    'Microsoft David',   // Windows
+                    'Karen',             // 常见的 macOS 英音
+                    'Daniel',            // 英式
+                ];
+                let selected = null;
+                for (const pref of preferredVoices) {
+                    selected = voices.find(v => v.name.includes(pref) && v.lang.startsWith('en'));
+                    if (selected) break;
+                }
+                // 如果都没找到，选第一个英语语音
+                if (!selected) {
+                    selected = voices.find(v => v.lang.startsWith('en'));
+                }
+                bestVoice = selected || voices[0] || null;
+                return bestVoice;
+            });
+        }
+
+        // 判断是否为移动设备
+        function isMobileDevice() {
+            return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        // 初始化引擎
+        async function initEngine() {
+            if (isMobileDevice()) {
+                useNativeSpeech = true;
+                await selectBestVoice();
+                engineHint.textContent = '📱 移动端 · 已优化英语语音';
+            } else {
+                useNativeSpeech = false;
+                engineHint.textContent = '🖥️ 桌面端 · ResponsiveVoice 在线语音';
+            }
+        }
+
+        // ========== 播放控制（统一入口） ==========
         function updateProgress() {
             if(!isPlaying || totalChars<=0 || isDragging) return;
             const elapsed = (Date.now() - startTime) / 1000;
@@ -235,16 +294,19 @@
             currentTimeDisplay.textContent = formatTime((currentChar/totalChars) * estimatedDuration);
 
             if(currentChar >= totalChars) {
-                cancelSpeechAndTimer();
+                stopPlaybackInternally();
                 progressBar.value = 100;
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
-                updatePlayPauseButton();
             }
         }
 
-        function cancelSpeechAndTimer() {
-            if(window.responsiveVoice && window.responsiveVoice.isPlaying()) {
-                window.responsiveVoice.cancel();
+        function stopPlaybackInternally() {
+            if (useNativeSpeech) {
+                window.speechSynthesis.cancel();
+            } else {
+                if(window.responsiveVoice && window.responsiveVoice.isPlaying()) {
+                    window.responsiveVoice.cancel();
+                }
             }
             if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
             isPlaying = false;
@@ -252,7 +314,7 @@
         }
 
         function resetAll() {
-            cancelSpeechAndTimer();
+            stopPlaybackInternally();
             pausedCharPos = 0;
             progressBar.value = 0;
             progressBar.disabled = true;
@@ -262,7 +324,7 @@
         }
 
         function startPlayback(fromChar) {
-            cancelSpeechAndTimer();
+            stopPlaybackInternally();
             if(currentIndex === null || !sentencePool[currentIndex]) return;
 
             fullText = sentencePool[currentIndex];
@@ -285,50 +347,83 @@
             isPlaying = true;
             updatePlayPauseButton();
 
-            window.responsiveVoice.speak(remainingText, 'UK English Female', {
-                rate: playbackSpeed,
-                onstart: () => {
+            if (useNativeSpeech) {
+                // 使用系统高质量语音
+                const utterance = new SpeechSynthesisUtterance(remainingText);
+                utterance.rate = playbackSpeed;
+                utterance.lang = 'en-US';
+                if (bestVoice) utterance.voice = bestVoice;
+                utterance.onstart = () => {
                     if(!isPlaying) return;
                     if(progressTimer) clearInterval(progressTimer);
                     progressTimer = setInterval(updateProgress, 100);
-                },
-                onend: () => {
+                };
+                utterance.onend = () => {
                     if(!isPlaying) return;
                     isPlaying = false;
                     if(progressTimer) clearInterval(progressTimer);
                     progressBar.value = 100;
                     currentTimeDisplay.textContent = totalTimeDisplay.textContent;
                     updatePlayPauseButton();
-                },
-                onerror: () => {
+                };
+                utterance.onerror = () => {
                     isPlaying = false;
                     if(progressTimer) clearInterval(progressTimer);
                     showToast('播放出错', 2000);
                     updatePlayPauseButton();
-                }
-            });
+                };
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } else {
+                // ResponsiveVoice
+                window.responsiveVoice.speak(remainingText, 'UK English Female', {
+                    rate: playbackSpeed,
+                    onstart: () => {
+                        if(!isPlaying) return;
+                        if(progressTimer) clearInterval(progressTimer);
+                        progressTimer = setInterval(updateProgress, 100);
+                    },
+                    onend: () => {
+                        if(!isPlaying) return;
+                        isPlaying = false;
+                        if(progressTimer) clearInterval(progressTimer);
+                        progressBar.value = 100;
+                        currentTimeDisplay.textContent = totalTimeDisplay.textContent;
+                        updatePlayPauseButton();
+                    },
+                    onerror: () => {
+                        isPlaying = false;
+                        if(progressTimer) clearInterval(progressTimer);
+                        showToast('播放出错', 2000);
+                        updatePlayPauseButton();
+                    }
+                });
+            }
         }
 
         function handlePlayPause() {
             if(currentIndex===null || !sentencePool.length) {
                 showToast('没有可播放的句子',2000); return;
             }
-            if(!window.responsiveVoice) {
-                showToast('语音引擎未加载',2500); return;
-            }
 
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
+                // 暂停
                 const elapsed = (Date.now()-startTime)/1000;
                 const currentRate = BASE_CHAR_RATE * playbackSpeed;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * currentRate));
-                window.responsiveVoice.cancel();
+                if (useNativeSpeech) {
+                    window.speechSynthesis.cancel();
+                } else {
+                    if(window.responsiveVoice.isPlaying()) window.responsiveVoice.cancel();
+                }
                 if(progressTimer) clearInterval(progressTimer);
                 isPlaying = false;
                 isPaused = true;
                 updatePlayPauseButton();
             } else if(isPaused) {
+                // 继续
                 startPlayback(pausedCharPos);
             }
         }
@@ -353,6 +448,7 @@
             }
         }
 
+        // ========== 进度条拖拽 ==========
         progressBar.addEventListener('mousedown', () => { isDragging = true; });
         progressBar.addEventListener('touchstart', () => { isDragging = true; });
         progressBar.addEventListener('mouseup', () => { isDragging = false; });
@@ -373,6 +469,7 @@
             startPlayback(tc);
         });
 
+        // ========== 语速滑块 ==========
         speedSlider.addEventListener('input', () => {
             playbackSpeed = parseFloat(speedSlider.value);
             speedValueEl.textContent = playbackSpeed.toFixed(2)+'x';
@@ -386,6 +483,7 @@
             localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
         });
 
+        // ========== 句子切换 ==========
         function switchToSentence(idx) {
             if(idx<0||idx>=sentencePool.length) return;
             if(currentIndex===idx) return;
@@ -423,6 +521,7 @@
             answerShown=false;
         }
 
+        // ========== 答案检查 ==========
         function escapeHtml(s) {
             const d=document.createElement('div'); d.textContent=s; return d.innerHTML;
         }
@@ -483,7 +582,10 @@
             if(e.key==='Enter') { e.preventDefault(); addNewSentence(); }
         });
 
-        window.onload=()=>{
+        // ========== 启动 ==========
+        window.onload = async () => {
+            await initEngine();
+
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if(savedSpeed) {
                 playbackSpeed = parseFloat(savedSpeed);
@@ -507,7 +609,10 @@
             setTimeout(()=>userInputEl.focus(),400);
         };
 
-        window.addEventListener('beforeunload', ()=> cancelSpeechAndTimer());
+        window.addEventListener('beforeunload', ()=> {
+            if (useNativeSpeech) window.speechSynthesis.cancel();
+            else if(window.responsiveVoice && window.responsiveVoice.isPlaying()) window.responsiveVoice.cancel();
+        });
     </script>
 </body>
 </html>
