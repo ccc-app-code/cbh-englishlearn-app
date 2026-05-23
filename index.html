@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语听写练习 · 高质量语音</title>
+    <title>英语听写练习 · 系统默认高质量语音</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -123,8 +123,8 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">每日随机一句 · 自动启用最高质量英语语音</p>
-    <div class="voice-hint" id="voiceHint">🔊 正在初始化高质量语音…</div>
+    <p class="subtitle">每日随机一句 · 系统默认英语语音 (Samantha)</p>
+    <div class="voice-hint">🔊 使用系统默认高质量语音</div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -210,7 +210,6 @@
         const currentTimeDisplay = document.getElementById('currentTimeDisplay');
         const totalTimeDisplay = document.getElementById('totalTimeDisplay');
         const toastEl = document.getElementById('toast');
-        const voiceHint = document.getElementById('voiceHint');
 
         let currentIndex = null, answerShown = false, playbackSpeed = 0.85;
         let isPlaying = false, isPaused = false;
@@ -219,75 +218,7 @@
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
 
-        const BASE_CHAR_RATE = 14;
-        let bestVoice = null;
-
-        // ========== 自动匹配最佳英语语音（无调试输出） ==========
-        function getAllVoices() {
-            return new Promise((resolve) => {
-                const voices = window.speechSynthesis.getVoices();
-                if (voices.length === 0) {
-                    window.speechSynthesis.addEventListener('voiceschanged', () => {
-                        resolve(window.speechSynthesis.getVoices());
-                    }, { once: true });
-                } else {
-                    resolve(voices);
-                }
-            });
-        }
-
-        function selectBestVoice(voices) {
-            // 1. 严格匹配：名字或标识符包含 "samantha" 的英语语音，优先高质量标识（enhanced/premium）
-            const samanthaCandidates = voices.filter(v => 
-                v.lang.startsWith('en') && 
-                (v.name.toLowerCase().includes('samantha') || (v.voiceURI && v.voiceURI.toLowerCase().includes('samantha')))
-            );
-            if (samanthaCandidates.length > 0) {
-                // 优先选含 enhanced/premium 的
-                const premium = samanthaCandidates.find(v => 
-                    v.name.toLowerCase().includes('enhanced') || v.name.toLowerCase().includes('premium') ||
-                    (v.voiceURI && (v.voiceURI.toLowerCase().includes('enhanced') || v.voiceURI.toLowerCase().includes('premium')))
-                );
-                return premium || samanthaCandidates[0];
-            }
-
-            // 2. 其他平台高质量语音
-            const priorityList = [
-                'Google US English',
-                'Microsoft David',
-                'Karen',
-                'Daniel',
-                'Alex',
-                'Moira',
-                'Tessa',
-                'Veena'
-            ];
-            for (const name of priorityList) {
-                const voice = voices.find(v => v.name === name && v.lang.startsWith('en'));
-                if (voice) return voice;
-            }
-
-            // 3. 任何 enhanced/premium 英语语音
-            const enhanced = voices.find(v => 
-                v.lang.startsWith('en') && 
-                (v.name.toLowerCase().includes('enhanced') || v.name.toLowerCase().includes('premium'))
-            );
-            if (enhanced) return enhanced;
-
-            // 4. 第一个英语语音
-            const english = voices.find(v => v.lang.startsWith('en'));
-            return english || voices[0] || null;
-        }
-
-        async function initVoice() {
-            const voices = await getAllVoices();
-            bestVoice = selectBestVoice(voices);
-            if (bestVoice) {
-                voiceHint.textContent = `✅ 已启用：${bestVoice.name}`;
-            } else {
-                voiceHint.textContent = '⚠️ 未找到英语语音，请检查系统语音设置';
-            }
-        }
+        const BASE_CHAR_RATE = 14; // 字符/秒，预估语速
 
         // ========== 工具函数 ==========
         let toastTimer;
@@ -369,10 +300,10 @@
             isPlaying = true;
             updatePlayPauseButton();
 
+            // 不指定 voice，直接使用系统默认语音（即为 Samantha）
             const utterance = new SpeechSynthesisUtterance(remainingText);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            if(bestVoice) utterance.voice = bestVoice;
 
             utterance.onstart = () => {
                 if(!isPlaying) return;
@@ -404,6 +335,7 @@
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
+                // 暂停：记录当前位置
                 const elapsed = (Date.now() - startTime) / 1000;
                 const currentRate = BASE_CHAR_RATE * playbackSpeed;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * currentRate));
@@ -413,6 +345,7 @@
                 isPaused = true;
                 updatePlayPauseButton();
             } else if(isPaused) {
+                // 继续播放
                 startPlayback(pausedCharPos);
             }
         }
@@ -582,7 +515,7 @@
         });
 
         // ========== 启动 ==========
-        window.onload = async () => {
+        window.onload = () => {
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if(savedSpeed) {
                 playbackSpeed = parseFloat(savedSpeed);
@@ -590,9 +523,6 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
-
-            // 初始化高质量语音
-            await initVoice();
 
             if(!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
