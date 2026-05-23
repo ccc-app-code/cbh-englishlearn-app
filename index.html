@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语听写练习 · Edge TTS 高保真语音</title>
+    <title>英语听写练习 · 移动端高音质</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -123,8 +123,8 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">每日随机一句 · Edge TTS 神经网络语音 (无电流声)</p>
-    <div class="voice-hint">🔊 云端高保真语音：en-US-AriaNeural</div>
+    <p class="subtitle">每日随机一句 · Google TTS 高清晰语音</p>
+    <div class="voice-hint">🔊 高保真语音引擎就绪</div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -213,15 +213,9 @@
 
         let currentIndex = null, answerShown = false, playbackSpeed = 0.85;
         let isPlaying = false, isPaused = false;
-        let fullText = '', totalChars = 0;  // 保留用于进度估算，但实际用音频时长
         let audio = null;
         let progressTimer = null;
         let isDragging = false;
-        let pendingPlayFromChar = 0;      // 拖拽/暂停后需要跳转的起始字符位置
-
-        // Edge TTS 语音配置
-        const EDGE_VOICE = 'en-US-AriaNeural';   // 可改为 'en-US-JennyNeural' 等
-        const EDGE_API_BASE = 'https://edge-tts-api-gray.vercel.app/api/tts'; // 公共代理，建议自行部署
 
         // ========== 工具函数 ==========
         let toastTimer;
@@ -236,16 +230,7 @@
             return `${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
         }
 
-        function findWordBoundary(text, pos) {
-            if(pos <= 0) return 0;
-            if(pos >= text.length) return text.length;
-            for(let i = pos; i >= 0; i--) {
-                if(/\s|[.!?;,:]/.test(text[i])) return i + 1;
-            }
-            return 0;
-        }
-
-        // ========== 停止当前播放 ==========
+        // ========== 音频停止 ==========
         function stopAudio() {
             if (audio) {
                 audio.pause();
@@ -264,7 +249,6 @@
 
         function resetAll() {
             stopAudio();
-            pendingPlayFromChar = 0;
             progressBar.value = 0;
             progressBar.disabled = true;
             currentTimeDisplay.textContent = '00:00';
@@ -272,29 +256,21 @@
             updatePlayPauseButton();
         }
 
-        // ========== Edge TTS 播放核心 ==========
-        async function startPlayback(fromChar) {
+        // ========== Google TTS 播放 ==========
+        function getGoogleTtsUrl(text, lang = 'en') {
+            const encoded = encodeURIComponent(text);
+            return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encoded}`;
+        }
+
+        async function startPlayback(fromTime = 0) {
             stopAudio();
             if(currentIndex === null || !sentencePool[currentIndex]) return;
 
-            fullText = sentencePool[currentIndex];
-            totalChars = fullText.length;
+            const fullText = sentencePool[currentIndex];
+            // 对于很长的句子，Google TTS 可能仍会截断，但一般几百字符没问题
+            const url = getGoogleTtsUrl(fullText);
 
-            const startPos = findWordBoundary(fullText, fromChar);
-            const textToSpeak = fullText.substring(startPos);
-            pendingPlayFromChar = startPos;   // 记录起始位置，用于进度估算
-
-            // 根据语速计算 API 的 rate 参数（Edge TTS 接受 -50% 到 +100% 的字符串）
-            const rateStr = `${Math.round((playbackSpeed - 1) * 100)}%`;
-
-            const params = new URLSearchParams({
-                text: textToSpeak,
-                voice: EDGE_VOICE,
-                rate: rateStr
-            });
-            const url = `${EDGE_API_BASE}?${params.toString()}`;
-
-            // 进度条先显示加载状态
+            // 显示加载状态
             progressBar.disabled = false;
             progressBar.value = 0;
             currentTimeDisplay.textContent = '⏳';
@@ -302,98 +278,91 @@
             isPlaying = true;
             updatePlayPauseButton();
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`TTS HTTP ${response.status}`);
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
-                audio = new Audio(audioUrl);
+            audio = new Audio(url);
+            audio.playbackRate = playbackSpeed;
 
-                // 获取真实音频时长
-                audio.addEventListener('loadedmetadata', () => {
-                    if (!audio) return;
-                    const dur = audio.duration;
-                    if (dur && !isNaN(dur)) {
-                        progressBar.max = 100;
-                        totalTimeDisplay.textContent = formatTime(dur);
-                    } else {
-                        // 估算时长
-                        const est = Math.max(1, textToSpeak.length / (14 * playbackSpeed));
-                        totalTimeDisplay.textContent = formatTime(est);
+            audio.addEventListener('loadedmetadata', () => {
+                if (!audio) return;
+                const dur = audio.duration;
+                if (dur && !isNaN(dur)) {
+                    totalTimeDisplay.textContent = formatTime(dur);
+                    // 如果指定了开始时间
+                    if (fromTime > 0) {
+                        audio.currentTime = fromTime;
                     }
+                } else {
+                    // 估算时长
+                    const est = Math.max(1, fullText.length / 14);
+                    totalTimeDisplay.textContent = formatTime(est);
+                }
+                // 开始播放
+                audio.play().catch(e => {
+                    showToast('播放失败，切换为系统语音', 2000);
+                    fallbackToSpeechSynthesis(fullText, fromTime);
                 });
+            });
 
-                audio.onplay = () => {
-                    if (!isPlaying) return;
-                    currentTimeDisplay.textContent = '00:00';
-                    progressBar.value = 0;
-                    if (progressTimer) clearInterval(progressTimer);
-                    progressTimer = setInterval(() => {
-                        if (!audio || !isPlaying) return;
-                        const ct = audio.currentTime;
-                        const dur = audio.duration || (totalChars / (14 * playbackSpeed));
-                        if (dur > 0) {
-                            const percent = (ct / dur) * 100;
-                            progressBar.value = Math.min(100, percent);
-                            currentTimeDisplay.textContent = formatTime(ct);
-                        }
-                        if (audio.ended) {
-                            stopAudio();
-                            progressBar.value = 100;
-                            updatePlayPauseButton();
-                        }
-                    }, 100);
-                };
+            audio.onplay = () => {
+                if (!isPlaying) return;
+                currentTimeDisplay.textContent = formatTime(audio.currentTime);
+                if (progressTimer) clearInterval(progressTimer);
+                progressTimer = setInterval(() => {
+                    if (!audio || isDragging) return;
+                    const ct = audio.currentTime;
+                    const dur = audio.duration || (fullText.length / 14);
+                    if (dur > 0) {
+                        progressBar.value = Math.min(100, (ct / dur) * 100);
+                        currentTimeDisplay.textContent = formatTime(ct);
+                    }
+                    if (audio.ended) {
+                        stopAudio();
+                        progressBar.value = 100;
+                        updatePlayPauseButton();
+                    }
+                }, 100);
+            };
 
-                audio.onended = () => {
-                    stopAudio();
-                    progressBar.value = 100;
-                    currentTimeDisplay.textContent = totalTimeDisplay.textContent;
-                    updatePlayPauseButton();
-                };
+            audio.onended = () => {
+                stopAudio();
+                progressBar.value = 100;
+                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
+                updatePlayPauseButton();
+            };
 
-                audio.onerror = () => {
-                    showToast('音频播放失败，切换系统语音', 2500);
-                    stopAudio();
-                    fallbackToSystemTTS(textToSpeak);
-                };
+            audio.onerror = () => {
+                showToast('Google TTS 不可用，切换系统语音', 2000);
+                fallbackToSpeechSynthesis(fullText, fromTime);
+            };
 
-                await audio.play();
-            } catch (err) {
-                console.error('Edge TTS 调用失败，回退到系统语音', err);
-                showToast('云端语音暂时不可用，已切换系统语音', 3000);
-                fallbackToSystemTTS(textToSpeak);
-            }
+            // 开始加载
+            audio.load();
         }
 
-        // 回退到系统语音合成（用于网络失败时的降级）
-        function fallbackToSystemTTS(text) {
-            stopAudio();  // 清除可能残留的 audio 对象
+        // 回退到系统语音合成
+        function fallbackToSpeechSynthesis(text, fromTime = 0) {
+            stopAudio();
             if (!text) return;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
+
+            let startTime = Date.now();
+            let duration = Math.max(1, text.length / 14);
 
             utterance.onstart = () => {
                 isPlaying = true;
                 isPaused = false;
                 updatePlayPauseButton();
                 progressBar.disabled = false;
-                progressBar.value = 0;
-                currentTimeDisplay.textContent = '00:00';
-                const est = Math.max(1, text.length / (14 * playbackSpeed));
-                totalTimeDisplay.textContent = formatTime(est);
                 if (progressTimer) clearInterval(progressTimer);
-                let startTime = Date.now();
                 progressTimer = setInterval(() => {
                     if (!isPlaying) return;
                     const elapsed = (Date.now() - startTime) / 1000;
-                    const dur = text.length / (14 * playbackSpeed);
-                    const percent = Math.min(100, (elapsed / dur) * 100);
+                    const percent = Math.min(100, (elapsed / duration) * 100);
                     progressBar.value = percent;
                     currentTimeDisplay.textContent = formatTime(elapsed);
                     if (percent >= 100) {
-                        stopAudio(); // 这里会用 cancel 停止
+                        stopAudio();
                         progressBar.value = 100;
                         updatePlayPauseButton();
                     }
@@ -413,13 +382,12 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        // ========== 暂停/继续 ==========
+        // ========== 播放/暂停/继续 ==========
         function handlePlayPause() {
             if(currentIndex === null || !sentencePool.length) {
                 showToast('没有可播放的句子', 2000); return;
             }
             if (!isPlaying && !isPaused) {
-                // 全新播放
                 startPlayback(0);
             } else if (isPlaying) {
                 // 暂停
@@ -427,7 +395,8 @@
                     audio.pause();
                     isPlaying = false;
                     isPaused = true;
-                } else if (window.speechSynthesis.speaking) {
+                } else {
+                    // 系统语音暂停
                     window.speechSynthesis.pause();
                     isPlaying = false;
                     isPaused = true;
@@ -435,34 +404,33 @@
                 if (progressTimer) clearInterval(progressTimer);
                 updatePlayPauseButton();
             } else if (isPaused) {
-                // 继续播放
+                // 继续
                 if (audio) {
                     audio.play();
                     isPlaying = true;
                     isPaused = false;
-                    // 重新启动进度更新
                     if (progressTimer) clearInterval(progressTimer);
                     progressTimer = setInterval(() => {
-                        if (!audio || !isPlaying) return;
+                        if (!audio || isDragging) return;
                         const ct = audio.currentTime;
-                        const dur = audio.duration || (totalChars / (14 * playbackSpeed));
+                        const dur = audio.duration || (sentencePool[currentIndex].length / 14);
                         if (dur > 0) {
                             progressBar.value = Math.min(100, (ct / dur) * 100);
                             currentTimeDisplay.textContent = formatTime(ct);
                         }
                     }, 100);
-                } else if (window.speechSynthesis.paused) {
+                } else {
                     window.speechSynthesis.resume();
                     isPlaying = true;
                     isPaused = false;
-                    // 重新启动系统语音进度估算
-                    let startTime = Date.now();
-                    const text = fullText.substring(pendingPlayFromChar);
+                    // 对于系统语音，没有精确进度，简单恢复计时器
+                    let resumeTime = Date.now();
                     progressTimer = setInterval(() => {
                         if (!isPlaying) return;
-                        const elapsed = (Date.now() - startTime) / 1000;
-                        const dur = text.length / (14 * playbackSpeed);
-                        progressBar.value = Math.min(100, (elapsed / dur) * 100);
+                        const elapsed = (Date.now() - resumeTime) / 1000;
+                        const dur = sentencePool[currentIndex].length / 14;
+                        const percent = Math.min(100, (elapsed / dur) * 100);
+                        progressBar.value = percent;
                         currentTimeDisplay.textContent = formatTime(elapsed);
                     }, 100);
                 }
@@ -498,30 +466,54 @@
         progressBar.addEventListener('mouseleave', () => { if(isDragging) isDragging = false; });
 
         progressBar.addEventListener('input', (e) => {
-            if(totalChars <= 0) return;
+            if (!audio || !audio.duration) return;
             const p = parseFloat(e.target.value);
-            // 拖动时临时更新时间显示
-            const estDur = totalChars / (14 * playbackSpeed);
-            currentTimeDisplay.textContent = formatTime((p / 100) * estDur);
-            if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            const targetTime = (p / 100) * audio.duration;
+            currentTimeDisplay.textContent = formatTime(targetTime);
+            if (progressTimer) clearInterval(progressTimer);
         });
 
         progressBar.addEventListener('change', (e) => {
-            if(totalChars <= 0) return;
+            if (!audio || !audio.duration) {
+                // 如果使用系统语音，进度条改变重新开始
+                if (isPlaying || isPaused) {
+                    const p = parseFloat(e.target.value);
+                    const estDur = sentencePool[currentIndex].length / 14;
+                    const targetTime = (p / 100) * estDur;
+                    fallbackToSpeechSynthesis(sentencePool[currentIndex], targetTime);
+                }
+                return;
+            }
             const p = parseFloat(e.target.value);
-            // 根据百分比计算目标字符位置
-            const targetChar = Math.floor((p / 100) * totalChars);
-            // 停止当前播放并从目标位置重新开始
-            stopAudio();
-            startPlayback(targetChar);
+            const targetTime = (p / 100) * audio.duration;
+            audio.currentTime = targetTime;
+            if (isPaused) {
+                // 如果之前暂停，拖动后保持暂停，更新时间显示
+                currentTimeDisplay.textContent = formatTime(targetTime);
+            } else if (isPlaying) {
+                // 播放中则继续播放，重新启动计时器
+                if (progressTimer) clearInterval(progressTimer);
+                progressTimer = setInterval(() => {
+                    if (!audio || isDragging) return;
+                    const ct = audio.currentTime;
+                    const dur = audio.duration;
+                    if (dur > 0) {
+                        progressBar.value = Math.min(100, (ct / dur) * 100);
+                        currentTimeDisplay.textContent = formatTime(ct);
+                    }
+                }, 100);
+            }
         });
 
         // ========== 语速滑块 ==========
         speedSlider.addEventListener('input', () => {
             playbackSpeed = parseFloat(speedSlider.value);
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
-            // 动态更新预估总时长（仅在非播放状态）
-            if(!isPlaying && totalChars > 0) {
+            if (audio) {
+                audio.playbackRate = playbackSpeed;
+            }
+            // 更新总时长（预估）
+            if (totalChars && !audio) {
                 const est = Math.max(1, totalChars / (14 * playbackSpeed));
                 totalTimeDisplay.textContent = formatTime(est);
             }
@@ -530,6 +522,7 @@
             localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
         });
 
+        let totalChars = 0;
         // ========== 句子切换 ==========
         function switchToSentence(idx) {
             if(idx < 0 || idx >= sentencePool.length) return;
@@ -538,11 +531,10 @@
             currentIndex = idx;
             clearInputAndResult();
             totalChars = sentencePool[currentIndex].length;
-            const est = Math.max(1, totalChars / (14 * playbackSpeed));
             progressBar.value = 0;
             progressBar.disabled = true;
             currentTimeDisplay.textContent = '00:00';
-            totalTimeDisplay.textContent = formatTime(est);
+            totalTimeDisplay.textContent = '--:--';
             updatePlayPauseButton();
             userInputEl.focus();
         }
@@ -623,8 +615,6 @@
                 currentIndex = 0;
                 clearInputAndResult();
                 totalChars = t.length;
-                const est = Math.max(1, totalChars / (14 * playbackSpeed));
-                totalTimeDisplay.textContent = formatTime(est);
                 updatePlayPauseButton();
             }
             showToast('✅ 句子已添加！', 1800);
@@ -656,8 +646,6 @@
             currentIndex = (dailyIdx !== null && dailyIdx < sentencePool.length) ? dailyIdx : 0;
             clearInputAndResult();
             totalChars = sentencePool[currentIndex].length;
-            const est = Math.max(1, totalChars / (14 * playbackSpeed));
-            totalTimeDisplay.textContent = formatTime(est);
             updatePlayPauseButton();
             setTimeout(() => userInputEl.focus(), 400);
         };
