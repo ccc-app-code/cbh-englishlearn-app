@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语听写练习 · Samantha 语音</title>
+    <title>英语听写练习 · 高质量语音</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -29,15 +29,10 @@
         h2 { text-align: center; margin-bottom: 4px; font-size: 1.4em; }
         .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 14px; }
 
-        .voice-card {
-            background: var(--card); border-radius: var(--radius-sm); padding: 10px 14px;
-            box-shadow: var(--shadow); margin-bottom: 12px;
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-        }
-        .voice-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
-        .voice-card select {
-            flex: 1; min-width: 160px; padding: 8px 10px; border-radius: var(--radius-xs);
-            border: 1px solid #ccc; font-size: 13px; background: #fafafa; cursor: pointer;
+        .voice-hint {
+            background: #e8f5e9; border-radius: 20px; padding: 4px 16px;
+            font-size: 0.8em; color: #2e7d32; text-align: center; margin-bottom: 12px;
+            display: inline-block; font-weight: 600;
         }
 
         .speed-card {
@@ -128,15 +123,8 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">每日随机一句 · 已适配 Samantha 增强语音</p>
-
-    <!-- 语音选择器 -->
-    <div class="voice-card">
-        <label>🔊 语音：</label>
-        <select id="voiceSelect">
-            <option value="">正在加载语音列表…</option>
-        </select>
-    </div>
+    <p class="subtitle">每日随机一句 · 自动启用最高质量英语语音</p>
+    <div class="voice-hint" id="voiceHint">🔊 正在初始化高质量语音…</div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -179,7 +167,6 @@
         // ========== 配置与句子库 ==========
         const STORAGE_KEY_SENTENCES = 'sentencePool_v3';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
-        const STORAGE_KEY_VOICE = 'selectedVoiceURI_v2';
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
             "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
@@ -214,7 +201,6 @@
         }
 
         // ========== DOM ==========
-        const voiceSelect = document.getElementById('voiceSelect');
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -224,6 +210,7 @@
         const currentTimeDisplay = document.getElementById('currentTimeDisplay');
         const totalTimeDisplay = document.getElementById('totalTimeDisplay');
         const toastEl = document.getElementById('toast');
+        const voiceHint = document.getElementById('voiceHint');
 
         let currentIndex = null, answerShown = false, playbackSpeed = 0.85;
         let isPlaying = false, isPaused = false;
@@ -235,7 +222,7 @@
         const BASE_CHAR_RATE = 14;
         let bestVoice = null;
 
-        // ========== 语音选择器与匹配 ==========
+        // ========== 自动匹配最佳英语语音（无调试输出） ==========
         function getAllVoices() {
             return new Promise((resolve) => {
                 const voices = window.speechSynthesis.getVoices();
@@ -250,19 +237,21 @@
         }
 
         function selectBestVoice(voices) {
-            // 1. 优先查找包含 Samantha 的英语语音，优先 enhanced/premium，避免 compact
-            let samanthaVoice = voices.find(v => 
-                v.lang.startsWith('en') && v.name.toLowerCase().includes('samantha') && 
-                (v.name.toLowerCase().includes('enhanced') || v.name.toLowerCase().includes('premium'))
+            // 1. 严格匹配：名字或标识符包含 "samantha" 的英语语音，优先高质量标识（enhanced/premium）
+            const samanthaCandidates = voices.filter(v => 
+                v.lang.startsWith('en') && 
+                (v.name.toLowerCase().includes('samantha') || (v.voiceURI && v.voiceURI.toLowerCase().includes('samantha')))
             );
-            if (!samanthaVoice) {
-                samanthaVoice = voices.find(v => 
-                    v.lang.startsWith('en') && v.name.toLowerCase().includes('samantha')
+            if (samanthaCandidates.length > 0) {
+                // 优先选含 enhanced/premium 的
+                const premium = samanthaCandidates.find(v => 
+                    v.name.toLowerCase().includes('enhanced') || v.name.toLowerCase().includes('premium') ||
+                    (v.voiceURI && (v.voiceURI.toLowerCase().includes('enhanced') || v.voiceURI.toLowerCase().includes('premium')))
                 );
+                return premium || samanthaCandidates[0];
             }
-            if (samanthaVoice) return samanthaVoice;
 
-            // 2. 通用高质量语音列表
+            // 2. 其他平台高质量语音
             const priorityList = [
                 'Google US English',
                 'Microsoft David',
@@ -278,7 +267,7 @@
                 if (voice) return voice;
             }
 
-            // 3. 任何包含 enhanced/premium 的英语语音
+            // 3. 任何 enhanced/premium 英语语音
             const enhanced = voices.find(v => 
                 v.lang.startsWith('en') && 
                 (v.name.toLowerCase().includes('enhanced') || v.name.toLowerCase().includes('premium'))
@@ -290,48 +279,14 @@
             return english || voices[0] || null;
         }
 
-        function populateVoiceList(voices) {
-            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-            voiceSelect.innerHTML = '';
-            if (englishVoices.length === 0) {
-                voiceSelect.innerHTML = '<option value="">未找到英语语音</option>';
-                return;
-            }
-            englishVoices.forEach(voice => {
-                const option = document.createElement('option');
-                option.value = voice.voiceURI;
-                option.textContent = `${voice.name} (${voice.lang})`;
-                voiceSelect.appendChild(option);
-            });
-
-            // 尝试恢复上次保存的选择
-            const savedURI = localStorage.getItem(STORAGE_KEY_VOICE);
-            if (savedURI && englishVoices.some(v => v.voiceURI === savedURI)) {
-                voiceSelect.value = savedURI;
-                bestVoice = englishVoices.find(v => v.voiceURI === savedURI) || bestVoice;
-            } else {
-                // 使用自动匹配的最佳语音
-                bestVoice = selectBestVoice(voices);
-                if (bestVoice) {
-                    voiceSelect.value = bestVoice.voiceURI;
-                }
-            }
-        }
-
-        voiceSelect.addEventListener('change', () => {
-            const selectedURI = voiceSelect.value;
-            const voices = window.speechSynthesis.getVoices();
-            bestVoice = voices.find(v => v.voiceURI === selectedURI) || null;
-            if (bestVoice) {
-                localStorage.setItem(STORAGE_KEY_VOICE, bestVoice.voiceURI);
-                showToast(`已选择：${bestVoice.name}`, 2000);
-            }
-        });
-
         async function initVoice() {
             const voices = await getAllVoices();
-            console.log('所有英语语音：', voices.filter(v => v.lang.startsWith('en')).map(v => v.name));
-            populateVoiceList(voices);
+            bestVoice = selectBestVoice(voices);
+            if (bestVoice) {
+                voiceHint.textContent = `✅ 已启用：${bestVoice.name}`;
+            } else {
+                voiceHint.textContent = '⚠️ 未找到英语语音，请检查系统语音设置';
+            }
         }
 
         // ========== 工具函数 ==========
@@ -636,6 +591,7 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
+            // 初始化高质量语音
             await initVoice();
 
             if(!sentencePool.length) {
