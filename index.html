@@ -79,7 +79,6 @@
         }
         .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .missing { color: #888; font-weight: bold; background: #f0f0f0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; border: 1px dashed #bbb; }
         .result-empty { color: #bbb; text-align: center; display: block; }
 
         .action-row { display: flex; gap: 8px; margin-bottom: 4px; }
@@ -119,12 +118,12 @@
         .modal-content ul { list-style: none; margin-bottom: 16px; }
         .modal-content li {
             padding: 10px 0; border-bottom: 1px solid #eee;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; flex-direction: column;
             font-size: 0.9em;
         }
         .modal-content li .delete-btn {
             background: var(--red); color: #fff; padding: 4px 12px;
-            border-radius: 15px; font-size: 0.8em; border: none; cursor: pointer;
+            border-radius: 15px; font-size: 0.8em; border: none; cursor: pointer; align-self: flex-start; margin-top: 4px;
         }
         .modal-content .close-btn {
             background: #eee; color: #333; padding: 10px 20px;
@@ -147,7 +146,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">移动端完美体验 · 键盘不收回 · 语音正常</p>
+    <p class="subtitle">移动端完美体验 · 历史记录含用户输入</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -189,7 +188,7 @@
     </div>
 
     <!-- 历史记录按钮 -->
-    <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录（提交过的句子）</button>
+    <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录（含用户输入）</button>
 
     <!-- 历史记录弹窗 -->
     <div class="modal-overlay" id="historyModal">
@@ -204,7 +203,7 @@
         // ========== 存储键 ==========
         const STORAGE_KEY_SENTENCES = 'sentencePool_v3';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
-        const STORAGE_KEY_HISTORY = 'sentenceHistory_v1';   // 历史记录（以句子为主键）
+        const STORAGE_KEY_HISTORY = 'sentenceHistory_v2';   // 历史记录（含用户输入）
 
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -225,7 +224,7 @@
         function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
         let sentencePool = loadSentencePool();
 
-        // 历史记录管理（句子 -> 最新提交时间）
+        // 历史记录管理（句子 -> { time, userInput }）
         function loadHistory() {
             const stored = localStorage.getItem(STORAGE_KEY_HISTORY);
             if (stored) {
@@ -238,10 +237,12 @@
         }
         let sentenceHistory = loadHistory();
 
-        // 更新历史记录（以句子为主键，记录最新提交时间）
-        function updateHistory(sentence) {
-            const now = new Date().toISOString();
-            sentenceHistory[sentence] = now;
+        // 更新历史记录（保存用户输入和当前时间）
+        function updateHistory(sentence, userInput) {
+            sentenceHistory[sentence] = {
+                time: new Date().toISOString(),
+                userInput: userInput
+            };
             saveHistory(sentenceHistory);
         }
 
@@ -574,7 +575,7 @@
             answerShown = false;
         }
 
-        // ========== 智能答案检查（忽略标点 + 缺词占位符）==========
+        // ========== 检查答案（无缺词占位符，仅标注对错）==========
         function normalizeWord(word) {
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
             return cleaned || '';
@@ -597,6 +598,7 @@
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
 
+            // 智能对齐但不显示占位符：缺失的单词直接跳过
             let html = '';
             let cIdx = 0;
             let uIdx = 0;
@@ -610,6 +612,7 @@
                     cIdx++;
                     uIdx++;
                 } else {
+                    // 检查用户当前词是否能在后面正确序列中找到（表示此处有缺失）
                     let foundFuture = false;
                     for (let k = cIdx + 1; k < normCorrect.length; k++) {
                         if (userClean === normCorrect[k]) {
@@ -618,19 +621,18 @@
                         }
                     }
                     if (foundFuture) {
-                        html += `<span class="missing">⏺</span> `;
+                        // 缺失了当前正确词，但不再显示占位符，仅跳过正确词
                         cIdx++;
                     } else {
+                        // 用户词不在正确序列中，标红
                         html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
                         uIdx++;
                     }
                 }
             }
 
-            while (cIdx < normCorrect.length) {
-                html += `<span class="missing">⏺</span> `;
-                cIdx++;
-            }
+            // 剩余的正确词（缺失）不显示任何内容
+            // 剩余的用户词（多余）标红
             while (uIdx < normUser.length) {
                 html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
                 uIdx++;
@@ -638,10 +640,10 @@
 
             const perfect = normUser.join(' ') === normCorrect.join(' ');
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
-                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
+                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。');
             
-            // 新增：将当前句子（正确答案）提交到历史记录
-            updateHistory(correct);
+            // 保存历史记录（包含用户输入）
+            updateHistory(correct, rawUser);
             
             answerShown = false;
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -671,8 +673,8 @@
                 sentencePool.push(t);
                 saveSentencePool(sentencePool);
             }
-            // 更新历史记录
-            updateHistory(t);
+            // 更新历史记录（添加句子时用户输入为空？这里记录空即可，也可不更新历史）
+            // 因为添加句子不是检查，所以不更新历史，除非你希望也保存一个记录。
             inp.value = '';
 
             if(currentIndex === null && sentencePool.length === 1) {
@@ -696,12 +698,15 @@
                 historyList.innerHTML = '<li style="text-align:center;color:#999;">暂无提交记录</li>';
             } else {
                 // 按时间倒序
-                entries.sort((a, b) => b[1].localeCompare(a[1]));
-                historyList.innerHTML = entries.map(([sentence, time]) => {
-                    const shortTime = new Date(time).toLocaleString();
+                entries.sort((a, b) => b[1].time.localeCompare(a[1].time));
+                historyList.innerHTML = entries.map(([sentence, data]) => {
+                    const shortTime = new Date(data.time).toLocaleString();
+                    const userInput = data.userInput || '（无输入）';
                     return `
                         <li>
-                            <span style="flex:1; word-break:break-word; margin-right:8px;">${escapeHtml(sentence)} <br><small style="color:#888;">${shortTime}</small></span>
+                            <div><strong>原文：</strong>${escapeHtml(sentence)}</div>
+                            <div style="color:#555; margin-top:2px;"><strong>你的输入：</strong>${escapeHtml(userInput)}</div>
+                            <small style="color:#888;">${shortTime}</small>
                             <button class="delete-btn" onclick="deleteHistoryItem('${escapeHtml(sentence).replace(/'/g, "\\'")}')">删除</button>
                         </li>
                     `;
