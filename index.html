@@ -2,8 +2,8 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语听写练习</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>英语听写练习 · 智能缺词 · 全屏书写</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -11,17 +11,27 @@
             --shadow: 0 1px 4px rgba(0,0,0,0.06); --radius-sm: 10px; --radius-xs: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            padding: 20px; max-width: 700px; margin: auto; background: var(--bg);
-            min-height: 100vh; color: var(--text); -webkit-tap-highlight-color: transparent; user-select: none;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 20px 20px 0 20px;
+            max-width: 700px;
+            margin: 0 auto;
         }
-        h2 { text-align: center; margin-bottom: 4px; font-size: 1.4em; }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 14px; }
+        h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; flex-shrink: 0; }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; flex-shrink: 0; }
 
         .speed-card {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-            background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm); box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+            background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
+            box-shadow: var(--shadow); flex-shrink: 0;
         }
         .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
         .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
@@ -32,7 +42,7 @@
         }
         .speed-value { font-size: 0.8em; font-weight: 700; color: var(--teal); min-width: 36px; text-align: center; }
 
-        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 6px; }
+        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none;
             cursor: pointer; font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
@@ -43,12 +53,13 @@
         .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
         .btn-check { background: var(--green); color: #fff; }
         .btn-answer { background: #66bb6a; color: #fff; }
-        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 4px; font-size: 1em; padding: 14px; }
-        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
+        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; flex-shrink: 0; }
+        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; flex-shrink: 0; }
 
         .progress-container {
-            display: flex; align-items: center; gap: 8px; margin: 6px 0 10px;
-            background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm); box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+            background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
+            box-shadow: var(--shadow); flex-shrink: 0;
         }
         .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
         .progress-container input[type="range"]::-webkit-slider-thumb {
@@ -57,27 +68,53 @@
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
+        /* 弹性书写区 */
+        .writing-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* 允许收缩 */
+            margin-bottom: 8px;
+        }
         #userInput {
-            width: 100%; height: 25vh; min-height: 150px; padding: 14px 16px; font-size: 16px;
-            border-radius: var(--radius-sm); border: 2px solid #ddd; background: #fff;
-            margin-bottom: 6px; resize: vertical; font-family: inherit; line-height: 1.7;
+            flex: 1;
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border-radius: var(--radius-sm);
+            border: 2px solid #ddd;
+            background: #fff;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.7;
+            min-height: 150px; /* 最小高度保障 */
         }
         #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
         #userInput::placeholder { color: #bbb; }
 
         .result {
-            margin-top: 10px; padding: 16px; background: #fff; border-radius: var(--radius-sm);
-            white-space: pre-wrap; line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow); min-height: 20px; margin-bottom: 8px;
+            padding: 16px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            white-space: pre-wrap;
+            line-height: 1.9;
+            font-size: 0.95em;
+            box-shadow: var(--shadow);
+            min-height: 20px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
-        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; }
-        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; }
-        .result-empty { color: #bbb; text-align: center; }
+        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .missing { color: #888; font-weight: bold; background: #f0f0f0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; border: 1px dashed #bbb; }
+        .result-empty { color: #bbb; text-align: center; display: block; }
 
-        .action-row { display: flex; gap: 8px; margin-bottom: 4px; }
+        .action-row { display: flex; gap: 8px; margin-bottom: 4px; flex-shrink: 0; }
         .action-row button { flex: 1; }
 
         .add-section {
-            background: #fff; border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); margin-top: 14px;
+            background: #fff; border-radius: var(--radius-sm); padding: 16px;
+            box-shadow: var(--shadow); margin-top: 8px; flex-shrink: 0;
         }
         .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; }
         .add-section input[type="text"] {
@@ -88,26 +125,28 @@
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: 0.9em;
-            z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            background: #333; color: #fff; padding: 10px 22px; border-radius: 24px;
+            font-size: 0.9em; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
         .toast.show { opacity: 1; pointer-events: auto; }
 
         @media (max-width: 480px) {
-            body { padding: 12px; }
+            body { padding: 12px 12px 0 12px; }
             h2 { font-size: 1.2em; }
             button { padding: 10px 14px; font-size: 14px; }
             .btn-play, .btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
-            #userInput { height: 22vh; min-height: 130px; font-size: 15px; }
-            .action-row button { padding: 11px 10px; }
+            #userInput { min-height: 120px; font-size: 15px; }
+            .action-row button { font-size: 14px; padding: 11px 10px; }
             .progress-container { padding: 6px 10px; gap: 4px; }
             .progress-time { font-size: 0.72em; min-width: 34px; }
+            .speed-card { padding: 8px 10px; gap: 5px; }
+            .speed-card label { font-size: 0.75em; }
         }
     </style>
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">系统默认语音 · 稳定流畅</p>
+    <p class="subtitle">系统默认语音 · 全屏书写 · 智能缺词提示</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -118,7 +157,10 @@
     </div>
 
     <div class="btn-row">
-        <button class="btn-play" id="playPauseBtn" onclick="handlePlayPause()">▶ 播放</button>
+        <button class="btn-play" id="playPauseBtn" 
+            onmousedown="event.preventDefault()" 
+            ontouchstart="event.preventDefault()"
+            onclick="handlePlayPause()">▶ 播放</button>
     </div>
 
     <div class="progress-container">
@@ -127,14 +169,17 @@
         <span class="progress-time" id="totalTimeDisplay">00:00</span>
     </div>
 
-    <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
+    <!-- 弹性书写区 -->
+    <div class="writing-area">
+        <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
+    </div>
 
     <div class="action-row">
         <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
         <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
     </div>
 
-    <div class="result" id="resultArea"><span class="result-empty">👆 输入答案后点击"检查"查看对比结果</span></div>
+    <div class="result" id="resultArea"><span class="result-empty">👆 输入答案后点击“检查”查看对比结果</span></div>
 
     <button class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
 
@@ -201,7 +246,7 @@
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
 
-        // ========== 工具 ==========
+        // ========== 工具函数 ==========
         let toastTimer;
         function showToast(msg, d=2500) {
             if(toastTimer) clearTimeout(toastTimer);
@@ -267,12 +312,13 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            // 不设置 voice，直接使用系统默认语音（Samantha）
 
             utterance.onstart = () => {
                 if(!isPlaying) return;
                 if(progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
+                // 确保键盘可见
+                setTimeout(() => userInputEl.focus(), 50);
             };
             utterance.onend = () => {
                 if(!isPlaying) return;
@@ -290,6 +336,8 @@
             };
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
+            // 再次强制焦点
+            setTimeout(() => userInputEl.focus(), 100);
         }
 
         function updateProgress() {
@@ -369,7 +417,7 @@
             startPlayback(tc);
         });
 
-        // ========== 语速 ==========
+        // ========== 语速滑块 ==========
         speedSlider.addEventListener('input', () => {
             playbackSpeed = parseFloat(speedSlider.value);
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
@@ -383,7 +431,7 @@
             localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
         });
 
-        // ========== 切换句子 ==========
+        // ========== 句子切换 ==========
         function switchToSentence(idx) {
             if(idx < 0 || idx >= sentencePool.length) return;
             if(currentIndex === idx) return;
@@ -419,51 +467,98 @@
 
         function clearInputAndResult() {
             userInputEl.value = '';
-            resultArea.innerHTML = '<span class="result-empty">👆 输入答案后点击"检查"查看对比结果</span>';
+            resultArea.innerHTML = '<span class="result-empty">👆 输入答案后点击“检查”查看对比结果</span>';
             answerShown = false;
         }
 
+        // ========== 智能答案检查（忽略标点 + 缺词占位符） ==========
+        function normalizeWord(word) {
+            // 移除单词两端的所有非字母数字字符，保留内部连字符
+            const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
+            return cleaned || ''; // 如果单词全是标点，返回空字符串
+        }
+
         function escapeHtml(s) {
-            const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
         }
 
         function checkAnswer() {
             if(currentIndex === null) return;
-            const u = userInputEl.value.trim(), c = sentencePool[currentIndex].trim();
-            if(!u) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
-            const uw = u.split(/\s+/), cw = c.split(/\s+/);
-            let ci = 0, styled = '';
-            for(const w of uw) {
-                if(ci < cw.length && w.toLowerCase() === cw[ci].toLowerCase()) {
-                    styled += `<span class="correct">${escapeHtml(w)}</span> `;
-                    ci++;
+            const rawUser = userInputEl.value.trim();
+            const correct = sentencePool[currentIndex].trim();
+            if(!rawUser) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
+
+            const userWords = rawUser.split(/\s+/);
+            const correctWords = correct.split(/\s+/);
+
+            // 使用去除标点的词进行比对，但保留原始显示
+            const normUser = userWords.map(normalizeWord);
+            const normCorrect = correctWords.map(normalizeWord);
+
+            let html = '';
+            let cIdx = 0;
+            let uIdx = 0;
+
+            while (cIdx < normCorrect.length && uIdx < normUser.length) {
+                const userClean = normUser[uIdx];
+                const correctClean = normCorrect[cIdx];
+
+                if (userClean === correctClean) {
+                    html += `<span class="correct">${escapeHtml(userWords[uIdx])}</span> `;
+                    cIdx++;
+                    uIdx++;
                 } else {
-                    let found = -1;
-                    for(let k = ci; k < cw.length; k++) {
-                        if(w.toLowerCase() === cw[k].toLowerCase()) { found = k; break; }
+                    // 检查用户当前词是否能在正确序列后面匹配（缺失情况）
+                    let foundFuture = false;
+                    for (let k = cIdx + 1; k < normCorrect.length; k++) {
+                        if (userClean === normCorrect[k]) {
+                            foundFuture = true;
+                            break;
+                        }
                     }
-                    if(found !== -1) {
-                        styled += `<span class="correct">${escapeHtml(w)}</span> `;
-                        ci = found + 1;
+                    if (foundFuture) {
+                        // 缺失正确词，显示占位符
+                        html += `<span class="missing">⏺</span> `;
+                        cIdx++;
                     } else {
-                        styled += `<span class="wrong">${escapeHtml(w)}</span> `;
+                        // 用户词错误
+                        html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
+                        uIdx++;
                     }
                 }
             }
-            const perfect = u.toLowerCase() === c.toLowerCase();
-            resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${styled.trim()}<br><br>` +
-                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，继续加油。');
+
+            // 剩余正确词缺失
+            while (cIdx < normCorrect.length) {
+                html += `<span class="missing">⏺</span> `;
+                cIdx++;
+            }
+            // 多余用户词标红
+            while (uIdx < normUser.length) {
+                html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
+                uIdx++;
+            }
+
+            // 完全匹配判断（忽略标点后）
+            const perfect = normUser.join(' ') === normCorrect.join(' ');
+            resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
+                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
             answerShown = false;
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function showAnswer() {
             if(currentIndex === null || answerShown) return;
             const c = sentencePool[currentIndex].trim();
-            if(resultArea.querySelector('.result-empty'))
+            if(resultArea.querySelector('.result-empty')) {
                 resultArea.innerHTML = `✅ <strong>正确答案：</strong>${escapeHtml(c)}`;
-            else
+            } else {
                 resultArea.innerHTML += `<br><br>✅ <strong>正确答案：</strong>${escapeHtml(c)}`;
+            }
             answerShown = true;
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function addNewSentence() {
