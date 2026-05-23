@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 键盘不收回 · 语音正常</title>
+    <title>英语听写练习 · 移动端优化 · 历史记录</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -48,6 +48,7 @@
         .btn-answer { background: #66bb6a; color: #fff; }
         .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
         .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
+        .btn-history { background: var(--accent); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
         .progress-container {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
@@ -101,6 +102,34 @@
             font-size: 0.9em; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
         .toast.show { opacity: 1; pointer-events: auto; }
+
+        /* 历史记录弹窗 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000; display: none;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #fff; border-radius: var(--radius-sm); padding: 20px;
+            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 { margin-bottom: 12px; font-size: 1.2em; }
+        .modal-content ul { list-style: none; margin-bottom: 16px; }
+        .modal-content li {
+            padding: 10px 0; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.9em;
+        }
+        .modal-content li .delete-btn {
+            background: var(--red); color: #fff; padding: 4px 12px;
+            border-radius: 15px; font-size: 0.8em; border: none; cursor: pointer;
+        }
+        .modal-content .close-btn {
+            background: #eee; color: #333; padding: 10px 20px;
+            border-radius: var(--radius-sm); font-size: 0.9em; border: none; cursor: pointer;
+        }
 
         @media (max-width: 480px) {
             body { padding: 12px 12px 30px; }
@@ -159,10 +188,24 @@
         <button type="button" class="btn-add" onclick="addNewSentence()">添加句子</button>
     </div>
 
+    <!-- 历史记录按钮 -->
+    <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录（提交过的句子）</button>
+
+    <!-- 历史记录弹窗 -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <h3>📜 历史记录（最新提交）</h3>
+            <ul id="historyList"></ul>
+            <button class="close-btn" onclick="closeHistory()">关闭</button>
+        </div>
+    </div>
+
     <script>
-        // ========== 句子库 ==========
+        // ========== 存储键 ==========
         const STORAGE_KEY_SENTENCES = 'sentencePool_v3';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
+        const STORAGE_KEY_HISTORY = 'sentenceHistory_v1';   // 历史记录（以句子为主键）
+
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
             "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
@@ -181,6 +224,32 @@
         }
         function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
         let sentencePool = loadSentencePool();
+
+        // 历史记录管理（句子 -> 最新提交时间）
+        function loadHistory() {
+            const stored = localStorage.getItem(STORAGE_KEY_HISTORY);
+            if (stored) {
+                try { const obj = JSON.parse(stored); if (typeof obj === 'object' && obj !== null) return obj; } catch(e) {}
+            }
+            return {};
+        }
+        function saveHistory(historyObj) {
+            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyObj));
+        }
+        let sentenceHistory = loadHistory();
+
+        // 更新历史记录（以句子为主键，记录最新提交时间）
+        function updateHistory(sentence) {
+            const now = new Date().toISOString();
+            sentenceHistory[sentence] = now;
+            saveHistory(sentenceHistory);
+        }
+
+        // 删除历史记录中的句子
+        function removeHistory(sentence) {
+            delete sentenceHistory[sentence];
+            saveHistory(sentenceHistory);
+        }
 
         function getDateString() {
             const now = new Date();
@@ -206,6 +275,8 @@
         const currentTimeDisplay = document.getElementById('currentTimeDisplay');
         const totalTimeDisplay = document.getElementById('totalTimeDisplay');
         const toastEl = document.getElementById('toast');
+        const historyModal = document.getElementById('historyModal');
+        const historyList = document.getElementById('historyList');
 
         let currentIndex = null, answerShown = false, playbackSpeed = 0.85;
         let isPlaying = false, isPaused = false;
@@ -285,7 +356,6 @@
             updatePlayPauseButton();
         }
 
-        // 保持焦点在输入框（带选区保护）
         function refocusInput() {
             const hasFocus = document.activeElement === userInputEl;
             if (!hasFocus) {
@@ -373,7 +443,6 @@
                 showToast('没有句子', 2000); return;
             }
 
-            // 预热语音引擎（仅首次）
             if (!isPlaying && !isPaused && !currentUtterance) {
                 const warmUp = new SpeechSynthesisUtterance('');
                 warmUp.volume = 0;
@@ -419,20 +488,15 @@
             }
         }
 
-        // ========== 绑定播放按钮（关键：使用 touchend/click 并 preventDefault） ==========
-        function bindPlayPauseButton() {
-            // 移动端：touchend 事件，阻止默认行为避免焦点转移
-            playPauseBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                handlePlayPause();
-            }, { passive: false });
-
-            // 桌面端/鼠标：click 事件，也阻止默认行为
-            playPauseBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                handlePlayPause();
-            });
-        }
+        // 绑定播放按钮事件
+        playPauseBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handlePlayPause();
+        }, { passive: false });
+        playPauseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handlePlayPause();
+        });
 
         // ========== 进度条拖拽 ==========
         progressBar.addEventListener('mousedown', () => { isDragging = true; });
@@ -597,9 +661,16 @@
             const inp = document.getElementById('newSentenceInput');
             const t = inp.value.trim();
             if(!t) { showToast('请输入有效的英语句子', 2000); return; }
-            sentencePool.push(t);
-            saveSentencePool(sentencePool);
+
+            // 添加到句子池（去重）
+            if (!sentencePool.includes(t)) {
+                sentencePool.push(t);
+                saveSentencePool(sentencePool);
+            }
+            // 更新历史记录
+            updateHistory(t);
             inp.value = '';
+
             if(currentIndex === null && sentencePool.length === 1) {
                 currentIndex = 0;
                 clearInputAndResult();
@@ -613,6 +684,48 @@
             showToast('✅ 句子已添加！', 1800);
         }
 
+        // ========== 历史记录功能 ==========
+        function showHistory() {
+            const history = loadHistory();
+            const entries = Object.entries(history);
+            if (entries.length === 0) {
+                historyList.innerHTML = '<li style="text-align:center;color:#999;">暂无提交记录</li>';
+            } else {
+                // 按时间倒序
+                entries.sort((a, b) => b[1].localeCompare(a[1]));
+                historyList.innerHTML = entries.map(([sentence, time]) => {
+                    const shortTime = new Date(time).toLocaleString();
+                    return `
+                        <li>
+                            <span style="flex:1; word-break:break-word; margin-right:8px;">${escapeHtml(sentence)} <br><small style="color:#888;">${shortTime}</small></span>
+                            <button class="delete-btn" onclick="deleteHistoryItem('${escapeHtml(sentence).replace(/'/g, "\\'")}')">删除</button>
+                        </li>
+                    `;
+                }).join('');
+            }
+            historyModal.classList.add('active');
+        }
+
+        function closeHistory() {
+            historyModal.classList.remove('active');
+        }
+
+        // 删除历史记录中的条目（同时从句子池中移除）
+        function deleteHistoryItem(sentence) {
+            removeHistory(sentence);
+            // 同时从句子池中删除
+            sentencePool = sentencePool.filter(s => s !== sentence);
+            saveSentencePool(sentencePool);
+            showHistory(); // 刷新列表
+            showToast('已删除记录', 1500);
+        }
+
+        // 点击弹窗外部关闭
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) closeHistory();
+        });
+
+        // 键盘事件
         userInputEl.addEventListener('keydown', e => {
             if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
         });
@@ -635,9 +748,6 @@
             warmUp.volume = 0;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(warmUp);
-
-            // 绑定播放按钮事件
-            bindPlayPauseButton();
 
             if(!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
