@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 移动端优化 · 历史记录</title>
+    <title>英语听写练习 · 历史记录</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -488,7 +488,7 @@
             }
         }
 
-        // 绑定播放按钮事件
+        // 绑定播放按钮事件（键盘不收回）
         playPauseBtn.addEventListener('touchend', (e) => {
             e.preventDefault();
             handlePlayPause();
@@ -574,7 +574,7 @@
             answerShown = false;
         }
 
-        // ========== 智能答案检查（忽略标点 + 缺词占位符） ==========
+        // ========== 智能答案检查（忽略标点 + 缺词占位符）==========
         function normalizeWord(word) {
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
             return cleaned || '';
@@ -639,6 +639,10 @@
             const perfect = normUser.join(' ') === normCorrect.join(' ');
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
+            
+            // 新增：将当前句子（正确答案）提交到历史记录
+            updateHistory(correct);
+            
             answerShown = false;
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             userInputEl.focus();
