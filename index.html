@@ -533,10 +533,10 @@
     <div class="tts-engine-card">
         <label for="ttsEngine">🔊 语音引擎：</label>
         <select id="ttsEngine">
-            <option value="browser">📱 系统语音（推荐）</option>
-            <option value="google">🌐 Google TTS（在线）</option>
+            <option value="google">🌐 Google TTS（高质量）</option>
+            <option value="browser">📱 系统语音（备选）</option>
         </select>
-        <span id="ttsStatusBadge" class="tts-badge online">📱 系统语音</span>
+        <span id="ttsStatusBadge" class="tts-badge online">✨ 加载中…</span>
         <div class="speed-slider" title="播放语速">
             <span style="font-size:0.75em;">🐢</span>
             <input type="range" id="speedSlider" min="0.6" max="1.2" step="0.05" value="0.85">
@@ -665,8 +665,8 @@
         let currentIndex = null;
         let answerShown = false;
 
-        // TTS引擎: 'google' | 'browser' - 移除多余选项，只保留Google和浏览器内置
-        let currentTTSEngine = 'browser'; // 默认使用浏览器内置，更适合移动端
+        // TTS引擎: 'google' | 'browser'
+        let currentTTSEngine = 'google'; // 默认使用Google TTS，音质更好
         let playbackSpeed = 0.85;
 
         // 浏览器TTS相关
@@ -747,15 +747,15 @@
         // ==================== 语音引擎切换 ====================
         function updateTTSEngineUI() {
             if (currentTTSEngine === 'google') {
-                ttsStatusBadge.textContent = '🌐 Google';
+                ttsStatusBadge.textContent = '✨ 加载中…';
                 ttsStatusBadge.className = 'tts-badge online';
                 browserVoiceRow.style.display = 'none';
                 speedSlider.disabled = false;
             } else { // browser
                 ttsStatusBadge.textContent = '📱 系统语音';
-                ttsStatusBadge.className = 'tts-badge online'; // 移动端语音也是在线获取的
-                browserVoiceRow.style.display = 'none'; // 隐藏语音选择器
-                speedSlider.disabled = false; // 保留语速调节
+                ttsStatusBadge.className = 'tts-badge offline';
+                browserVoiceRow.style.display = 'none';
+                speedSlider.disabled = false;
             }
             stopAllPlayback(true);
             resetProgressBar();
@@ -950,15 +950,16 @@
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
                     
                     const response = await fetch(url, {
                         method: 'GET',
                         headers: { 
-                            'Accept': 'audio/*',
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            'Accept': '*/*',
+                            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'
                         },
-                        signal: controller.signal
+                        signal: controller.signal,
+                        mode: 'cors'
                     });
                     
                     clearTimeout(timeoutId);
@@ -968,23 +969,31 @@
                     }
                     
                     const contentType = response.headers.get('content-type') || '';
-                    if (contentType.includes('text/html') || contentType.includes('application/json')) {
-                        throw new Error('Google TTS returned non-audio content');
+                    // Google TTS可能返回audio/mpeg或其他类型，不要严格限制
+                    if (contentType.includes('text/html') && !contentType.includes('audio')) {
+                        throw new Error('Google TTS returned HTML instead of audio');
                     }
                     
-                    return await response.blob();
+                    const blob = await response.blob();
+                    
+                    // 验证blob大小，如果太小可能是错误响应
+                    if (blob.size < 100) {
+                        throw new Error('Response too small, possibly an error');
+                    }
+                    
+                    return blob;
                 } catch (err) {
                     lastError = err;
-                    console.warn(`Attempt ${attempt} failed:`, err.message);
+                    console.warn(`Google TTS attempt ${attempt} failed:`, err.message);
                     
                     // 如果不是最后一次尝试，等待一下再重试
                     if (attempt < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
                     }
                 }
             }
             
-            throw lastError || new Error('Failed to fetch Google TTS audio');
+            throw lastError || new Error('Failed to fetch Google TTS audio after all retries');
         }
 
         function splitLongText(text, maxChunkSize = 350) {
@@ -1062,18 +1071,24 @@
                 updatePreloadBadge(false);
                 // 创建合并播放器
                 setupGoogleAudioFromSegments();
+                showToast('✅ Google语音加载成功', 1500);
             } catch (err) {
                 console.warn('Google TTS preload failed:', err.message);
                 updatePreloadBadge(false);
                 googleSegments = [];
                 googleSegmentCharOffsets = [];
                 if (err.name !== 'AbortError') {
-                    // 尝试使用浏览器内置语音作为备选
-                    showToast(`⚠️ 在线语音加载失败：${err.message}，已切换为浏览器内置语音`, 4000);
-                    currentTTSEngine = 'browser';
-                    ttsEngineSelect.value = 'browser';
-                    localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
-                    updateTTSEngineUI();
+                    // 显示更友好的错误提示，并询问是否切换
+                    const shouldSwitch = confirm(`Google语音加载失败：${err.message}\n\n是否切换到系统内置语音？`);
+                    if (shouldSwitch) {
+                        currentTTSEngine = 'browser';
+                        ttsEngineSelect.value = 'browser';
+                        localStorage.setItem(STORAGE_KEY_TTS_ENGINE, 'browser');
+                        updateTTSEngineUI();
+                        showToast('已切换到系统语音', 2000);
+                    } else {
+                        showToast('你可以稍后重试或手动切换引擎', 3000);
+                    }
                 }
             }
         }
@@ -1082,10 +1097,13 @@
             const badge = document.getElementById('ttsStatusBadge');
             if (loading && currentTTSEngine === 'google') {
                 badge.textContent = '⏳ 加载中…';
-                badge.className = 'tts-badge badge-loading';
-            } else if (currentTTSEngine === 'google') {
-                badge.textContent = '✨ 就绪';
                 badge.className = 'tts-badge online';
+            } else if (currentTTSEngine === 'google') {
+                badge.textContent = '✨ 高质量';
+                badge.className = 'tts-badge online';
+            } else {
+                badge.textContent = '📱 系统语音';
+                badge.className = 'tts-badge offline';
             }
         }
 
