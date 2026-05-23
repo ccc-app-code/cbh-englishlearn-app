@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 键盘不回收</title>
+    <title>英语听写练习 · 键盘不收回 · 语音正常</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -118,7 +118,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">移动端完美体验 · 键盘纹丝不动 · 语音流畅</p>
+    <p class="subtitle">移动端完美体验 · 键盘不收回 · 语音正常</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -129,12 +129,7 @@
     </div>
 
     <div class="btn-row">
-        <!-- 关键修改：使用 onmousedown/ontouchstart 并阻止默认行为，彻底禁止焦点转移 -->
-        <button type="button" class="btn-play" id="playPauseBtn"
-            onmousedown="handlePlayPause(); event.preventDefault()"
-            ontouchstart="handlePlayPause(); event.preventDefault()">
-            ▶ 播放
-        </button>
+        <button type="button" class="btn-play" id="playPauseBtn">▶ 播放</button>
     </div>
 
     <div class="progress-container">
@@ -290,8 +285,8 @@
             updatePlayPauseButton();
         }
 
+        // 保持焦点在输入框（带选区保护）
         function refocusInput() {
-            // 确保输入框有焦点，且不改变选区
             const hasFocus = document.activeElement === userInputEl;
             if (!hasFocus) {
                 const start = userInputEl.selectionStart;
@@ -378,7 +373,7 @@
                 showToast('没有句子', 2000); return;
             }
 
-            // 轻度预热，保证首次有效（不影响焦点）
+            // 预热语音引擎（仅首次）
             if (!isPlaying && !isPaused && !currentUtterance) {
                 const warmUp = new SpeechSynthesisUtterance('');
                 warmUp.volume = 0;
@@ -422,6 +417,21 @@
                 playPauseBtn.textContent = '▶ 继续';
                 playPauseBtn.className = 'btn-play';
             }
+        }
+
+        // ========== 绑定播放按钮（关键：使用 touchend/click 并 preventDefault） ==========
+        function bindPlayPauseButton() {
+            // 移动端：touchend 事件，阻止默认行为避免焦点转移
+            playPauseBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handlePlayPause();
+            }, { passive: false });
+
+            // 桌面端/鼠标：click 事件，也阻止默认行为
+            playPauseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handlePlayPause();
+            });
         }
 
         // ========== 进度条拖拽 ==========
@@ -625,6 +635,9 @@
             warmUp.volume = 0;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(warmUp);
+
+            // 绑定播放按钮事件
+            bindPlayPauseButton();
 
             if(!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
