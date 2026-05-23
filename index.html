@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 智能缺词 · 固定书写区</title>
+    <title>英语听写练习 · 移动端优化</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -43,6 +43,7 @@
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none;
             cursor: pointer; font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
+            -webkit-appearance: none;
         }
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -65,23 +66,24 @@
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
-        /* 固定高度书写区：占屏幕约 1/3 */
+        /* 自动扩展书写区 */
         .writing-area {
             margin-bottom: 8px;
         }
         #userInput {
             width: 100%;
-            height: 30vh;
+            height: 30vh;          /* 初始高度，约占屏幕1/3 */
             min-height: 150px;
-            max-height: 50vh;
+            max-height: 50vh;      /* 达到此高度后出现内部滚动 */
             padding: 14px 16px;
             font-size: 16px;
             border-radius: var(--radius-sm);
             border: 2px solid #ddd;
             background: #fff;
-            resize: vertical;
+            resize: none;          /* 禁止手动拖动，由内容自动决定 */
             font-family: inherit;
             line-height: 1.7;
+            overflow-y: auto;      /* 超出 max-height 时显示滚动条 */
         }
         #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
         #userInput::placeholder { color: #bbb; }
@@ -139,7 +141,7 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">系统默认语音 · 固定书写区 · 智能缺词提示</p>
+    <p class="subtitle">系统默认语音 · 自动扩展书写区</p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -150,9 +152,8 @@
     </div>
 
     <div class="btn-row">
-        <button class="btn-play" id="playPauseBtn" 
-            onmousedown="handlePlayPause(); event.preventDefault()" 
-            ontouchstart="handlePlayPause(); event.preventDefault()">
+        <button type="button" class="btn-play" id="playPauseBtn" 
+            onpointerdown="handlePlayPause(); event.preventDefault()">
             ▶ 播放
         </button>
     </div>
@@ -163,26 +164,25 @@
         <span class="progress-time" id="totalTimeDisplay">00:00</span>
     </div>
 
-    <!-- 固定高度书写区 -->
     <div class="writing-area">
         <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
     </div>
 
     <div class="action-row">
-        <button class="btn-check" onclick="checkAnswer()">✅ 检查</button>
-        <button class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
+        <button type="button" class="btn-check" onclick="checkAnswer()">✅ 检查</button>
+        <button type="button" class="btn-answer" onclick="showAnswer()">💡 显示答案</button>
     </div>
 
     <div class="result" id="resultArea"><span class="result-empty">👆 输入答案后点击“检查”查看对比结果</span></div>
 
-    <button class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
+    <button type="button" class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
 
     <div class="toast" id="toast"></div>
 
     <div class="add-section">
         <div class="list-title">➕ 添加新句子到句库</div>
         <input type="text" id="newSentenceInput" placeholder="输入英语句子，按 Enter 添加">
-        <button class="btn-add" onclick="addNewSentence()">添加句子</button>
+        <button type="button" class="btn-add" onclick="addNewSentence()">添加句子</button>
     </div>
 
     <script>
@@ -239,6 +239,29 @@
         let startTime = 0, pausedCharPos = 0;
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
+
+        // ========== 自动扩展文本框 ==========
+        function autoResizeTextarea() {
+            userInputEl.style.height = 'auto';
+            const newHeight = userInputEl.scrollHeight;
+            const maxHeight = window.innerHeight * 0.5; // 最大50vh
+            if (newHeight >= maxHeight) {
+                userInputEl.style.height = maxHeight + 'px';
+            } else {
+                userInputEl.style.height = newHeight + 'px';
+            }
+        }
+        userInputEl.addEventListener('input', autoResizeTextarea);
+        // 窗口大小变化时重新计算
+        window.addEventListener('resize', () => {
+            if (document.activeElement === userInputEl) autoResizeTextarea();
+        });
+
+        function resetTextareaHeight() {
+            userInputEl.style.height = '30vh';
+            // 重置后如果内容过多，再自动扩展一次
+            if (userInputEl.value) autoResizeTextarea();
+        }
 
         // ========== 工具函数 ==========
         let toastTimer;
@@ -311,8 +334,14 @@
                 if(!isPlaying) return;
                 if(progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
-                // 保持键盘可见（桌面端有效，移动端因焦点策略可能仍需手动点击）
-                setTimeout(() => userInputEl.focus(), 50);
+                // 保持键盘可见：重新聚焦输入框
+                setTimeout(() => {
+                    userInputEl.focus();
+                    // 如果移动端键盘已收起，再次尝试聚焦（部分浏览器需用户再点击一次）
+                    if (document.activeElement !== userInputEl) {
+                        userInputEl.click();
+                    }
+                }, 100);
             };
             utterance.onend = () => {
                 if(!isPlaying) return;
@@ -430,6 +459,7 @@
             resetAll();
             currentIndex = idx;
             clearInputAndResult();
+            resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
             const rate = Math.max(0.5, playbackSpeed) * 14;
             estimatedDuration = Math.max(1, totalChars / rate);
@@ -529,7 +559,7 @@
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
             answerShown = false;
-            // 滚动回输入框
+            // 滚动回输入框并聚焦
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             userInputEl.focus();
         }
@@ -544,6 +574,7 @@
             }
             answerShown = true;
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.focus();
         }
 
         function addNewSentence() {
@@ -556,6 +587,7 @@
             if(currentIndex === null && sentencePool.length === 1) {
                 currentIndex = 0;
                 clearInputAndResult();
+                resetTextareaHeight();
                 totalChars = t.length;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
                 estimatedDuration = Math.max(1, totalChars / rate);
@@ -590,6 +622,7 @@
             const dailyIdx = getDailyRecommendedIndex();
             currentIndex = (dailyIdx !== null && dailyIdx < sentencePool.length) ? dailyIdx : 0;
             clearInputAndResult();
+            resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
             const rate = Math.max(0.5, playbackSpeed) * 14;
             estimatedDuration = Math.max(1, totalChars / rate);
