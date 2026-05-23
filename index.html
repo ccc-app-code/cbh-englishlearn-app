@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语听写练习 · 高质量语音</title>
+    <title>英语听写练习 · Samantha 增强语音</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -123,8 +123,8 @@
 </head>
 <body>
     <h2>🎧 英语听写练习</h2>
-    <p class="subtitle">每日随机一句 · 自动匹配高质量系统语音</p>
-    <div class="voice-hint" id="voiceHint">🔊 正在优化语音质量…</div>
+    <p class="subtitle">每日随机一句 · 已启用 Samantha 高质量语音</p>
+    <div class="voice-hint" id="voiceHint">🔊 正在匹配 Samantha 增强语音…</div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -221,7 +221,7 @@
 
         const BASE_CHAR_RATE = 14; // 基础字符/秒，接近真人语速
 
-        // ========== 最佳语音选择逻辑 ==========
+        // ========== 高质量语音匹配逻辑（修复版） ==========
         function selectBestVoice() {
             return new Promise((resolve) => {
                 const voices = window.speechSynthesis.getVoices();
@@ -233,24 +233,46 @@
                     resolve(voices);
                 }
             }).then(voices => {
+                console.log('可用语音列表：', voices.map(v => v.name + ' (' + v.lang + ')'));
+                
+                // 优先选择包含 "Samantha" 的英语语音，并且优先 Enhanced 版本
+                let samanthaVoice = voices.find(v => 
+                    v.lang.startsWith('en') && 
+                    v.name.includes('Samantha') && 
+                    v.name.includes('Enhanced')
+                );
+                if (!samanthaVoice) {
+                    samanthaVoice = voices.find(v => 
+                        v.lang.startsWith('en') && 
+                        v.name.includes('Samantha')
+                    );
+                }
+                if (samanthaVoice) {
+                    console.log('✅ 找到 Samantha 语音：', samanthaVoice.name);
+                    return samanthaVoice;
+                }
+
+                // 如果找不到 Samantha，则按原来的优先级查找其他高质量语音
                 const priorityList = [
-                    'Samantha',           // iOS 经典美式英语
-                    'Google US English',  // Android Chrome 高质量
-                    'Microsoft David',    // Windows
-                    'Karen',              // macOS / iOS 英式
-                    'Daniel',             // macOS / iOS 英式
-                    'Alex',               // macOS
-                    'Moira', 'Tessa', 'Veena'  // 其他备选
+                    'Google US English',
+                    'Microsoft David',
+                    'Karen',
+                    'Daniel',
+                    'Alex',
+                    'Moira',
+                    'Tessa',
+                    'Veena'
                 ];
-                // 1. 尝试优先列表
                 for (const name of priorityList) {
                     const voice = voices.find(v => v.name === name && v.lang.startsWith('en'));
                     if (voice) return voice;
                 }
-                // 2. 查找任何名字包含 "enhanced" 的英语语音
+
+                // 再找任何包含 "Enhanced" 的英语语音
                 const enhanced = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('enhanced'));
                 if (enhanced) return enhanced;
-                // 3. 第一个英语语音
+
+                // 最后的 fallback
                 const english = voices.find(v => v.lang.startsWith('en'));
                 return english || voices[0] || null;
             });
@@ -262,7 +284,7 @@
             if (bestVoice) {
                 voiceHint.textContent = `🔊 当前语音：${bestVoice.name} (${bestVoice.lang})`;
             } else {
-                voiceHint.textContent = '⚠️ 未找到英语语音，请检查系统语音设置';
+                voiceHint.textContent = '⚠️ 未找到英语语音，请检查系统设置';
             }
         }
 
@@ -349,7 +371,7 @@
             const utterance = new SpeechSynthesisUtterance(remainingText);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            if(bestVoice) utterance.voice = bestVoice;   // 使用优质语音
+            if(bestVoice) utterance.voice = bestVoice;   // 使用匹配到的高质量语音
 
             utterance.onstart = () => {
                 if(!isPlaying) return;
@@ -381,7 +403,6 @@
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
-                // 暂停：记录当前字符位置
                 const elapsed = (Date.now() - startTime) / 1000;
                 const currentRate = BASE_CHAR_RATE * playbackSpeed;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * currentRate));
@@ -391,7 +412,6 @@
                 isPaused = true;
                 updatePlayPauseButton();
             } else if(isPaused) {
-                // 继续播放
                 startPlayback(pausedCharPos);
             }
         }
@@ -572,7 +592,7 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
-            // 初始化高质量语音
+            // 初始化高质量语音（自动匹配 Samantha）
             await initVoice();
 
             if(!sentencePool.length) {
