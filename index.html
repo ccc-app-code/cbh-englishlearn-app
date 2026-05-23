@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 移动端优化</title>
+    <title>英语听写练习 · 移动端稳定版</title>
     <style>
         :root {
             --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
@@ -66,38 +66,20 @@
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
-        /* 自动扩展书写区 */
-        .writing-area {
-            margin-bottom: 8px;
-        }
+        .writing-area { margin-bottom: 8px; }
         #userInput {
-            width: 100%;
-            height: 30vh;          /* 初始高度，约占屏幕1/3 */
-            min-height: 150px;
-            max-height: 50vh;      /* 达到此高度后出现内部滚动 */
-            padding: 14px 16px;
-            font-size: 16px;
-            border-radius: var(--radius-sm);
-            border: 2px solid #ddd;
-            background: #fff;
-            resize: none;          /* 禁止手动拖动，由内容自动决定 */
-            font-family: inherit;
-            line-height: 1.7;
-            overflow-y: auto;      /* 超出 max-height 时显示滚动条 */
+            width: 100%; height: 30vh; min-height: 150px; max-height: 50vh;
+            padding: 14px 16px; font-size: 16px; border-radius: var(--radius-sm);
+            border: 2px solid #ddd; background: #fff; resize: none;
+            font-family: inherit; line-height: 1.7; overflow-y: auto;
         }
         #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
         #userInput::placeholder { color: #bbb; }
 
         .result {
-            padding: 16px;
-            background: #fff;
-            border-radius: var(--radius-sm);
-            white-space: pre-wrap;
-            line-height: 1.9;
-            font-size: 0.95em;
-            box-shadow: var(--shadow);
-            min-height: 20px;
-            margin-bottom: 8px;
+            padding: 16px; background: #fff; border-radius: var(--radius-sm);
+            white-space: pre-wrap; line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow);
+            min-height: 20px; margin-bottom: 8px;
         }
         .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
@@ -152,10 +134,7 @@
     </div>
 
     <div class="btn-row">
-        <button type="button" class="btn-play" id="playPauseBtn" 
-            onpointerdown="handlePlayPause(); event.preventDefault()">
-            ▶ 播放
-        </button>
+        <button type="button" class="btn-play" id="playPauseBtn" onclick="handlePlayPause()">▶ 播放</button>
     </div>
 
     <div class="progress-container">
@@ -244,7 +223,7 @@
         function autoResizeTextarea() {
             userInputEl.style.height = 'auto';
             const newHeight = userInputEl.scrollHeight;
-            const maxHeight = window.innerHeight * 0.5; // 最大50vh
+            const maxHeight = window.innerHeight * 0.5;
             if (newHeight >= maxHeight) {
                 userInputEl.style.height = maxHeight + 'px';
             } else {
@@ -252,14 +231,12 @@
             }
         }
         userInputEl.addEventListener('input', autoResizeTextarea);
-        // 窗口大小变化时重新计算
         window.addEventListener('resize', () => {
             if (document.activeElement === userInputEl) autoResizeTextarea();
         });
 
         function resetTextareaHeight() {
             userInputEl.style.height = '30vh';
-            // 重置后如果内容过多，再自动扩展一次
             if (userInputEl.value) autoResizeTextarea();
         }
 
@@ -283,6 +260,15 @@
                 if(/\s|[.!?;,:]/.test(text[i])) return i + 1;
             }
             return 0;
+        }
+
+        // ========== 语音预热（解决首次播放无声问题） ==========
+        function warmUpSpeech() {
+            const dummy = new SpeechSynthesisUtterance('');
+            dummy.volume = 0;
+            dummy.rate = 1;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(dummy);
         }
 
         function stopPlayback() {
@@ -334,14 +320,8 @@
                 if(!isPlaying) return;
                 if(progressTimer) clearInterval(progressTimer);
                 progressTimer = setInterval(updateProgress, 100);
-                // 保持键盘可见：重新聚焦输入框
-                setTimeout(() => {
-                    userInputEl.focus();
-                    // 如果移动端键盘已收起，再次尝试聚焦（部分浏览器需用户再点击一次）
-                    if (document.activeElement !== userInputEl) {
-                        userInputEl.click();
-                    }
-                }, 100);
+                // 保持焦点在输入框
+                setTimeout(() => userInputEl.focus(), 50);
             };
             utterance.onend = () => {
                 if(!isPlaying) return;
@@ -381,6 +361,9 @@
             if(currentIndex === null || !sentencePool.length) {
                 showToast('没有句子', 2000); return;
             }
+            // 每次播放前先预热，确保 iOS 能正常播放
+            warmUpSpeech();
+            
             if(!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if(isPlaying) {
@@ -395,6 +378,8 @@
             } else if(isPaused) {
                 startPlayback(pausedCharPos);
             }
+            // 保持焦点，防止键盘收起
+            setTimeout(() => userInputEl.focus(), 150);
         }
 
         function updatePlayPauseButton() {
@@ -559,7 +544,6 @@
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，留意灰底占位符处的缺词。');
             answerShown = false;
-            // 滚动回输入框并聚焦
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             userInputEl.focus();
         }
@@ -613,6 +597,9 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
+
+            // 页面加载时预热语音引擎
+            warmUpSpeech();
 
             if(!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
