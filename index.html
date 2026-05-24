@@ -6,141 +6,452 @@
     <title>英语听写练习</title>
     <style>
         :root {
-            --bg: #f5f7fa; --card: #fff; --text: #333; --text-secondary: #555; --text-muted: #888;
-            --accent: #5b8def; --green: #4CAF50; --teal: #009688; --red: #c62828;
-            --shadow: 0 1px 4px rgba(0,0,0,0.06); --radius-sm: 10px; --radius-xs: 8px;
+            --bg: #f5f7fa;
+            --card: #fff;
+            --text: #333;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --accent: #5b8def;
+            --green: #4CAF50;
+            --teal: #009688;
+            --red: #c62828;
+            --shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            --radius-sm: 10px;
+            --radius-xs: 8px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg); color: var(--text);
-            -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
-            padding: 20px 20px 30px; max-width: 700px; margin: 0 auto;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 20px 20px 30px;
+            max-width: 700px;
+            margin: 0 auto;
         }
-        h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 2px;
+            font-size: 1.4em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85em;
+            margin-bottom: 12px;
+        }
 
         .speed-card {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-            background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            background: var(--card);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
         }
-        .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
-        .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
-        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
-        .speed-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: var(--teal); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .speed-value { font-size: 0.8em; font-weight: 700; color: var(--teal); min-width: 36px; text-align: center; }
 
-        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
-        button {
-            padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none;
-            cursor: pointer; font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
-            -webkit-appearance: none; touch-action: manipulation;
+        .speed-card label {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: var(--text-secondary);
         }
-        button:active { transform: scale(0.95); opacity: 0.8; }
-        button:disabled { opacity: 0.45; cursor: not-allowed; }
-        .btn-play { background: var(--green); color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
-        .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
-        .btn-check { background: var(--green); color: #fff; }
-        .btn-answer { background: #66bb6a; color: #fff; }
-        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
-        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
-        .btn-history { background: var(--accent); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
+
+        .speed-slider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .speed-slider input[type="range"] {
+            flex: 1;
+            height: 5px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+        }
+
+        .speed-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--teal);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .speed-value {
+            font-size: 0.8em;
+            font-weight: 700;
+            color: var(--teal);
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            padding: 12px 18px;
+            font-size: 15px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.15s;
+            background: #e0e0e0;
+            color: #333;
+            -webkit-appearance: none;
+            touch-action: manipulation;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .btn-play {
+            background: var(--green);
+            color: #fff;
+            font-size: 1.05em;
+            padding: 14px 28px;
+            min-width: 130px;
+        }
+        .btn-pause {
+            background: #66bb6a;
+            color: #fff;
+            font-size: 1.05em;
+            padding: 14px 28px;
+            min-width: 130px;
+        }
+        .btn-check {
+            background: var(--green);
+            color: #fff;
+        }
+        .btn-answer {
+            background: #66bb6a;
+            color: #fff;
+        }
+        .btn-next {
+            background: var(--green);
+            color: #fff;
+            width: 100%;
+            margin-top: 8px;
+            font-size: 1em;
+            padding: 14px;
+        }
+        .btn-add {
+            background: var(--green);
+            color: #fff;
+            width: 100%;
+            margin-top: 6px;
+        }
+        .btn-history {
+            background: var(--accent);
+            color: #fff;
+            width: 100%;
+            margin-top: 12px;
+            font-size: 0.95em;
+            padding: 14px;
+        }
 
         .progress-container {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-            background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            background: var(--card);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
         }
-        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
-        .progress-container input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-            background: var(--green); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
-        .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
-        .writing-area { margin-bottom: 8px; }
-        #userInput {
-            width: 100%; height: 30vh; min-height: 150px; max-height: 50vh;
-            padding: 14px 16px; font-size: 16px; border-radius: var(--radius-sm);
-            border: 2px solid #ddd; background: #fff; resize: none;
-            font-family: inherit; line-height: 1.7; overflow-y: auto;
+        .progress-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
         }
-        #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
-        #userInput::placeholder { color: #bbb; }
+
+        .progress-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--green);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-time {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            min-width: 42px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        .writing-area {
+            margin-bottom: 8px;
+        }
+
+        #userInput {
+            width: 100%;
+            height: 30vh;
+            min-height: 150px;
+            max-height: 50vh;
+            padding: 14px 16px;
+            font-size: 16px;
+            border-radius: var(--radius-sm);
+            border: 2px solid #ddd;
+            background: #fff;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.7;
+            overflow-y: auto;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.08);
+        }
+
+        #userInput::placeholder {
+            color: #bbb;
+        }
 
         .result {
-            padding: 16px; background: #fff; border-radius: var(--radius-sm);
-            white-space: pre-wrap; line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow);
-            min-height: 20px; margin-bottom: 8px;
+            padding: 16px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            white-space: pre-wrap;
+            line-height: 1.9;
+            font-size: 0.95em;
+            box-shadow: var(--shadow);
+            min-height: 20px;
+            margin-bottom: 8px;
         }
-        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .result-empty { color: #bbb; text-align: center; display: block; }
 
-        .action-row { display: flex; gap: 8px; margin-bottom: 4px; }
-        .action-row button { flex: 1; }
+        .correct {
+            color: #2e7d32;
+            font-weight: bold;
+            background: #e8f5e9;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+
+        .wrong {
+            color: #c62828;
+            text-decoration: underline;
+            font-weight: bold;
+            background: #ffebee;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+
+        .result-empty {
+            color: #bbb;
+            text-align: center;
+            display: block;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .action-row button {
+            flex: 1;
+        }
 
         .add-section {
-            background: #fff; border-radius: var(--radius-sm); padding: 16px;
-            box-shadow: var(--shadow); margin-top: 8px;
+            background: #fff;
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 8px;
         }
-        .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; }
+
+        .add-section .list-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
         .add-section input[type="text"] {
-            width: 100%; padding: 12px 14px; font-size: 15px; border-radius: var(--radius-xs);
-            border: 2px solid #ddd; background: #fff; margin-bottom: 4px;
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border-radius: var(--radius-xs);
+            border: 2px solid #ddd;
+            background: #fff;
+            margin-bottom: 4px;
         }
-        .add-section input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,141,239,0.08); }
+
+        .add-section input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.08);
+        }
 
         .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #333; color: #fff; padding: 10px 22px; border-radius: 24px;
-            font-size: 0.9em; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 24px;
+            font-size: 0.9em;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
-        .toast.show { opacity: 1; pointer-events: auto; }
 
-        /* 历史记录弹窗 */
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000; display: none;
-            align-items: center; justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-overlay.active { display: flex; }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
         .modal-content {
-            background: #fff; border-radius: var(--radius-sm); padding: 20px;
-            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #fff;
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-        .modal-content h3 { margin-bottom: 12px; font-size: 1.2em; }
-        .modal-content ul { list-style: none; margin-bottom: 16px; }
+
+        .modal-content h3 {
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .modal-content ul {
+            list-style: none;
+            margin-bottom: 16px;
+        }
+
         .modal-content li {
-            padding: 10px 0; border-bottom: 1px solid #eee;
-            display: flex; flex-direction: column;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
             font-size: 0.9em;
         }
+
         .modal-content li .delete-btn {
-            background: var(--red); color: #fff; padding: 4px 12px;
-            border-radius: 15px; font-size: 0.8em; border: none; cursor: pointer; align-self: flex-start; margin-top: 4px;
+            background: var(--red);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            border: none;
+            cursor: pointer;
+            align-self: flex-start;
+            margin-top: 4px;
         }
+
         .modal-content .close-btn {
-            background: #eee; color: #333; padding: 10px 20px;
-            border-radius: var(--radius-sm); font-size: 0.9em; border: none; cursor: pointer;
+            background: #eee;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9em;
+            border: none;
+            cursor: pointer;
         }
 
         @media (max-width: 480px) {
-            body { padding: 12px 12px 30px; }
-            h2 { font-size: 1.2em; }
-            button { padding: 10px 14px; font-size: 14px; }
-            .btn-play, .btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
-            #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
-            .action-row button { font-size: 14px; padding: 11px 10px; }
-            .progress-container { padding: 6px 10px; gap: 4px; }
-            .progress-time { font-size: 0.72em; min-width: 34px; }
-            .speed-card { padding: 8px 10px; gap: 5px; }
-            .speed-card label { font-size: 0.75em; }
+            body {
+                padding: 12px 12px 30px;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            button {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+            .btn-play,
+            .btn-pause {
+                padding: 12px 22px;
+                font-size: 1em;
+                min-width: 110px;
+            }
+            #userInput {
+                height: 30vh;
+                min-height: 120px;
+                font-size: 15px;
+            }
+            .action-row button {
+                font-size: 14px;
+                padding: 11px 10px;
+            }
+            .progress-container {
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            .progress-time {
+                font-size: 0.72em;
+                min-width: 34px;
+            }
+            .speed-card {
+                padding: 8px 10px;
+                gap: 5px;
+            }
+            .speed-card label {
+                font-size: 0.75em;
+            }
         }
     </style>
 </head>
@@ -156,10 +467,6 @@
         <span class="speed-value" id="speedValue">0.85x</span>
     </div>
 
-    <div class="btn-row">
-        <button type="button" class="btn-check" id="checkBtn" onclick="checkAndShowAnswer()">✅ 检查并显示答案</button>
-    </div>
-
     <div class="progress-container">
         <span class="progress-time" id="currentTimeDisplay">00:00</span>
         <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1" disabled>
@@ -172,9 +479,10 @@
 
     <div class="action-row">
         <button type="button" class="btn-play" id="playPauseBtn">▶ 播放</button>
+        <button type="button" class="btn-check" id="checkBtn" onclick="checkAndShowAnswer()">✅ 检查</button>
     </div>
 
-    <div class="result" id="resultArea"><span class="result-empty">👆 输入答案后点击“检查”查看对比结果</span></div>
+    <div class="result" id="resultArea"></div>
 
     <button type="button" class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
 
@@ -236,7 +544,7 @@
             "Whereas understeer is typically regarded as stable and predictable for production vehicles, excessive understeer reduces cornering speed and limits performance in competitive racing environments",
             "Since roll centers define the instantaneous axis about which the body rolls, their height and migration path profoundly affect load transfer distribution and dynamic wheel camber",
             "Unless suspension geometry is designed to maintain favorable camber during roll, the outside tire will lose contact area and lateral force precisely when additional grip is most needed",
-            "Because aligning torque arises from both lateral force distribution across the contact patch and mechanical trail, it provides direct physical feedback that shapes the driver’s steering feel",
+            "Because aligning torque arises from both lateral force distribution across the contact patch and mechanical trail, it provides direct physical feedback that shapes the driver's steering feel",
             "Even though relaxation length is typically expressed as a fixed fraction of tire circumference, its effect on transient response diminishes at high speed because the time constant decreases proportionally with velocity",
             "Whereas the linear range of tire behavior allows superposition of forces and simple stability analysis, the nonlinear range near the friction limit requires empirical tire models such as the Magic Formula",
             "Since aerodynamic drag rises with the square of speed, power required to overcome drag increases with the cube of speed, creating a severe limitation on top speed for all race vehicles",
@@ -340,7 +648,7 @@
             "Even though roll steer can be used to fine-tune handling, unintended roll steer caused by compliance or poor geometry degrades predictability",
             "Whereas force excitation applies input directly to the mass, base excitation represents road-induced displacement that realistically simulates ride events",
             "Since lateral acceleration produces body roll, which in turn changes wheel loads and alignment, handling is inherently a coupled multivariable problem",
-            "Although differential preload improves traction, it also increases understeer and can make the vehicle feel “tight” in slow corners",
+            "Although differential preload improves traction, it also increases understeer and can make the vehicle feel \"tight\" in slow corners",
             "Because understeer increases the margin of stability for inexperienced drivers, it is intentionally engineered into most production passenger vehicles",
             "Even though computer simulations can evaluate thousands of setup combinations, real track testing remains essential to validate model accuracy",
             "Whereas the friction circle assumes equal lateral and longitudinal friction, real tires exhibit an ellipse due to different mechanisms of force generation",
@@ -408,7 +716,7 @@
             "Unless engineers understand both theoretical principles and real-world sensitivities, they cannot transform a collection of components into a fast, reliable, and drivable racing vehicle",
             "While the combined effects of tire load sensitivity, aerodynamic load distribution, and roll stiffness distribution must be integrated into a comprehensive dynamic model to accurately predict the limit handling behavior of a high-performance race car, most simplified engineering analyses still rely on linearized tire models that fail to capture the complex force degradation patterns near the friction circle",
             "Although the implementation of pushrod-activated suspension systems with rising-rate characteristics allows race engineers to maintain optimal ride height under significant aerodynamic downforce, such designs also introduce nonlinear changes in effective wheel rates that require precise matching with damper characteristics to preserve tire contact over uneven surfaces",
-            "Because the generation of pneumatic aligning torque depends on both the lateral force distribution across the tire contact patch and the mechanical trail induced by caster and kingpin geometry, steering feel cannot be optimized independently of the vehicle’s fundamental suspension layout and kinematic behavior",
+            "Because the generation of pneumatic aligning torque depends on both the lateral force distribution across the tire contact patch and the mechanical trail induced by caster and kingpin geometry, steering feel cannot be optimized independently of the vehicle's fundamental suspension layout and kinematic behavior",
             "Even though wind-tunnel testing remains the primary method for quantifying aerodynamic coefficients, the inability to replicate dynamic tire squirt, rotating wheel flow fields, and on-track chassis attitude often results in noticeable discrepancies between predicted and actual downforce levels in real racing conditions",
             "Whereas steady-state cornering analysis provides critical insights into balanced handling and lateral grip capability, it cannot account for the dynamic load shifts, tire lag effects, and yaw rate transients that dominate vehicle behavior during rapid turn entry and directional changes",
             "Since the relaxation length of a race tire represents the distance required for the contact patch to develop full steady-state lateral force following a change in slip angle, this fundamental property introduces a time-dependent lag that significantly influences low-speed transient response and steering precision",
@@ -416,7 +724,7 @@
             "Even though increasing the front anti-roll bar rate effectively reduces understeer by increasing lateral load transfer on the front axle, excessive stiffness can overload the outside front tire and trigger sudden push at the limit of adhesion",
             "Because every change in camber gain characteristics during body roll directly alters the lateral force generation of the outside tire, suspension kinematics must be carefully tuned to maintain optimal contact patch orientation as lateral acceleration builds",
             "Whereas the friction ellipse concept accurately describes the competition between longitudinal and lateral forces for available adhesion, real-world tire behavior further complicates this relationship through dynamic load transfer, camber effects, and temperature-dependent friction coefficients",
-            "Since the polar moment of inertia directly affects the vehicle’s agility and transient yaw response, minimizing mass distribution away from the center of gravity remains a critical objective in race car design despite packaging and component constraints",
+            "Since the polar moment of inertia directly affects the vehicle's agility and transient yaw response, minimizing mass distribution away from the center of gravity remains a critical objective in race car design despite packaging and component constraints",
             "Although four-wheel-drive systems improve traction under acceleration by distributing torque to all four wheels, they also increase understeer tendencies and add significant mass that compromises braking, agility, and high-speed cornering efficiency",
             "Because the pressure gradient along the underbody of a modern race car determines the efficiency of ground-effect downforce, even minor variations in ride height or front splitter height can trigger flow separation and drastically reduce aerodynamic performance",
             "Even though static toe settings are intended to enhance straight-line stability, excessive toe-in or toe-out creates persistent tire scrub, increases rolling resistance, and accelerates thermally induced tire degradation throughout a race stint",
@@ -548,7 +856,7 @@
             "Even though computational fluid dynamics can predict complex flow fields, it still requires validation against wind-tunnel and on-track measurements to ensure accuracy",
             "Because tire force degradation near the limit is progressive, professional tuning aims to extend this transitional region to enhance driver feel and control",
             "Whereas race car dynamics is often viewed as a collection of independent adjustments, it is fundamentally an integrated system where every change interacts with multiple others",
-            "Since the vehicle’s response to steering is determined by the entire dynamic system, no single component—whether tires, wings, or dampers—can be tuned in isolation",
+            "Since the vehicle's response to steering is determined by the entire dynamic system, no single component—whether tires, wings, or dampers—can be tuned in isolation",
             "Even though large-diameter brakes improve thermal capacity and fade resistance, they also add unsprung mass that harms wheel control and mechanical grip",
             "Because unsprung mass directly affects wheel control and tire contact, its minimization remains a critical objective in suspension and brake design",
             "Unless the effects of roll steer are included in handling models, predicted vehicle response will deviate from real behavior, especially at higher lateral accelerations",
@@ -581,7 +889,7 @@
             "Unless the suspensions camber curve is precisely matched to the roll gradient and lateral load transfer, the outside tire will not maintain ideal contact orientation at peak lateral acceleration",
             "Whereas race car dampers are primarily tuned for wheel control and tire contact, passenger car dampers prioritize ride comfort, leading to fundamentally different calibration strategies",
             "Since the pneumatic trail of a tire decreases continuously with increasing slip angle, the self-centering torque diminishes progressively as the limit of adhesion is approached",
-            "Even though differential preload can improve launch traction and stability, it also increases artificial understeer and can create a “tight” feeling that reduces turn-in agility",
+            "Even though differential preload can improve launch traction and stability, it also increases artificial understeer and can create a \"tight\" feeling that reduces turn-in agility",
             "Because flow separation over aerodynamic devices is triggered by adverse pressure gradients, its prevention requires carefully designed pressure recovery and boundary-layer control",
             "Whereas linear tire models are sufficient for stability and control analysis at low g levels, nonlinear models are mandatory for accurate prediction of limit handling and saturation behavior",
             "Since the polar moment of inertia affects how quickly the vehicle can change yaw rate, its reduction improves agility but may reduce high-speed stability in crosswinds or on rough surfaces",
@@ -596,21 +904,29 @@
         function loadSentencePool() {
             const stored = localStorage.getItem(STORAGE_KEY_SENTENCES);
             if (stored) {
-                try { const arr = JSON.parse(stored); if (Array.isArray(arr) && arr.length > 0) return arr; } catch(e) {}
+                try {
+                    const arr = JSON.parse(stored);
+                    if (Array.isArray(arr) && arr.length > 0) return arr;
+                } catch (e) {}
             }
             localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(defaultSentences));
             return [...defaultSentences];
         }
+
         function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
         let sentencePool = loadSentencePool();
 
         function loadHistory() {
             const stored = localStorage.getItem(STORAGE_KEY_HISTORY);
             if (stored) {
-                try { const obj = JSON.parse(stored); if (typeof obj === 'object' && obj !== null) return obj; } catch(e) {}
+                try {
+                    const obj = JSON.parse(stored);
+                    if (typeof obj === 'object' && obj !== null) return obj;
+                } catch (e) {}
             }
             return {};
         }
+
         function saveHistory(historyObj) {
             localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyObj));
         }
@@ -633,14 +949,17 @@
             const now = new Date();
             return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
         }
+
         function hashDateToIndex(d, l) {
-            if(l<=0) return 0;
-            let h=5381; for(let i=0;i<d.length;i++) h=((h<<5)+h)+d.charCodeAt(i);
-            return Math.abs(h)%l;
+            if (l <= 0) return 0;
+            let h = 5381;
+            for (let i = 0; i < d.length; i++) h = ((h << 5) + h) + d.charCodeAt(i);
+            return Math.abs(h) % l;
         }
+
         function getDailyRecommendedIndex() {
-            if(!sentencePool.length) return null;
-            return hashDateToIndex(getDateString(),sentencePool.length);
+            if (!sentencePool.length) return null;
+            return hashDateToIndex(getDateString(), sentencePool.length);
         }
 
         const speedSlider = document.getElementById('speedSlider');
@@ -655,11 +974,16 @@
         const historyModal = document.getElementById('historyModal');
         const historyList = document.getElementById('historyList');
 
-        let currentIndex = null, playbackSpeed = 0.85;
-        let isPlaying = false, isPaused = false;
-        let fullText = '', totalChars = 0;
-        let startTime = 0, pausedCharPos = 0;
-        let estimatedDuration = 0, progressTimer = null;
+        let currentIndex = null,
+            playbackSpeed = 0.85;
+        let isPlaying = false,
+            isPaused = false;
+        let fullText = '',
+            totalChars = 0;
+        let startTime = 0,
+            pausedCharPos = 0;
+        let estimatedDuration = 0,
+            progressTimer = null;
         let isDragging = false;
         let currentUtterance = null;
 
@@ -684,22 +1008,26 @@
         }
 
         let toastTimer;
-        function showToast(msg, d=2500) {
-            if(toastTimer) clearTimeout(toastTimer);
-            toastEl.textContent = msg; toastEl.classList.add('show');
-            toastTimer = setTimeout(()=>{ toastEl.classList.remove('show'); toastTimer = null; }, d);
+
+        function showToast(msg, d = 2500) {
+            if (toastTimer) clearTimeout(toastTimer);
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            toastTimer = setTimeout(() => { toastEl.classList.remove('show');
+                toastTimer = null; }, d);
         }
 
         function formatTime(sec) {
-            const s = Math.max(0, sec), m = Math.floor(s/60);
+            const s = Math.max(0, sec),
+                m = Math.floor(s / 60);
             return `${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
         }
 
         function findWordBoundary(text, pos) {
-            if(pos <= 0) return 0;
-            if(pos >= text.length) return text.length;
-            for(let i = pos; i >= 0; i--) {
-                if(/\s|[.!?;,:]/.test(text[i])) return i + 1;
+            if (pos <= 0) return 0;
+            if (pos >= text.length) return text.length;
+            for (let i = pos; i >= 0; i--) {
+                if (/\s|[.!?;,:]/.test(text[i])) return i + 1;
             }
             return 0;
         }
@@ -716,7 +1044,8 @@
         function stopPlayback(keepPaused = false) {
             detachUtterance();
             window.speechSynthesis.cancel();
-            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            if (progressTimer) { clearInterval(progressTimer);
+                progressTimer = null; }
             isPlaying = false;
             if (!keepPaused) isPaused = false;
         }
@@ -745,7 +1074,7 @@
 
         function startPlayback(fromChar) {
             stopPlayback(false);
-            if(currentIndex === null || !sentencePool[currentIndex]) return;
+            if (currentIndex === null || !sentencePool[currentIndex]) return;
 
             fullText = sentencePool[currentIndex];
             totalChars = fullText.length;
@@ -798,7 +1127,7 @@
         }
 
         function updateProgress() {
-            if(!isPlaying || totalChars <= 0 || isDragging) return;
+            if (!isPlaying || totalChars <= 0 || isDragging) return;
             const elapsed = (Date.now() - startTime) / 1000;
             const rate = Math.max(0.5, playbackSpeed) * 14;
             const chars = Math.floor(elapsed * rate);
@@ -806,7 +1135,7 @@
             const percent = (curChar / totalChars) * 100;
             progressBar.value = percent;
             currentTimeDisplay.textContent = formatTime((curChar / totalChars) * estimatedDuration);
-            if(curChar >= totalChars) {
+            if (curChar >= totalChars) {
                 stopPlayback(false);
                 progressBar.value = 100;
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
@@ -814,8 +1143,9 @@
         }
 
         function handlePlayPause() {
-            if(currentIndex === null || !sentencePool.length) {
-                showToast('没有句子', 2000); return;
+            if (currentIndex === null || !sentencePool.length) {
+                showToast('没有句子', 2000);
+                return;
             }
 
             if (!isPlaying && !isPaused && !currentUtterance) {
@@ -825,20 +1155,21 @@
                 window.speechSynthesis.speak(warmUp);
             }
 
-            if(!isPlaying && !isPaused) {
+            if (!isPlaying && !isPaused) {
                 startPlayback(0);
-            } else if(isPlaying) {
+            } else if (isPlaying) {
                 const elapsed = (Date.now() - startTime) / 1000;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * rate));
                 detachUtterance();
                 window.speechSynthesis.cancel();
-                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+                if (progressTimer) { clearInterval(progressTimer);
+                    progressTimer = null; }
                 isPlaying = false;
                 isPaused = true;
                 updatePlayPauseButton();
                 refocusInput();
-            } else if(isPaused) {
+            } else if (isPaused) {
                 startPlayback(pausedCharPos);
             }
         }
@@ -846,18 +1177,18 @@
         function updatePlayPauseButton() {
             const disabled = (currentIndex === null || !sentencePool.length);
             playPauseBtn.disabled = disabled;
-            if(disabled) {
+            if (disabled) {
                 playPauseBtn.textContent = '▶ 播放';
                 playPauseBtn.className = 'btn-play';
                 return;
             }
-            if(!isPlaying && !isPaused) {
+            if (!isPlaying && !isPaused) {
                 playPauseBtn.textContent = '▶ 播放';
                 playPauseBtn.className = 'btn-play';
-            } else if(isPlaying) {
+            } else if (isPlaying) {
                 playPauseBtn.textContent = '⏸ 暂停';
                 playPauseBtn.className = 'btn-pause';
-            } else if(isPaused) {
+            } else if (isPaused) {
                 playPauseBtn.textContent = '▶ 继续';
                 playPauseBtn.className = 'btn-play';
             }
@@ -876,17 +1207,18 @@
         progressBar.addEventListener('touchstart', () => { isDragging = true; });
         progressBar.addEventListener('mouseup', () => { isDragging = false; });
         progressBar.addEventListener('touchend', () => { isDragging = false; });
-        progressBar.addEventListener('mouseleave', () => { if(isDragging) isDragging = false; });
+        progressBar.addEventListener('mouseleave', () => { if (isDragging) isDragging = false; });
 
         progressBar.addEventListener('input', (e) => {
-            if(totalChars <= 0) return;
+            if (totalChars <= 0) return;
             const p = parseFloat(e.target.value);
             const tc = Math.floor((p / 100) * totalChars);
             currentTimeDisplay.textContent = formatTime((tc / totalChars) * estimatedDuration);
-            if(progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            if (progressTimer) { clearInterval(progressTimer);
+                progressTimer = null; }
         });
         progressBar.addEventListener('change', (e) => {
-            if(totalChars <= 0) return;
+            if (totalChars <= 0) return;
             const p = parseFloat(e.target.value);
             const tc = Math.floor((p / 100) * totalChars);
             startPlayback(tc);
@@ -895,7 +1227,7 @@
         speedSlider.addEventListener('input', () => {
             playbackSpeed = parseFloat(speedSlider.value);
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
-            if(totalChars > 0) {
+            if (totalChars > 0) {
                 const rate = Math.max(0.5, playbackSpeed) * 14;
                 estimatedDuration = Math.max(1, totalChars / rate);
                 totalTimeDisplay.textContent = formatTime(estimatedDuration);
@@ -906,8 +1238,8 @@
         });
 
         function switchToSentence(idx) {
-            if(idx < 0 || idx >= sentencePool.length) return;
-            if(currentIndex === idx) return;
+            if (idx < 0 || idx >= sentencePool.length) return;
+            if (currentIndex === idx) return;
             resetAll();
             currentIndex = idx;
             clearInputAndResult();
@@ -929,7 +1261,7 @@
                 return;
             }
             if (sentencePool.length === 1) {
-                resultArea.innerHTML = '<span class="result-empty">📌 只有1句，请添加更多。</span>';
+                showToast('📌 只有1句，请添加更多。', 2500);
                 return;
             }
             const availableIndices = sentencePool
@@ -943,7 +1275,7 @@
 
         function clearInputAndResult() {
             userInputEl.value = '';
-            resultArea.innerHTML = '<span class="result-empty">👆 输入答案后点击“检查”查看对比结果</span>';
+            resultArea.innerHTML = '';
         }
 
         function normalizeWord(word) {
@@ -958,10 +1290,13 @@
         }
 
         function checkAnswer() {
-            if(currentIndex === null) return;
+            if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
             const correct = sentencePool[currentIndex].trim();
-            if(!rawUser) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
+            if (!rawUser) {
+                resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>';
+                return;
+            }
 
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
@@ -1020,7 +1355,7 @@
         function addNewSentence() {
             const inp = document.getElementById('newSentenceInput');
             const t = inp.value.trim();
-            if(!t) { showToast('请输入有效的英语句子', 2000); return; }
+            if (!t) { showToast('请输入有效的英语句子', 2000); return; }
 
             if (!sentencePool.includes(t)) {
                 sentencePool.push(t);
@@ -1028,7 +1363,7 @@
             }
             inp.value = '';
 
-            if(currentIndex === null && sentencePool.length === 1) {
+            if (currentIndex === null && sentencePool.length === 1) {
                 currentIndex = 0;
                 clearInputAndResult();
                 resetTextareaHeight();
@@ -1081,17 +1416,19 @@
         });
 
         userInputEl.addEventListener('keydown', e => {
-            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault();
+                checkAnswer(); }
         });
         document.getElementById('newSentenceInput').addEventListener('keydown', e => {
-            if(e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
+            if (e.key === 'Enter') { e.preventDefault();
+                addNewSentence(); }
         });
 
         window.onload = () => {
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
-            if(savedSpeed) {
+            if (savedSpeed) {
                 playbackSpeed = parseFloat(savedSpeed);
-                if(isNaN(playbackSpeed) || playbackSpeed < 0.6 || playbackSpeed > 1.2) playbackSpeed = 0.85;
+                if (isNaN(playbackSpeed) || playbackSpeed < 0.6 || playbackSpeed > 1.2) playbackSpeed = 0.85;
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
@@ -1101,7 +1438,7 @@
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(warmUp);
 
-            if(!sentencePool.length) {
+            if (!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
                 updatePlayPauseButton();
                 return;
