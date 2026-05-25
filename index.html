@@ -63,10 +63,12 @@
         .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
         .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
 
-        /* 录音、播放录音、历史记录 统一绿色系 */
-        .btn-record { background: var(--green); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        /* 录音与播放录音按钮区域：增加上下间距，颜色统一为绿色 */
+        .record-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; }
+        .btn-record, .btn-play-recording {
+            background: var(--green); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em;
+        }
         .btn-record.recording { background: var(--red); animation: pulse 1.5s infinite; }
-        .btn-play-recording { background: var(--green-light); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
         .btn-history { background: var(--green-dark); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
@@ -189,7 +191,7 @@
         <button type="button" class="btn-add" onclick="addNewSentence()">添加句子</button>
     </div>
 
-    <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录（含用户输入）</button>
+    <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录</button>
 
     <div class="modal-overlay" id="historyModal">
         <div class="modal-content">
