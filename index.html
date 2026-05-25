@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 录音修复版</title>
+    <title>英语听写练习 · 录音完整版</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -23,18 +23,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-            padding: 20px 20px 30px;
-            max-width: 700px;
-            margin: 0 auto;
+            background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-select: none; padding: 20px 20px 30px; max-width: 700px; margin: 0 auto;
         }
         h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; }
         .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; }
-
         .speed-card {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm); box-shadow: var(--shadow);
@@ -48,6 +41,7 @@
         }
         .speed-value { font-size: 0.8em; font-weight: 700; color: var(--teal); min-width: 36px; text-align: center; }
 
+        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none; cursor: pointer;
             font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
@@ -146,14 +140,12 @@
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练 · 录音修复版</h2>
-    <p class="subtitle"> </p>
+    <h2>🎧 小毛快练 · 完整版</h2>
+    <p class="subtitle"></p>
 
     <div class="speed-card">
         <label>🐢 语速</label>
-        <div class="speed-slider">
-            <input type="range" id="speedSlider" min="0.6" max="1.2" step="0.05" value="0.85">
-        </div>
+        <div class="speed-slider"><input type="range" id="speedSlider" min="0.6" max="1.2" step="0.05" value="0.85"></div>
         <span class="speed-value" id="speedValue">0.85x</span>
     </div>
 
@@ -167,9 +159,9 @@
         <textarea id="userInput" placeholder="在这里默写…（Enter 检查，Shift+Enter 换行）" autocomplete="off"></textarea>
     </div>
 
-    <div class="action-row">
+    <div class="btn-row">
         <button type="button" class="btn-play" id="playPauseBtn">▶ 播放</button>
-        <button type="button" class="btn-check" onclick="checkAndShowAnswer()">✅ 检查</button>
+        <button type="button" class="btn-check" id="checkBtn" onclick="checkAndShowAnswer()">✅ 检查</button>
     </div>
 
     <div class="result" id="resultArea"></div>
@@ -200,12 +192,12 @@
     </div>
 
     <script>
-        // ========== 存储键 ==========
+        // ==================== 句子库与历史 ====================
         const STORAGE_KEY_SENTENCES = 'sentencePool_v4';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v2';
 
-        const defaultSentences = [ /* 保持您原有的所有句子，此处省略以节省空间，实际使用时请保留 */ 
+        const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
             "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
             "The faster a car is going at the point it starts to spin, the faster it will be at all points during deceleration, as it always stops in the same place. Therefore ... before the spin. Hence, says Mosley, reduced grip equals increased safety, everything else being equal",
@@ -409,190 +401,6 @@
             "Whereas mechanical grip is determined by tires, suspension, and setup, aerodynamic grip is determined by bodywork and speed",
             "Since race car dynamics ultimately reduces to managing tire forces within physical limits, mastery of tire behavior is the foundation of all tuning",
             "Unless engineers understand both theoretical principles and real-world sensitivities, they cannot transform a collection of components into a fast, reliable, and drivable racing vehicle",
-            "While the combined effects of tire load sensitivity, aerodynamic load distribution, and roll stiffness distribution must be integrated into a comprehensive dynamic model to accurately predict the limit handling behavior of a high-performance race car, most simplified engineering analyses still rely on linearized tire models that fail to capture the complex force degradation patterns near the friction circle",
-            "Although the implementation of pushrod-activated suspension systems with rising-rate characteristics allows race engineers to maintain optimal ride height under significant aerodynamic downforce, such designs also introduce nonlinear changes in effective wheel rates that require precise matching with damper characteristics to preserve tire contact over uneven surfaces",
-            "Because the generation of pneumatic aligning torque depends on both the lateral force distribution across the tire contact patch and the mechanical trail induced by caster and kingpin geometry, steering feel cannot be optimized independently of the vehicle's fundamental suspension layout and kinematic behavior",
-            "Even though wind-tunnel testing remains the primary method for quantifying aerodynamic coefficients, the inability to replicate dynamic tire squirt, rotating wheel flow fields, and on-track chassis attitude often results in noticeable discrepancies between predicted and actual downforce levels in real racing conditions",
-            "Whereas steady-state cornering analysis provides critical insights into balanced handling and lateral grip capability, it cannot account for the dynamic load shifts, tire lag effects, and yaw rate transients that dominate vehicle behavior during rapid turn entry and directional changes",
-            "Since the relaxation length of a race tire represents the distance required for the contact patch to develop full steady-state lateral force following a change in slip angle, this fundamental property introduces a time-dependent lag that significantly influences low-speed transient response and steering precision",
-            "Unless the vertical stiffness of the tire sidewall is properly calibrated to complement the spring and anti-roll bar rates, the overall suspension system will fail to distribute load evenly across the contact patch, leading to premature tire saturation and reduced cornering power",
-            "Even though increasing the front anti-roll bar rate effectively reduces understeer by increasing lateral load transfer on the front axle, excessive stiffness can overload the outside front tire and trigger sudden push at the limit of adhesion",
-            "Because every change in camber gain characteristics during body roll directly alters the lateral force generation of the outside tire, suspension kinematics must be carefully tuned to maintain optimal contact patch orientation as lateral acceleration builds",
-            "Whereas the friction ellipse concept accurately describes the competition between longitudinal and lateral forces for available adhesion, real-world tire behavior further complicates this relationship through dynamic load transfer, camber effects, and temperature-dependent friction coefficients",
-            "Since the polar moment of inertia directly affects the vehicle's agility and transient yaw response, minimizing mass distribution away from the center of gravity remains a critical objective in race car design despite packaging and component constraints",
-            "Although four-wheel-drive systems improve traction under acceleration by distributing torque to all four wheels, they also increase understeer tendencies and add significant mass that compromises braking, agility, and high-speed cornering efficiency",
-            "Because the pressure gradient along the underbody of a modern race car determines the efficiency of ground-effect downforce, even minor variations in ride height or front splitter height can trigger flow separation and drastically reduce aerodynamic performance",
-            "Even though static toe settings are intended to enhance straight-line stability, excessive toe-in or toe-out creates persistent tire scrub, increases rolling resistance, and accelerates thermally induced tire degradation throughout a race stint",
-            "Whereas damping forces in the rebound stage primarily control body motion and tire loading during weight transfer events, compression damping governs wheel control over high-frequency inputs and determines mechanical grip on rough track surfaces",
-            "Since the roll center migration path during cornering directly influences the magnitude and rate of lateral load transfer, inconsistent or highly dynamic roll center behavior often leads to unpredictable and non-linear handling characteristics",
-            "Unless the brake torque distribution is precisely calibrated to match the dynamic axle load shift during heavy deceleration, either front-wheel lockup and steering loss or rear-wheel lockup and instability will inevitably limit peak deceleration capability",
-            "Even though active aerodynamic devices allow dynamic adjustment of downforce and drag for different circuit sectors, their effectiveness depends heavily on rapid and accurate sensing of speed, lateral acceleration, and chassis attitude",
-            "Because the cornering stiffness of a race tire decreases nonlinearly with increasing vertical load, the axle subjected to greater load transfer during cornering will always experience a relative reduction in lateral force capability that defines the fundamental understeer or oversteer balance",
-            "Whereas linear stability analysis using stability derivatives provides clear insight into low-speed handling behavior, it becomes increasingly inaccurate as tires enter the nonlinear region and lateral force gain begins to degrade",
-            "Since any suspension compliance in bushings, uprights, or steering components introduces unintended elastic steer and camber angles under load, race cars require extremely rigid structures to preserve intentional geometric control",
-            "Even though higher tire pressures increase cornering stiffness and improve transient response, they also reduce the contact patch area and can raise operating temperatures beyond the optimal window for peak friction",
-            "Because the Moment Method integrates force and moment equilibrium into a single graphical representation, it remains one of the most powerful tools for diagnosing limit understeer, oversteer, and stability characteristics across all operating conditions",
-            "Unless aerodynamic downforce is distributed proportionally with the dynamic tire loads at each axle, the vehicle will exhibit speed-dependent handling transitions that severely compromise consistency and driver confidence",
-            "Whereas lateral load transfer during cornering is governed by lateral acceleration, center of gravity height, and track width, its distribution between front and rear axles is controlled entirely by roll stiffness distribution",
-            "Since the induced drag generated by a tire during cornering increases with lateral force, high-speed cornering inevitably demands additional engine power to overcome drag forces that are absent in straight-line operation",
-            "Even though differential locking mechanisms improve corner-exit traction by limiting wheel spin, excessive lock torque restricts the natural differentiation required in turns and introduces significant understeer",
-            "Because both pneumatic trail and mechanical trail decrease as the tire approaches saturation, steering feedback naturally diminishes near the limit, requiring the driver to rely increasingly on experience and vehicle memory",
-            "Whereas the bicycle model neglects roll motion, load transfer, and tire nonlinearity, it remains invaluable for establishing a foundational understanding of understeer, oversteer, and static directional stability",
-            "Since the effectiveness of aerodynamic devices such as wings and diffusers depends heavily on maintaining smooth and attached airflow, any disturbance from turbulence, wheel spray, or following vehicles can drastically reduce downforce and upset handling balance",
-            "Unless the vertical spring rates are tuned to control chassis attitude without disrupting tire contact, aerodynamic rake angles will shift dynamically and create unintended changes in downforce distribution during cornering and braking",
-            "Even though longer wheelbase vehicles demonstrate superior high-speed stability, they suffer from reduced low-speed agility, increased yaw inertia, and poorer turn-in response compared to shorter-wheelbase counterparts",
-            "Because tire temperature evolution during a race stint directly impacts friction coefficient and cornering stiffness, setup decisions must account for thermal sensitivity as well as steady-state performance",
-            "Whereas anti-dive geometry reduces nose dive during braking by using suspension leverage to resist chassis pitch, excessive anti-dive can unload the rear axle and induce instability under combined braking and steering",
-            "Since the contact patch shape and pressure distribution vary continuously with load, camber, and speed, race tires cannot be accurately represented using constant-parameter linear models in high-performance simulations",
-            "Even though Gurney flaps and small trailing-edge devices appear insignificant, they strongly modify pressure recovery and can significantly enhance downforce without imposing substantial drag penalties",
-            "Because every steering input produces both lateral force and yaw moment simultaneously, vehicle response is inherently coupled and cannot be fully understood using decoupled single-input analysis methods",
-            "Whereas road-course race cars require balanced aerodynamic setup for both high-speed corners and slow chicanes, oval-track vehicles rely on extreme asymmetric setups to optimize performance in sustained left turns",
-            "Since the rolling resistance of a racing tire increases with speed, load, and deflection, it contributes noticeably to power absorption even when aerodynamic drag becomes the dominant resistance term",
-            "Unless the entire suspension system—including springs, dampers, bars, and tires—operates as a harmoniously tuned system, wheel control will be inconsistent, and mechanical grip will be severely limited",
-            "Even though computer simulations can rapidly evaluate hundreds of setup combinations, they remain dependent on empirical tire data that is often difficult to measure accurately under representative racing conditions",
-            "Because the self-aligning torque generated by a tire peaks earlier than lateral force, steering feedback begins to decay before the tire reaches its absolute cornering limit, providing an early warning to the driver",
-            "Whereas force-excited suspension models represent external loads acting on the chassis, base-excited models more realistically simulate road-induced inputs and are therefore superior for ride and wheel-control analysis",
-            "Since flow separation over the rear deck or wing surfaces causes sudden loss of downforce, aerodynamic stability depends heavily on controlling boundary-layer growth and delaying separation through judicious device design",
-            "Even though wider rear tires improve traction and lateral grip, they also increase aerodynamic drag, rolling resistance, and steering effort, requiring careful balance in performance optimization",
-            "Because the longitudinal load transfer during acceleration increases rear-wheel normal load, rear-wheel-drive vehicles naturally benefit from improved traction during power application",
-            "Unless camber change during roll is carefully calibrated, the outside tire will either lose contact area or overload a small section of the tread, resulting in non-linear and unpredictable grip loss",
-            "Whereas understeer provides a stable and predictable handling mode for novice drivers, it limits peak cornering speed and is therefore deliberately minimized in professional racing applications",
-            "Since body roll alters both wheel loads and camber angles simultaneously, handling behavior is inherently multi-variable and cannot be fully controlled by any single suspension parameter",
-            "Even though closed-loop driver control can stabilize an otherwise unstable vehicle, it places significantly higher cognitive demand on the driver and reduces consistency over long distances",
-            "Because the effective spring rate at the wheel is modified by the motion ratio of the suspension, the physical spring rate alone does not determine the overall vertical stiffness of the chassis",
-            "Whereas steady-state skidpad testing provides repeatable measurements of understeer and lateral grip, it fails to replicate the transient load and slip conditions encountered in actual racing",
-            "Since aerodynamic downforce acts directly on the sprung mass, it increases tire loading without increasing inertial resistance, creating a performance advantage unique to high-speed operation",
-            "Even though compliant bushings improve ride comfort and reduce noise transmission, they introduce hysteresis and elastic deformation that undermine the precise geometric control required in racing",
-            "Because slip angle represents the fundamental control variable for lateral tire force, its relationship to steering angle forms the basis of directional control for all land vehicles",
-            "Unless brake cooling airflow is properly directed to the rotors and calipers, thermal fade will rapidly reduce braking power and create dangerous inconsistencies in stopping performance",
-            "Whereas the friction circle assumes isotropic friction capability, real tires exhibit different peak friction levels for lateral and longitudinal forces due to structural and tread-element behavior",
-            "Since yaw damping provides resistance to angular velocity rather than position, it suppresses oscillation without altering the steady-state cornering equilibrium of the vehicle",
-            "Even though anti-squat geometry reduces rear-end lift during acceleration, excessive anti-squat can lift the inner rear wheel and reduce traction on uneven or undulating surfaces",
-            "Because the pressure coefficient distribution along the vehicle body dictates local velocity and pressure changes, it directly determines whether a given surface generates lift or downforce",
-            "Whereas frequency-response analysis reveals resonant modes and dynamic stiffness characteristics, it remains limited to the linear range and cannot capture limit behavior",
-            "Since tire force buildup during transient steering is delayed by relaxation length, vehicles feel less responsive and less direct at low speeds where time constants are longer",
-            "Even though weight reduction universally improves acceleration, braking, and cornering, it must never compromise chassis torsional stiffness, which is essential for consistent suspension performance",
-            "Because the roll axis connects the front and rear roll centers, its height and slope define the moment arm through which centrifugal forces generate body roll",
-            "Unless the aerodynamic balance is matched to the chassis setup, the vehicle will transition between understeer and oversteer as speed changes, making it virtually undrivable at the limit",
-            "Whereas rear-wing downforce improves high-speed stability and rear grip, excessive rear aerodynamic load can overload the rear tires and induce sudden oversteer in fast corners",
-            "Since lateral force and aligning torque both depend strongly on operating temperature, tire warm-up procedures are critical to achieving consistent handling from the initial laps",
-            "Even though vortex generators delay flow separation and improve aerodynamic efficiency, they also create parasitic drag and must be used selectively to maintain overall performance",
-            "Because combined acceleration, braking, and cornering simultaneously load all friction resources, the maximum capability in any single direction is always reduced during combined maneuvers",
-            "Whereas static weight distribution establishes the baseline handling character, dynamic load transfer during motion often reverses the relative grip levels between front and rear axles",
-            "Since the sidewall stiffness of a racing tire influences both vertical spring rate and lateral response, it represents a critical compromise between grip, response, and durability",
-            "Even though front-wing downforce enhances front grip and steering response, excessive front loading can lead to early front-tire saturation and persistent understeer",
-            "Because the kingpin inclination and caster angle together determine mechanical trail and steering offset, they fundamentally shape steering effort, self-centering, and directional stability",
-            "Unless suspension travel is properly managed with bump stops and progressive springs, bottoming events will cause sudden changes in camber, toe, and ride height that destabilize the vehicle",
-            "Whereas steering ratio directly affects driver effort and response, it cannot change the inherent understeer or oversteer characteristics determined by chassis and tire setup",
-            "Since the induced velocity field from rotating wheels alters local airflow around the uprights and brakes, wheel rotation significantly affects both aerodynamic drag and cooling efficiency",
-            "Even though passive suspension systems rely on fixed mechanical properties, they can still be optimized to provide near-optimal performance across a wide range of operating conditions",
-            "Because the neutral-steer point depends on front and rear cornering stiffness distribution, any change in tire type, pressure, or wear will shift the handling balance of the vehicle",
-            "Whereas limit handling is defined by tire saturation, professional tuning focuses on making saturation progressive, predictable, and easily controlled by the driver",
-            "Since every modification to the vehicle simultaneously affects multiple dynamic parameters, only single-variable testing can reliably establish cause and effect in chassis tuning",
-            "Even though high downforce dramatically improves cornering speed, it also increases structural loads and requires reinforced components that add weight and reduce efficiency",
-            "Because rough-track conditions force continuous wheel movement, dampers must be tuned to absorb high-frequency inputs without breaking tire contact from the road surface",
-            "Unless the effects of tire load sensitivity are embedded within simulation models, predicted handling behavior will consistently deviate from real-world on-track performance",
-            "Whereas the Bode plot illustrates amplitude ratio and phase lag across frequencies, it allows engineers to identify resonant modes that cause instability or poor control",
-            "Since lateral acceleration in circular motion is proportional to the square of speed, small speed increases produce very large increases in required lateral tire force",
-            "Even though aerodynamic ground effects generate highly efficient downforce, they are extremely sensitive to ride height and can stall suddenly if the chassis is too low",
-            "Because both steering sensitivity and stability change continuously with lateral acceleration, the drivers perception of vehicle behavior evolves as cornering force builds",
-            "Whereas mechanical grip arises from tire, suspension, and chassis setup, aerodynamic grip depends on body shape, speed, and attitude, requiring independent but complementary optimization",
-            "Since brake bias determines which axle reaches tire friction limits first during deceleration, it directly influences both maximum stopping power and directional stability",
-            "Even though increasing track width reduces lateral load transfer and improves cornering power, it also increases frontal area and aerodynamic drag, reducing top speed",
-            "Because the center of gravity height influences load transfer in all directions, its reduction remains one of the most effective universal improvements in race car design",
-            "Unless the steering system is designed with minimal friction, backlash, and compliance, the driver will lose critical feedback regarding tire behavior and vehicle state",
-            "Whereas transient response characterizes vehicle behavior during rapid inputs, steady-state response describes balanced cornering, and both are essential to complete performance evaluation",
-            "Since the tire contact patch represents the only connection between vehicle and road, all handling performance ultimately depends on its consistent and controlled loading",
-            "Even though wet-weather tires are designed to evacuate water and prevent hydroplaning, they operate at much lower friction levels and require significant changes to suspension and aerodynamic setup",
-            "Because flow beneath the car dominates modern aerodynamic performance, ground effect is far more influential than external wings in contemporary open-wheel racing",
-            "Whereas chassis torsional stiffness ensures that suspension geometry operates as intended, insufficient rigidity allows twisting that disturbs camber, toe, and alignment under load",
-            "Since the lateral force capability of a tire decreases as slip angle exceeds the linear range, the relationship between steering input and cornering sharpness becomes highly nonlinear",
-            "Even though data acquisition systems record hundreds of channels, the most critical signals for tuning remain steering angle, lateral acceleration, yaw rate, and suspension displacement",
-            "Because all pneumatic tires exhibit load sensitivity, no amount of chassis tuning can eliminate the inherent reduction in friction coefficient at high vertical loads",
-            "Unless the complete vehicle system—including powertrain, brakes, aerodynamics, and tires—is balanced and integrated, no single component can deliver its full potential performance",
-            "Whereas simulation tools allow rapid iteration of design changes, physical testing remains essential to validate models and confirm real-world feasibility",
-            "Since race performance depends on consistent operation near the friction limit, predictable handling is often more valuable than theoretically higher peak grip",
-            "Even though advanced tire models such as the Magic Formula capture complex behavior, they require extensive experimental data that is often unavailable to small teams",
-            "Because the time constant of tire force buildup decreases with speed, vehicles feel increasingly responsive and direct as velocity increases",
-            "Whereas excessive body roll degrades handling by disrupting alignment and load distribution, extreme stiffness can reduce mechanical grip by preventing tire contact on rough surfaces",
-            "Since powertrain inertia affects acceleration response, it influences the longitudinal component of the g-g diagram and thus the full-acceleration driving style",
-            "Even though asymmetric suspension setups improve oval-track handling in sustained turns, they produce undesirable handling characteristics on road courses with left and right corners",
-            "Because aerodynamic lift or downforce creates moments about the center of gravity, they directly affect trim attitude and high-speed stability independent of mechanical setup",
-            "Unless suspension kinematic and compliance effects are combined in analysis, predicted wheel angles will not match measured values, leading to inaccurate tuning decisions",
-            "Whereas underdamped yaw response provides agile turn-in, excessive overshoot leads to instability during rapid steering reversals and lane-change maneuvers",
-            "Since tire-induced drag increases with cornering force, even moderate lateral acceleration creates significant additional resistance that reduces effective engine power",
-            "Even though anti-roll bars effectively control body roll, they also increase load transfer differences and reduce mechanical grip on uneven or bumpy track surfaces",
-            "Because the side-slip angle of the body influences aerodynamic lift and drag, high-speed stability in crosswinds depends heavily on directional aerodynamic characteristics",
-            "Whereas fixed aerodynamic configurations work well on single-purpose tracks, modern race cars benefit from variable devices that adapt to different speed and corner conditions",
-            "Since heat buildup in brakes leads to fade, judder, and failure, the aerodynamic management of cooling airflow is as critical as the mechanical design of the brakes themselves",
-            "Even though higher caster angles improve self-centering and straight-line stability, they also increase steering effort and induce camber change during steering",
-            "Because wheel alignment parameters—camber, caster, and toe—directly affect tire loading and force generation, they represent the final critical step in chassis setup",
-            "Unless the tire operating temperature remains within its narrow optimal window, both friction and durability will suffer, leading to poor performance and early pit stops",
-            "Whereas longitudinal weight transfer dominates during acceleration and braking, lateral weight transfer dominates during cornering, and both must be managed cooperatively",
-            "Since the contact patch pressure distribution determines local slip and wear, uneven pressure distribution leads to irregular tread wear and shortened tire life",
-            "Even though active suspension systems can continuously adjust forces and rates, they remain banned in most professional racing series due to cost and regulation constraints",
-            "Because the Moment Method diagram incorporates all forces and moments, it eliminates the need for separate understeer, stability, and limit analyses",
-            "Whereas smooth race tracks allow extremely stiff suspension setups, bumpy circuits require increased compliance to maintain consistent tire contact and grip",
-            "Since vehicle dynamics is governed by Newtonian physical laws, consistent performance requires consistent tire loading, predictable force buildup, and stable dynamic equilibrium",
-            "Even though simulated tire data is useful for preliminary design, only measured force-and-moment data can support accurate high-performance handling simulation",
-            "Because the rear tires provide the primary stabilizing yaw moment in most vehicles, rear-tire saturation leads to sudden oversteer and potential loss of control",
-            "Unless aerodynamic devices are positioned outside turbulent wake regions, their efficiency will be severely compromised, and performance will be unpredictable",
-            "Whereas steering feel is shaped by aligning torque, mechanical trail, and friction, it can be tuned independently from the inherent understeer of the chassis",
-            "Since combined maneuvers force tires to operate within the friction ellipse, drivers must manage trade-offs between braking, accelerating, and steering to maximize exit speed",
-            "Even though front-wheel-drive vehicles benefit from traction during acceleration, they suffer from severe understeer due to combined driving and cornering loads on the front axle",
-            "Because pitch motion alters front and rear ride heights simultaneously, it changes aerodynamic rake and downforce distribution independently of steering or roll",
-            "Whereas the installation ratio of a spring defines its leverage effect on the wheel, it directly determines the relationship between physical spring rate and effective wheel rate",
-            "Since tire wear reduces both cornering stiffness and friction coefficient, handling balance gradually shifts during a race stint, requiring adaptive driving or setup compensation",
-            "Even though low-speed handling is dominated by tire lag and kinematics, high-speed behavior is governed by aerodynamics, damping, and inertial response",
-            "Because the complete dynamic behavior of a race car involves coupled heave, pitch, roll, lateral, and yaw motions, it cannot be fully understood using simplified single-mode models",
-            "Unless the suspension system is designed to maintain optimal camber throughout its travel, the tire will lose grip precisely when additional cornering force is most needed",
-            "Whereas open differentials allow necessary wheel speed differentiation in turns, they permit inner-wheel spin and reduce traction during corner-exit acceleration",
-            "Since lateral force variation acts as a periodic excitation on the suspension, damping must be calibrated to prevent resonance and sustained oscillation",
-            "Even though computational fluid dynamics can predict complex flow fields, it still requires validation against wind-tunnel and on-track measurements to ensure accuracy",
-            "Because tire force degradation near the limit is progressive, professional tuning aims to extend this transitional region to enhance driver feel and control",
-            "Whereas race car dynamics is often viewed as a collection of independent adjustments, it is fundamentally an integrated system where every change interacts with multiple others",
-            "Since the vehicle's response to steering is determined by the entire dynamic system, no single component—whether tires, wings, or dampers—can be tuned in isolation",
-            "Even though large-diameter brakes improve thermal capacity and fade resistance, they also add unsprung mass that harms wheel control and mechanical grip",
-            "Because unsprung mass directly affects wheel control and tire contact, its minimization remains a critical objective in suspension and brake design",
-            "Unless the effects of roll steer are included in handling models, predicted vehicle response will deviate from real behavior, especially at higher lateral accelerations",
-            "Whereas steady-state analysis assumes equilibrium, real racing involves continuous transients that demand strong, stable, and predictable dynamic response",
-            "Since airflow through the radiator, brakes, and engine compartment significantly affects total drag, internal airflow management is as critical as external body shape",
-            "Even though simplified vehicle models are useful for teaching and analysis, high-performance simulation requires fully coupled dynamic models with nonlinear tire characteristics",
-            "Because the g-g diagram represents the full acceleration envelope, its area and shape provide a concise measure of overall vehicle performance capability",
-            "Whereas neutral steer is theoretically ideal, slight, progressive understeer is often more practical for real-world racing because it enhances stability and predictability",
-            "Since every race circuit has a unique combination of corners, straights, and bumps, setup must be individually optimized to match the specific demands of each track",
-            "Even though modern sensors and data logging provide unprecedented insight, driver feedback remains indispensable for interpreting subjective feel and limit behavior",
-            "Because the foundation of race car dynamics lies in tire behavior, mastery of tire force characteristics is essential for successful engineering and tuning",
-            "Unless engineers integrate knowledge of mechanics, aerodynamics, tires, and control systems, they cannot produce a truly balanced, competitive, and drivable race car",
-            "While the interaction between dynamic load transfer, tire nonlinearity, and aerodynamic sensitivity creates highly coupled behavior that complicates tuning, it also enables precise fine-tuning of handling balance through small, targeted adjustments to springs, bars, and aerodynamic devices",
-            "Although increasing the rear roll stiffness effectively shifts handling balance toward oversteer by reducing rear axle lateral force capability, it simultaneously reduces mechanical grip on rough surfaces and can induce early rear-tire saturation over undulations",
-            "Because the effective friction coefficient of a race tire varies significantly with slip ratio, slip angle, camber, and temperature, no single fixed value can accurately represent its performance across all operating conditions",
-            "Even though venturi-shaped underfloor channels generate powerful ground-effect downforce through low-pressure suction, they are extremely sensitive to ride height, pitch, and porosity, making consistency difficult to maintain",
-            "Whereas the lateral force generated by a tire at small slip angles is dominated by cornering stiffness, at large slip angles it becomes limited by the friction coefficient and contact patch stress limits",
-            "Since the aerodynamic center of pressure determines the inherent stability of the body in airflow, its position relative to the center of gravity directly affects high-speed stability and pitch sensitivity",
-            "Unless the steering systems nonlinearities, friction, and compliance are accurately modeled, simulated steering feel and response will not match the subjective feedback reported by drivers",
-            "Even though lowering the center of gravity universally reduces load transfer and improves handling, practical constraints such as ground clearance, component packaging, and crashworthiness often limit how low it can be placed",
-            "Because the roll gradient of a race car defines its body roll per unit lateral acceleration, it directly influences driver confidence, tire alignment change, and aerodynamic attitude variation during cornering",
-            "Whereas pure mechanical grip depends on tires, suspension, and weight distribution without aerodynamic influence, aerodynamic grip multiplies normal forces and becomes dominant at racing speeds",
-            "Since any change in tire aspect ratio alters sidewall stiffness, contact patch shape, and relaxation length, it affects both steady-state cornering power and transient response characteristics",
-            "Even though rapid steering inputs are necessary for direction changes, they also excite transient tire lag, suspension modes, and yaw inertia that can destabilize the vehicle if not properly damped",
-            "Because brake pad friction coefficients change with temperature, pressure, and speed, consistent brake performance requires careful material selection and aerodynamic cooling management",
-            "Whereas the wheelbase determines the moment arm for yaw moments and influences directional stability, it also affects the vehicles turning radius and low-speed agility",
-            "Since the lateral load transfer ratio between front and rear axles directly determines understeer or oversteer, it is the single most important parameter in chassis balance adjustment",
-            "Even though aerodynamic drag is unavoidable in high-speed racing, its impact on top speed can be minimized through streamlined bodywork, reduced frontal area, and carefully managed wake flow",
-            "Because the contact patch is the only point where force is transmitted between vehicle and road, its size, shape, pressure distribution, and dynamic stability define all measurable handling behavior",
-            "Unless the suspensions camber curve is precisely matched to the roll gradient and lateral load transfer, the outside tire will not maintain ideal contact orientation at peak lateral acceleration",
-            "Whereas race car dampers are primarily tuned for wheel control and tire contact, passenger car dampers prioritize ride comfort, leading to fundamentally different calibration strategies",
-            "Since the pneumatic trail of a tire decreases continuously with increasing slip angle, the self-centering torque diminishes progressively as the limit of adhesion is approached",
-            "Even though differential preload can improve launch traction and stability, it also increases artificial understeer and can create a \"tight\" feeling that reduces turn-in agility",
-            "Because flow separation over aerodynamic devices is triggered by adverse pressure gradients, its prevention requires carefully designed pressure recovery and boundary-layer control",
-            "Whereas linear tire models are sufficient for stability and control analysis at low g levels, nonlinear models are mandatory for accurate prediction of limit handling and saturation behavior",
-            "Since the polar moment of inertia affects how quickly the vehicle can change yaw rate, its reduction improves agility but may reduce high-speed stability in crosswinds or on rough surfaces",
-            "Even though static camber settings improve cornering grip, they also reduce straight-line braking and acceleration performance by reducing effective contact patch area",
-            "Because the front tires control the direction of the vehicle while the rear tires provide stability, their relative force capabilities define the fundamental safety and performance character",
-            "Unless all suspension links, uprights, and chassis components exhibit high stiffness, elastic deformation will alter wheel angles and create unpredictable handling deviations",
-            "Whereas on-board data logging provides objective measurements of vehicle state, driver feedback provides subjective evaluation of feel, confidence, and limit behavior—both are necessary for complete tuning",
-            "Since race car vehicle dynamics is governed by measurable physical laws, it allows systematic engineering rather than guesswork, making consistent performance achievable through rigorous testing and analysis",
             "Handling is really the sum of the driver and the vehicle. The driver provides the input and the vehicle responds with feedback. ... we are left to study the vehicle response, or the vehicle dynamics"
         ];
 
@@ -632,7 +440,7 @@
             saveHistory(sentenceHistory);
         }
 
-        // ========== 系统语音 ==========
+        // ==================== 系统语音 ====================
         let selectedVoice = null;
         function selectBestSystemVoice() {
             const voices = window.speechSynthesis.getVoices();
@@ -652,7 +460,7 @@
         window.speechSynthesis.addEventListener('voiceschanged', selectBestSystemVoice);
         selectBestSystemVoice();
 
-        // ========== 录音核心（修复版） ==========
+        // ==================== 录音逻辑 ====================
         let mediaRecorder = null;
         let audioChunks = [];
         let recordedBlob = null;
@@ -662,20 +470,12 @@
         const recordBtn = document.getElementById('recordBtn');
         const playRecordingBtn = document.getElementById('playRecordingBtn');
 
-        // 获取浏览器支持的最佳音频类型
         function getSupportedMimeType() {
-            const types = [
-                'audio/webm;codecs=opus',
-                'audio/webm',
-                'audio/ogg;codecs=opus',
-                'audio/mp4'
-            ];
+            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
             for (let type of types) {
-                if (MediaRecorder.isTypeSupported(type)) {
-                    return type;
-                }
+                if (MediaRecorder.isTypeSupported(type)) return type;
             }
-            return ''; // 浏览器默认
+            return '';
         }
 
         async function startRecording() {
@@ -693,7 +493,6 @@
                 mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) audioChunks.push(e.data);
                 };
-
                 mediaRecorder.onstop = () => {
                     recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
                     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
@@ -702,7 +501,6 @@
                     stream.getTracks().forEach(track => track.stop());
                     showToast('✅ 录音完成', 1500);
                 };
-
                 mediaRecorder.onerror = () => {
                     showToast('❌ 录音出错', 2000);
                     stopRecordingUI();
@@ -713,7 +511,7 @@
                 recordBtn.classList.add('recording');
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
-                console.error('麦克风错误:', err);
+                console.error(err);
                 showToast('❌ 无法访问麦克风，请检查权限设置', 2500);
             }
         }
@@ -739,16 +537,15 @@
                 showToast('⚠️ 请先录音', 2000);
                 return;
             }
-            // 重置音频播放器状态
             audioPlayer.src = recordingUrl;
             audioPlayer.load();
             audioPlayer.play().catch(e => {
-                console.error('播放失败:', e);
-                showToast('❌ 播放失败，可能浏览器不支持此音频格式', 2500);
+                console.error(e);
+                showToast('❌ 播放失败，可能格式不支持', 2500);
             });
         }
 
-        // ========== 原有听写逻辑（完全保留） ==========
+        // ==================== 原有听写逻辑 ====================
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -769,10 +566,21 @@
         let isDragging = false;
         let currentUtterance = null;
 
-        function autoResizeTextarea() { /* ... */ }
+        function autoResizeTextarea() {
+            userInputEl.style.height = 'auto';
+            const newHeight = userInputEl.scrollHeight;
+            const maxHeight = window.innerHeight * 0.5;
+            userInputEl.style.height = newHeight >= maxHeight ? maxHeight + 'px' : newHeight + 'px';
+        }
         userInputEl.addEventListener('input', autoResizeTextarea);
+        window.addEventListener('resize', () => {
+            if (document.activeElement === userInputEl) autoResizeTextarea();
+        });
 
-        function resetTextareaHeight() { userInputEl.style.height = '30vh'; if (userInputEl.value) autoResizeTextarea(); }
+        function resetTextareaHeight() {
+            userInputEl.style.height = '30vh';
+            if (userInputEl.value) autoResizeTextarea();
+        }
 
         let toastTimer;
         function showToast(msg, d = 2500) {
@@ -796,38 +604,180 @@
             return 0;
         }
 
-        function detachUtterance() { /* ... */ }
-        function stopPlayback(keepPaused = false) { /* ... */ }
-        function resetAll() { /* ... */ }
-        function refocusInput() { /* ... */ }
-        function startPlayback(fromChar) { /* ... */ }
-        function updateProgress() { /* ... */ }
-        function handlePlayPause() { /* ... */ }
-        function updatePlayPauseButton() { /* ... */ }
-        function switchToSentence(idx) { /* ... */ }
-        function nextSentence() { /* ... */ }
-        function clearInputAndResult() { /* ... */ }
-        function normalizeWord(word) { /* ... */ }
-        function escapeHtml(s) { /* ... */ }
-        function checkAnswer() { /* ... */ }
-        function checkAndShowAnswer() { checkAnswer(); }
-        function addNewSentence() { /* ... */ }
-        function showHistory() { /* ... */ }
-        function closeHistory() { /* ... */ }
-        function deleteHistoryItem(sentence) { /* ... */ }
+        function detachUtterance() {
+            if (currentUtterance) {
+                currentUtterance.onstart = null;
+                currentUtterance.onend = null;
+                currentUtterance.onerror = null;
+                currentUtterance = null;
+            }
+        }
 
-        // 事件绑定
-        playPauseBtn.addEventListener('click', handlePlayPause);
-        progressBar.addEventListener('mousedown', () => isDragging = true);
-        progressBar.addEventListener('touchstart', () => isDragging = true);
-        progressBar.addEventListener('mouseup', () => isDragging = false);
-        progressBar.addEventListener('touchend', () => isDragging = false);
+        function stopPlayback(keepPaused = false) {
+            detachUtterance();
+            window.speechSynthesis.cancel();
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            isPlaying = false;
+            if (!keepPaused) isPaused = false;
+        }
+
+        function resetAll() {
+            stopPlayback(false);
+            pausedCharPos = 0;
+            progressBar.value = 0;
+            progressBar.disabled = true;
+            currentTimeDisplay.textContent = '00:00';
+            totalTimeDisplay.textContent = '00:00';
+            updatePlayPauseButton();
+        }
+
+        function refocusInput() {
+            if (document.activeElement !== userInputEl) {
+                const start = userInputEl.selectionStart;
+                const end = userInputEl.selectionEnd;
+                userInputEl.focus();
+                setTimeout(() => { userInputEl.setSelectionRange(start, end); }, 10);
+            }
+        }
+
+        function startPlayback(fromChar) {
+            stopPlayback(false);
+            if (currentIndex === null || !sentencePool[currentIndex]) return;
+
+            fullText = sentencePool[currentIndex];
+            totalChars = fullText.length;
+            const rate = Math.max(0.5, playbackSpeed) * 14;
+            estimatedDuration = Math.max(1, totalChars / rate);
+            progressBar.disabled = false;
+            progressBar.max = 100;
+            totalTimeDisplay.textContent = formatTime(estimatedDuration);
+
+            const startPos = findWordBoundary(fullText, fromChar);
+            const text = fullText.substring(startPos);
+            pausedCharPos = startPos;
+
+            progressBar.value = (startPos / totalChars) * 100;
+            currentTimeDisplay.textContent = formatTime((startPos / totalChars) * estimatedDuration);
+
+            startTime = Date.now();
+            isPlaying = true;
+            updatePlayPauseButton();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = playbackSpeed;
+            utterance.lang = 'en-US';
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else {
+                selectBestSystemVoice();
+                if (selectedVoice) utterance.voice = selectedVoice;
+            }
+
+            utterance.onstart = () => {
+                if (!isPlaying) return;
+                if (progressTimer) clearInterval(progressTimer);
+                progressTimer = setInterval(updateProgress, 100);
+                refocusInput();
+            };
+            utterance.onend = () => {
+                if (!isPlaying) return;
+                isPlaying = false;
+                if (progressTimer) clearInterval(progressTimer);
+                progressBar.value = 100;
+                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
+                updatePlayPauseButton();
+            };
+            utterance.onerror = () => {
+                isPlaying = false;
+                if (progressTimer) clearInterval(progressTimer);
+                updatePlayPauseButton();
+            };
+
+            currentUtterance = utterance;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function updateProgress() {
+            if (!isPlaying || totalChars <= 0 || isDragging) return;
+            const elapsed = (Date.now() - startTime) / 1000;
+            const rate = Math.max(0.5, playbackSpeed) * 14;
+            const chars = Math.floor(elapsed * rate);
+            const curChar = Math.min(totalChars, pausedCharPos + chars);
+            progressBar.value = (curChar / totalChars) * 100;
+            currentTimeDisplay.textContent = formatTime((curChar / totalChars) * estimatedDuration);
+            if (curChar >= totalChars) {
+                stopPlayback(false);
+                progressBar.value = 100;
+                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
+            }
+        }
+
+        function handlePlayPause() {
+            if (currentIndex === null || !sentencePool.length) {
+                showToast('没有句子', 2000);
+                return;
+            }
+            if (!isPlaying && !isPaused) {
+                startPlayback(0);
+            } else if (isPlaying) {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const rate = Math.max(0.5, playbackSpeed) * 14;
+                pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * rate));
+                detachUtterance();
+                window.speechSynthesis.cancel();
+                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+                isPlaying = false;
+                isPaused = true;
+                updatePlayPauseButton();
+                refocusInput();
+            } else if (isPaused) {
+                startPlayback(pausedCharPos);
+            }
+        }
+
+        function updatePlayPauseButton() {
+            const disabled = (currentIndex === null || !sentencePool.length);
+            playPauseBtn.disabled = disabled;
+            if (disabled) {
+                playPauseBtn.textContent = '▶ 播放';
+                playPauseBtn.className = 'btn-play';
+                return;
+            }
+            if (!isPlaying && !isPaused) {
+                playPauseBtn.textContent = '▶ 播放';
+                playPauseBtn.className = 'btn-play';
+            } else if (isPlaying) {
+                playPauseBtn.textContent = '⏸ 暂停';
+                playPauseBtn.className = 'btn-pause';
+            } else if (isPaused) {
+                playPauseBtn.textContent = '▶ 继续';
+                playPauseBtn.className = 'btn-play';
+            }
+        }
+
+        playPauseBtn.addEventListener('click', (e) => { e.preventDefault(); handlePlayPause(); });
+        playPauseBtn.addEventListener('touchend', (e) => { e.preventDefault(); handlePlayPause(); });
+
+        progressBar.addEventListener('mousedown', () => { isDragging = true; });
+        progressBar.addEventListener('touchstart', () => { isDragging = true; });
+        progressBar.addEventListener('mouseup', () => { isDragging = false; });
+        progressBar.addEventListener('touchend', () => { isDragging = false; });
+        progressBar.addEventListener('mouseleave', () => { if (isDragging) isDragging = false; });
+        progressBar.addEventListener('input', (e) => {
+            if (totalChars <= 0) return;
+            const p = parseFloat(e.target.value);
+            const tc = Math.floor((p / 100) * totalChars);
+            currentTimeDisplay.textContent = formatTime((tc / totalChars) * estimatedDuration);
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+        });
         progressBar.addEventListener('change', (e) => {
             if (totalChars <= 0) return;
             const p = parseFloat(e.target.value);
             const tc = Math.floor((p / 100) * totalChars);
             startPlayback(tc);
         });
+
         speedSlider.addEventListener('input', () => {
             playbackSpeed = parseFloat(speedSlider.value);
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
@@ -837,15 +787,161 @@
                 totalTimeDisplay.textContent = formatTime(estimatedDuration);
             }
         });
-        speedSlider.addEventListener('change', () => localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed));
+        speedSlider.addEventListener('change', () => {
+            localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
+        });
+
+        function switchToSentence(idx) {
+            if (idx < 0 || idx >= sentencePool.length) return;
+            if (currentIndex === idx) return;
+            resetAll();
+            currentIndex = idx;
+            clearInputAndResult();
+            resetTextareaHeight();
+            totalChars = sentencePool[currentIndex].length;
+            const rate = Math.max(0.5, playbackSpeed) * 14;
+            estimatedDuration = Math.max(1, totalChars / rate);
+            progressBar.value = 0;
+            progressBar.disabled = true;
+            currentTimeDisplay.textContent = '00:00';
+            totalTimeDisplay.textContent = formatTime(estimatedDuration);
+            updatePlayPauseButton();
+            userInputEl.focus();
+        }
+
+        function nextSentence() {
+            if (sentencePool.length === 0) { showToast('📭 句子库为空', 2500); return; }
+            if (sentencePool.length === 1) { showToast('📌 只有1句，请添加更多。', 2500); return; }
+            const availableIndices = sentencePool.map((_, i) => i).filter(i => i !== currentIndex);
+            const ni = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+            switchToSentence(ni);
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.focus();
+        }
+
+        function clearInputAndResult() {
+            userInputEl.value = '';
+            resultArea.innerHTML = '';
+        }
+
+        function normalizeWord(word) {
+            const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
+            return cleaned || '';
+        }
+
+        function escapeHtml(s) {
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        function checkAnswer() {
+            if (currentIndex === null) return;
+            const rawUser = userInputEl.value.trim();
+            const correct = sentencePool[currentIndex].trim();
+            if (!rawUser) {
+                resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>';
+                return;
+            }
+            const userWords = rawUser.split(/\s+/);
+            const correctWords = correct.split(/\s+/);
+            const normUser = userWords.map(normalizeWord);
+            const normCorrect = correctWords.map(normalizeWord);
+
+            let html = '';
+            let cIdx = 0, uIdx = 0;
+            while (cIdx < normCorrect.length && uIdx < normUser.length) {
+                const userClean = normUser[uIdx];
+                const correctClean = normCorrect[cIdx];
+                if (userClean === correctClean) {
+                    html += `<span class="correct">${escapeHtml(userWords[uIdx])}</span> `;
+                    cIdx++; uIdx++;
+                } else {
+                    let foundFuture = false;
+                    for (let k = cIdx + 1; k < normCorrect.length; k++) {
+                        if (userClean === normCorrect[k]) { foundFuture = true; break; }
+                    }
+                    if (foundFuture) { cIdx++; }
+                    else { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
+                }
+            }
+            while (uIdx < normUser.length) {
+                html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
+                uIdx++;
+            }
+            const perfect = normUser.join(' ') === normCorrect.join(' ');
+            resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
+                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
+                `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+            updateHistory(correct, rawUser);
+            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            userInputEl.focus();
+        }
+
+        function checkAndShowAnswer() { checkAnswer(); }
+
+        function addNewSentence() {
+            const inp = document.getElementById('newSentenceInput');
+            const t = inp.value.trim();
+            if (!t) { showToast('请输入有效的英语句子', 2000); return; }
+            if (!sentencePool.includes(t)) {
+                sentencePool.push(t);
+                saveSentencePool(sentencePool);
+            }
+            inp.value = '';
+            if (currentIndex === null && sentencePool.length === 1) {
+                currentIndex = 0;
+                clearInputAndResult();
+                resetTextareaHeight();
+                totalChars = t.length;
+                const rate = Math.max(0.5, playbackSpeed) * 14;
+                estimatedDuration = Math.max(1, totalChars / rate);
+                totalTimeDisplay.textContent = formatTime(estimatedDuration);
+                updatePlayPauseButton();
+            }
+            showToast('✅ 句子已添加！', 1800);
+        }
+
+        function showHistory() {
+            const history = loadHistory();
+            const entries = Object.entries(history);
+            if (entries.length === 0) {
+                historyList.innerHTML = '<li style="text-align:center;color:#999;">暂无提交记录</li>';
+            } else {
+                entries.sort((a, b) => b[1].time.localeCompare(a[1].time));
+                historyList.innerHTML = entries.map(([sentence, data]) => {
+                    const shortTime = new Date(data.time).toLocaleString();
+                    const userInput = data.userInput || '（无输入）';
+                    return `<li>
+                        <div><strong>原文：</strong>${escapeHtml(sentence)}</div>
+                        <div style="color:#555; margin-top:2px;"><strong>你的输入：</strong>${escapeHtml(userInput)}</div>
+                        <small style="color:#888;">${shortTime}</small>
+                        <button class="delete-btn" onclick="deleteHistoryItem('${escapeHtml(sentence).replace(/'/g, "\\'")}')">删除</button>
+                    </li>`;
+                }).join('');
+            }
+            historyModal.classList.add('active');
+        }
+
+        function closeHistory() { historyModal.classList.remove('active'); }
+
+        function deleteHistoryItem(sentence) {
+            removeHistory(sentence);
+            sentencePool = sentencePool.filter(s => s !== sentence);
+            saveSentencePool(sentencePool);
+            showHistory();
+            showToast('已删除记录', 1500);
+        }
+
+        historyModal.addEventListener('click', (e) => { if (e.target === historyModal) closeHistory(); });
         userInputEl.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
         });
         document.getElementById('newSentenceInput').addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
         });
-        historyModal.addEventListener('click', (e) => { if (e.target === historyModal) closeHistory(); });
 
+        // ==================== 初始化 ====================
         window.onload = () => {
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (savedSpeed) {
@@ -861,12 +957,13 @@
                 updatePlayPauseButton();
                 return;
             }
-            const dailyIdx = sentencePool.length > 0 ? 0 : null; // 简化，原版有哈希取索引
-            currentIndex = dailyIdx !== null ? dailyIdx : 0;
+            const dailyIdx = 0; // 简化，使用第一句
+            currentIndex = dailyIdx;
             clearInputAndResult();
             resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
-            estimatedDuration = Math.max(1, totalChars / (Math.max(0.5, playbackSpeed) * 14));
+            const rate = Math.max(0.5, playbackSpeed) * 14;
+            estimatedDuration = Math.max(1, totalChars / rate);
             totalTimeDisplay.textContent = formatTime(estimatedDuration);
             updatePlayPauseButton();
             setTimeout(() => userInputEl.focus(), 400);
