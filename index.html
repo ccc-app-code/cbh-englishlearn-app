@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 录音完整版</title>
+    <title>英语听写练习 · 最终版</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -50,8 +50,12 @@
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        .btn-play { background: var(--green); color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
-        .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; }
+        /* 统一播放和检查按钮的尺寸与字体 */
+        .btn-play, .btn-check {
+            font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; line-height: 1.2;
+        }
+        .btn-play { background: var(--green); color: #fff; }
+        .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; }
         .btn-check { background: var(--green); color: #fff; }
         .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
         .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
@@ -129,7 +133,7 @@
             body { padding: 12px 12px 30px; }
             h2 { font-size: 1.2em; }
             button { padding: 10px 14px; font-size: 14px; }
-            .btn-play,.btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
+            .btn-play,.btn-pause,.btn-check { padding: 12px 22px; font-size: 1em; min-width: 110px; height: 46px; }
             .btn-record,.btn-play-recording { padding: 12px 10px; font-size: 0.9em; }
             #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
             .progress-container { padding: 6px 10px; gap: 4px; }
@@ -140,7 +144,7 @@
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练 · 完整版</h2>
+    <h2>🎧 小毛快练 · 无语音选择版</h2>
     <p class="subtitle"></p>
 
     <div class="speed-card">
@@ -192,7 +196,7 @@
     </div>
 
     <script>
-        // ==================== 句子库与历史 ====================
+        // ==================== 存储 ====================
         const STORAGE_KEY_SENTENCES = 'sentencePool_v4';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v2';
@@ -407,10 +411,7 @@
         function loadSentencePool() {
             const stored = localStorage.getItem(STORAGE_KEY_SENTENCES);
             if (stored) {
-                try {
-                    const arr = JSON.parse(stored);
-                    if (Array.isArray(arr) && arr.length > 0) return arr;
-                } catch (e) {}
+                try { const arr = JSON.parse(stored); if (Array.isArray(arr) && arr.length > 0) return arr; } catch (e) {}
             }
             localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(defaultSentences));
             return [...defaultSentences];
@@ -421,10 +422,7 @@
         function loadHistory() {
             const stored = localStorage.getItem(STORAGE_KEY_HISTORY);
             if (stored) {
-                try {
-                    const obj = JSON.parse(stored);
-                    if (typeof obj === 'object' && obj !== null) return obj;
-                } catch (e) {}
+                try { const obj = JSON.parse(stored); if (typeof obj === 'object' && obj !== null) return obj; } catch (e) {}
             }
             return {};
         }
@@ -440,26 +438,6 @@
             saveHistory(sentenceHistory);
         }
 
-        // ==================== 系统语音 ====================
-        let selectedVoice = null;
-        function selectBestSystemVoice() {
-            const voices = window.speechSynthesis.getVoices();
-            if (!voices || voices.length === 0) return;
-            let best = voices.find(v => v.default && v.lang.startsWith('en'));
-            if (best) { selectedVoice = best; return; }
-            best = voices.find(v => v.localService && v.lang === 'en-US');
-            if (best) { selectedVoice = best; return; }
-            best = voices.find(v => v.localService && v.lang.startsWith('en'));
-            if (best) { selectedVoice = best; return; }
-            best = voices.find(v => v.lang === 'en-US');
-            if (best) { selectedVoice = best; return; }
-            best = voices.find(v => v.lang.startsWith('en'));
-            if (best) { selectedVoice = best; return; }
-            selectedVoice = null;
-        }
-        window.speechSynthesis.addEventListener('voiceschanged', selectBestSystemVoice);
-        selectBestSystemVoice();
-
         // ==================== 录音逻辑 ====================
         let mediaRecorder = null;
         let audioChunks = [];
@@ -472,27 +450,21 @@
 
         function getSupportedMimeType() {
             const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
-            for (let type of types) {
-                if (MediaRecorder.isTypeSupported(type)) return type;
-            }
+            for (let type of types) { if (MediaRecorder.isTypeSupported(type)) return type; }
             return '';
         }
 
         async function startRecording() {
             audioChunks = [];
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showToast('❌ 当前浏览器不支持录音功能', 2500);
-                return;
+                showToast('❌ 当前浏览器不支持录音功能', 2500); return;
             }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mimeType = getSupportedMimeType();
                 const options = mimeType ? { mimeType } : {};
                 mediaRecorder = new MediaRecorder(stream, options);
-
-                mediaRecorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) audioChunks.push(e.data);
-                };
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
                     recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
                     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
@@ -501,11 +473,7 @@
                     stream.getTracks().forEach(track => track.stop());
                     showToast('✅ 录音完成', 1500);
                 };
-                mediaRecorder.onerror = () => {
-                    showToast('❌ 录音出错', 2000);
-                    stopRecordingUI();
-                };
-
+                mediaRecorder.onerror = () => { showToast('❌ 录音出错', 2000); stopRecordingUI(); };
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
@@ -517,35 +485,24 @@
         }
 
         function stopRecordingUI() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
         }
 
         function toggleRecording() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-                startRecording();
-            } else if (mediaRecorder.state === 'recording') {
-                stopRecordingUI();
-            }
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') { startRecording(); }
+            else if (mediaRecorder.state === 'recording') { stopRecordingUI(); }
         }
 
         function playRecording() {
-            if (!recordingUrl) {
-                showToast('⚠️ 请先录音', 2000);
-                return;
-            }
+            if (!recordingUrl) { showToast('⚠️ 请先录音', 2000); return; }
             audioPlayer.src = recordingUrl;
             audioPlayer.load();
-            audioPlayer.play().catch(e => {
-                console.error(e);
-                showToast('❌ 播放失败，可能格式不支持', 2500);
-            });
+            audioPlayer.play().catch(e => { console.error(e); showToast('❌ 播放失败', 2500); });
         }
 
-        // ==================== 原有听写逻辑 ====================
+        // ==================== 听写逻辑 ====================
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -573,14 +530,9 @@
             userInputEl.style.height = newHeight >= maxHeight ? maxHeight + 'px' : newHeight + 'px';
         }
         userInputEl.addEventListener('input', autoResizeTextarea);
-        window.addEventListener('resize', () => {
-            if (document.activeElement === userInputEl) autoResizeTextarea();
-        });
+        window.addEventListener('resize', () => { if (document.activeElement === userInputEl) autoResizeTextarea(); });
 
-        function resetTextareaHeight() {
-            userInputEl.style.height = '30vh';
-            if (userInputEl.value) autoResizeTextarea();
-        }
+        function resetTextareaHeight() { userInputEl.style.height = '30vh'; if (userInputEl.value) autoResizeTextarea(); }
 
         let toastTimer;
         function showToast(msg, d = 2500) {
@@ -598,9 +550,7 @@
         function findWordBoundary(text, pos) {
             if (pos <= 0) return 0;
             if (pos >= text.length) return text.length;
-            for (let i = pos; i >= 0; i--) {
-                if (/\s|[.!?;,:]/.test(text[i])) return i + 1;
-            }
+            for (let i = pos; i >= 0; i--) { if (/\s|[.!?;,:]/.test(text[i])) return i + 1; }
             return 0;
         }
 
@@ -666,12 +616,7 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            } else {
-                selectBestSystemVoice();
-                if (selectedVoice) utterance.voice = selectedVoice;
-            }
+            // 不再手动指定语音，完全交给浏览器默认
 
             utterance.onstart = () => {
                 if (!isPlaying) return;
@@ -714,46 +659,28 @@
         }
 
         function handlePlayPause() {
-            if (currentIndex === null || !sentencePool.length) {
-                showToast('没有句子', 2000);
-                return;
-            }
-            if (!isPlaying && !isPaused) {
-                startPlayback(0);
-            } else if (isPlaying) {
+            if (currentIndex === null || !sentencePool.length) { showToast('没有句子', 2000); return; }
+            if (!isPlaying && !isPaused) { startPlayback(0); }
+            else if (isPlaying) {
                 const elapsed = (Date.now() - startTime) / 1000;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * rate));
                 detachUtterance();
                 window.speechSynthesis.cancel();
                 if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
-                isPlaying = false;
-                isPaused = true;
+                isPlaying = false; isPaused = true;
                 updatePlayPauseButton();
                 refocusInput();
-            } else if (isPaused) {
-                startPlayback(pausedCharPos);
-            }
+            } else if (isPaused) { startPlayback(pausedCharPos); }
         }
 
         function updatePlayPauseButton() {
             const disabled = (currentIndex === null || !sentencePool.length);
             playPauseBtn.disabled = disabled;
-            if (disabled) {
-                playPauseBtn.textContent = '▶ 播放';
-                playPauseBtn.className = 'btn-play';
-                return;
-            }
-            if (!isPlaying && !isPaused) {
-                playPauseBtn.textContent = '▶ 播放';
-                playPauseBtn.className = 'btn-play';
-            } else if (isPlaying) {
-                playPauseBtn.textContent = '⏸ 暂停';
-                playPauseBtn.className = 'btn-pause';
-            } else if (isPaused) {
-                playPauseBtn.textContent = '▶ 继续';
-                playPauseBtn.className = 'btn-play';
-            }
+            if (disabled) { playPauseBtn.textContent = '▶ 播放'; playPauseBtn.className = 'btn-play'; return; }
+            if (!isPlaying && !isPaused) { playPauseBtn.textContent = '▶ 播放'; playPauseBtn.className = 'btn-play'; }
+            else if (isPlaying) { playPauseBtn.textContent = '⏸ 暂停'; playPauseBtn.className = 'btn-pause'; }
+            else if (isPaused) { playPauseBtn.textContent = '▶ 继续'; playPauseBtn.className = 'btn-play'; }
         }
 
         playPauseBtn.addEventListener('click', (e) => { e.preventDefault(); handlePlayPause(); });
@@ -787,9 +714,7 @@
                 totalTimeDisplay.textContent = formatTime(estimatedDuration);
             }
         });
-        speedSlider.addEventListener('change', () => {
-            localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed);
-        });
+        speedSlider.addEventListener('change', () => { localStorage.setItem(STORAGE_KEY_SPEED, playbackSpeed); });
 
         function switchToSentence(idx) {
             if (idx < 0 || idx >= sentencePool.length) return;
@@ -801,8 +726,7 @@
             totalChars = sentencePool[currentIndex].length;
             const rate = Math.max(0.5, playbackSpeed) * 14;
             estimatedDuration = Math.max(1, totalChars / rate);
-            progressBar.value = 0;
-            progressBar.disabled = true;
+            progressBar.value = 0; progressBar.disabled = true;
             currentTimeDisplay.textContent = '00:00';
             totalTimeDisplay.textContent = formatTime(estimatedDuration);
             updatePlayPauseButton();
@@ -819,35 +743,24 @@
             userInputEl.focus();
         }
 
-        function clearInputAndResult() {
-            userInputEl.value = '';
-            resultArea.innerHTML = '';
-        }
+        function clearInputAndResult() { userInputEl.value = ''; resultArea.innerHTML = ''; }
 
         function normalizeWord(word) {
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
             return cleaned || '';
         }
 
-        function escapeHtml(s) {
-            const div = document.createElement('div');
-            div.textContent = s;
-            return div.innerHTML;
-        }
+        function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
 
         function checkAnswer() {
             if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
             const correct = sentencePool[currentIndex].trim();
-            if (!rawUser) {
-                resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>';
-                return;
-            }
+            if (!rawUser) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
-
             let html = '';
             let cIdx = 0, uIdx = 0;
             while (cIdx < normCorrect.length && uIdx < normUser.length) {
@@ -865,10 +778,7 @@
                     else { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
                 }
             }
-            while (uIdx < normUser.length) {
-                html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
-                uIdx++;
-            }
+            while (uIdx < normUser.length) { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
             const perfect = normUser.join(' ') === normCorrect.join(' ');
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
@@ -884,20 +794,12 @@
             const inp = document.getElementById('newSentenceInput');
             const t = inp.value.trim();
             if (!t) { showToast('请输入有效的英语句子', 2000); return; }
-            if (!sentencePool.includes(t)) {
-                sentencePool.push(t);
-                saveSentencePool(sentencePool);
-            }
+            if (!sentencePool.includes(t)) { sentencePool.push(t); saveSentencePool(sentencePool); }
             inp.value = '';
             if (currentIndex === null && sentencePool.length === 1) {
-                currentIndex = 0;
-                clearInputAndResult();
-                resetTextareaHeight();
-                totalChars = t.length;
-                const rate = Math.max(0.5, playbackSpeed) * 14;
-                estimatedDuration = Math.max(1, totalChars / rate);
-                totalTimeDisplay.textContent = formatTime(estimatedDuration);
-                updatePlayPauseButton();
+                currentIndex = 0; clearInputAndResult(); resetTextareaHeight();
+                totalChars = t.length; estimatedDuration = Math.max(1, totalChars / (Math.max(0.5, playbackSpeed) * 14));
+                totalTimeDisplay.textContent = formatTime(estimatedDuration); updatePlayPauseButton();
             }
             showToast('✅ 句子已添加！', 1800);
         }
@@ -941,7 +843,7 @@
             if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
         });
 
-        // ==================== 初始化 ====================
+        // 初始化
         window.onload = () => {
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (savedSpeed) {
@@ -950,20 +852,17 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
-            selectBestSystemVoice();
 
             if (!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
                 updatePlayPauseButton();
                 return;
             }
-            const dailyIdx = 0; // 简化，使用第一句
-            currentIndex = dailyIdx;
+            currentIndex = 0;
             clearInputAndResult();
             resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
-            const rate = Math.max(0.5, playbackSpeed) * 14;
-            estimatedDuration = Math.max(1, totalChars / rate);
+            estimatedDuration = Math.max(1, totalChars / (Math.max(0.5, playbackSpeed) * 14));
             totalTimeDisplay.textContent = formatTime(estimatedDuration);
             updatePlayPauseButton();
             setTimeout(() => userInputEl.focus(), 400);
@@ -972,9 +871,7 @@
         window.addEventListener('beforeunload', () => {
             detachUtterance();
             window.speechSynthesis.cancel();
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
             if (recordingUrl) URL.revokeObjectURL(recordingUrl);
         });
     </script>
