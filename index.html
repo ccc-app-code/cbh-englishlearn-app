@@ -986,6 +986,64 @@
             progressTimer = null;
         let isDragging = false;
         let currentUtterance = null;
+        // ========== 系统默认语音（优先使用手机本地语音引擎）==========
+        let selectedVoice = null;
+
+        /**
+         * 选择系统默认语音
+         * 优先级：default语音 > localService英语语音 > 任意英语语音 > 不指定（浏览器自动选择）
+         * 在手机上，localService: true 的语音即为系统内置TTS引擎
+         */
+        function selectSystemVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || voices.length === 0) {
+                // 语音列表尚未加载，等待 voiceschanged 事件
+                return;
+            }
+
+            // 1. 优先选择 default 且语言为英语的语音
+            let bestVoice = voices.find(v => v.default && v.lang.startsWith('en'));
+            if (bestVoice) {
+                selectedVoice = bestVoice;
+                return;
+            }
+
+            // 2. 选择本地服务(localService)且语言为 en-US 的语音
+            bestVoice = voices.find(v => v.localService && v.lang === 'en-US');
+            if (bestVoice) {
+                selectedVoice = bestVoice;
+                return;
+            }
+
+            // 3. 选择本地服务且语言为英语的语音
+            bestVoice = voices.find(v => v.localService && v.lang.startsWith('en'));
+            if (bestVoice) {
+                selectedVoice = bestVoice;
+                return;
+            }
+
+            // 4. 选择任意 en-US 语音
+            bestVoice = voices.find(v => v.lang === 'en-US');
+            if (bestVoice) {
+                selectedVoice = bestVoice;
+                return;
+            }
+
+            // 5. 选择任意英语语音
+            bestVoice = voices.find(v => v.lang.startsWith('en'));
+            if (bestVoice) {
+                selectedVoice = bestVoice;
+                return;
+            }
+
+            // 6. 回退：不指定语音，让浏览器根据 lang='en-US' 自动选择
+            selectedVoice = null;
+        }
+
+        // 监听语音列表变化（iOS Safari 需要此事件才能获取完整语音列表）
+        window.speechSynthesis.addEventListener('voiceschanged', () => {
+            selectSystemVoice();
+        });
 
         function autoResizeTextarea() {
             userInputEl.style.height = 'auto';
@@ -1099,6 +1157,10 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
+            // ========== 使用系统默认语音 ==========
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
 
             utterance.onstart = () => {
                 if (!isPlaying) return;
@@ -1114,10 +1176,15 @@
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
                 updatePlayPauseButton();
             };
-            utterance.onerror = () => {
+            utterance.onerror = (e) => {
+                // 在某些移动端环境下，语音合成可能因系统资源不足而失败
+                if (e.error === 'canceled' || e.error === 'interrupted') {
+                    // 被取消或中断是正常操作，不提示
+                } else {
+                    showToast('播放出错，请重试', 2000);
+                }
                 isPlaying = false;
                 if (progressTimer) clearInterval(progressTimer);
-                showToast('播放出错', 2000);
                 updatePlayPauseButton();
             };
 
@@ -1149,8 +1216,11 @@
             }
 
             if (!isPlaying && !isPaused && !currentUtterance) {
+                // 预热TTS引擎（移动端首次调用可能较慢）
                 const warmUp = new SpeechSynthesisUtterance('');
                 warmUp.volume = 0;
+                if (selectedVoice) warmUp.voice = selectedVoice;
+                warmUp.lang = 'en-US';
                 window.speechSynthesis.cancel();
                 window.speechSynthesis.speak(warmUp);
             }
@@ -1433,8 +1503,14 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
+            // ========== 初始化语音选择 ==========
+            selectSystemVoice();
+
+            // 预热TTS引擎（使用系统默认语音）
             const warmUp = new SpeechSynthesisUtterance('');
             warmUp.volume = 0;
+            warmUp.lang = 'en-US';
+            if (selectedVoice) warmUp.voice = selectedVoice;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(warmUp);
 
