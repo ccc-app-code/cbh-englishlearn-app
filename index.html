@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 系统语音优化版</title>
+    <title>英语听写练习 · 录音版</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -15,6 +15,7 @@
             --green: #4CAF50;
             --teal: #009688;
             --red: #c62828;
+            --orange: #FF9800;
             --shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
             --radius-sm: 10px;
             --radius-xs: 8px;
@@ -158,6 +159,36 @@
             font-size: 0.95em;
             padding: 14px;
         }
+        /* 录音相关按钮 */
+        .record-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-record {
+            background: var(--orange);
+            color: #fff;
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 1em;
+        }
+        .btn-play-recording {
+            background: var(--teal);
+            color: #fff;
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 1em;
+        }
+        .btn-record.recording {
+            background: var(--red);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
         .progress-container {
             display: flex;
             align-items: center;
@@ -369,6 +400,7 @@
             h2 { font-size: 1.2em; }
             button { padding: 10px 14px; font-size: 14px; }
             .btn-play,.btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
+            .btn-record,.btn-play-recording { padding: 12px 10px; font-size: 0.9em; }
             #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
             .action-row button { font-size: 14px; padding: 11px 10px; }
             .progress-container { padding: 6px 10px; gap: 4px; }
@@ -379,7 +411,7 @@
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练 · 系统语音版</h2>
+    <h2>🎧 小毛快练 · 录音版</h2>
     <p class="subtitle"> </p>
 
     <div class="speed-card">
@@ -408,6 +440,12 @@
     <div class="result" id="resultArea"></div>
 
     <button type="button" class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
+
+    <!-- 新增录音按钮区域 -->
+    <div class="record-row">
+        <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音</button>
+        <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
+    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -882,53 +920,101 @@
 
         // ========== 系统语音优化选择 ==========
         let selectedVoice = null;
-        let voicesReady = false;
 
         function selectBestSystemVoice() {
             const voices = window.speechSynthesis.getVoices();
-            if (!voices || voices.length === 0) {
-                // 语音列表尚未加载，等待 voiceschanged 事件
-                voicesReady = false;
-                return;
-            }
-            voicesReady = true;
-
-            // 1. 优先选择系统默认且语言为英语的语音
+            if (!voices || voices.length === 0) return;
             let best = voices.find(v => v.default && v.lang.startsWith('en'));
             if (best) { selectedVoice = best; return; }
-
-            // 2. 选择本地服务(localService)且语言为 en-US 的语音
             best = voices.find(v => v.localService && v.lang === 'en-US');
             if (best) { selectedVoice = best; return; }
-
-            // 3. 选择本地服务且语言为英语的语音
             best = voices.find(v => v.localService && v.lang.startsWith('en'));
             if (best) { selectedVoice = best; return; }
-
-            // 4. 选择任意 en-US 语音
             best = voices.find(v => v.lang === 'en-US');
             if (best) { selectedVoice = best; return; }
-
-            // 5. 选择任意英语语音
             best = voices.find(v => v.lang.startsWith('en'));
             if (best) { selectedVoice = best; return; }
-
-            // 6. 回退：不指定语音，让浏览器根据 lang='en-US' 自动选择
             selectedVoice = null;
         }
 
-        // 监听语音列表变化（iOS Safari 需要此事件）
         window.speechSynthesis.addEventListener('voiceschanged', () => {
             selectBestSystemVoice();
-            // 如果之前没有语音，现在有了，可以在控制台看到变化
-            if (selectedVoice) {
-                console.log('✅ 已选择系统语音：' + selectedVoice.name);
-            }
         });
-
-        // 页面加载时立即尝试选择
         selectBestSystemVoice();
 
+        // ========== 录音相关变量与逻辑 ==========
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordedBlob = null;
+        let recordingUrl = null;
+        let audioPlayer = new Audio();
+
+        const recordBtn = document.getElementById('recordBtn');
+        const playRecordingBtn = document.getElementById('playRecordingBtn');
+
+        // 请求麦克风权限并开始录音
+        async function startRecording() {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+                    recordingUrl = URL.createObjectURL(recordedBlob);
+                    playRecordingBtn.disabled = false;
+                    // 停止所有轨道以释放麦克风
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                recordBtn.textContent = '⏹ 停止录音';
+                recordBtn.classList.add('recording');
+                showToast('🎤 录音中…', 1500);
+            } catch (err) {
+                console.error('无法获取麦克风权限:', err);
+                showToast('❌ 无法访问麦克风，请检查权限设置', 2500);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                recordBtn.textContent = '🎤 录音';
+                recordBtn.classList.remove('recording');
+                showToast('✅ 录音完成', 1500);
+            }
+        }
+
+        function toggleRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                startRecording();
+            } else if (mediaRecorder.state === 'recording') {
+                stopRecording();
+            }
+        }
+
+        function playRecording() {
+            if (!recordingUrl) {
+                showToast('⚠️ 请先录音', 2000);
+                return;
+            }
+            // 如果正在播放，则重新从头播放
+            audioPlayer.src = recordingUrl;
+            audioPlayer.play().catch(e => {
+                showToast('❌ 播放失败', 1500);
+                console.error(e);
+            });
+        }
+
+        // ========== 原有功能代码 ==========
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -953,11 +1039,7 @@
             userInputEl.style.height = 'auto';
             const newHeight = userInputEl.scrollHeight;
             const maxHeight = window.innerHeight * 0.5;
-            if (newHeight >= maxHeight) {
-                userInputEl.style.height = maxHeight + 'px';
-            } else {
-                userInputEl.style.height = newHeight + 'px';
-            }
+            userInputEl.style.height = (newHeight >= maxHeight) ? maxHeight + 'px' : newHeight + 'px';
         }
         userInputEl.addEventListener('input', autoResizeTextarea);
         window.addEventListener('resize', () => {
@@ -1043,8 +1125,7 @@
             const text = fullText.substring(startPos);
             pausedCharPos = startPos;
 
-            const initialPercent = (startPos / totalChars) * 100;
-            progressBar.value = initialPercent;
+            progressBar.value = (startPos / totalChars) * 100;
             currentTimeDisplay.textContent = formatTime((startPos / totalChars) * estimatedDuration);
 
             startTime = Date.now();
@@ -1054,15 +1135,11 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            // ========== 使用系统内置语音 ==========
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
-                console.log('🎤 使用语音：' + selectedVoice.name);
             } else {
-                // 如果尚未就绪，尝试再次选择
                 selectBestSystemVoice();
                 if (selectedVoice) utterance.voice = selectedVoice;
-                console.log('🎤 语音未就绪，使用浏览器默认');
             }
 
             utterance.onstart = () => {
@@ -1079,10 +1156,7 @@
                 currentTimeDisplay.textContent = totalTimeDisplay.textContent;
                 updatePlayPauseButton();
             };
-            utterance.onerror = (e) => {
-                if (e.error !== 'canceled' && e.error !== 'interrupted') {
-                    showToast('播放出错，请重试', 2000);
-                }
+            utterance.onerror = () => {
                 isPlaying = false;
                 if (progressTimer) clearInterval(progressTimer);
                 updatePlayPauseButton();
@@ -1099,8 +1173,7 @@
             const rate = Math.max(0.5, playbackSpeed) * 14;
             const chars = Math.floor(elapsed * rate);
             const curChar = Math.min(totalChars, pausedCharPos + chars);
-            const percent = (curChar / totalChars) * 100;
-            progressBar.value = percent;
+            progressBar.value = (curChar / totalChars) * 100;
             currentTimeDisplay.textContent = formatTime((curChar / totalChars) * estimatedDuration);
             if (curChar >= totalChars) {
                 stopPlayback(false);
@@ -1114,16 +1187,6 @@
                 showToast('没有句子', 2000);
                 return;
             }
-
-            if (!isPlaying && !isPaused && !currentUtterance) {
-                const warmUp = new SpeechSynthesisUtterance('');
-                warmUp.volume = 0;
-                warmUp.lang = 'en-US';
-                if (selectedVoice) warmUp.voice = selectedVoice;
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(warmUp);
-            }
-
             if (!isPlaying && !isPaused) {
                 startPlayback(0);
             } else if (isPlaying) {
@@ -1358,15 +1421,7 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
-            // 再次尝试选择系统语音（onload 时 voices 可能已就绪）
             selectBestSystemVoice();
-
-            const warmUp = new SpeechSynthesisUtterance('');
-            warmUp.volume = 0;
-            warmUp.lang = 'en-US';
-            if (selectedVoice) warmUp.voice = selectedVoice;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(warmUp);
 
             if (!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
@@ -1388,6 +1443,10 @@
         window.addEventListener('beforeunload', () => {
             detachUtterance();
             window.speechSynthesis.cancel();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            if (recordingUrl) URL.revokeObjectURL(recordingUrl);
         });
     </script>
 </body>
