@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习</title>
+    <title>英语听写练习 · 系统语音优化版</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -19,13 +19,11 @@
             --radius-sm: 10px;
             --radius-xs: 8px;
         }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg);
@@ -37,20 +35,17 @@
             max-width: 700px;
             margin: 0 auto;
         }
-
         h2 {
             text-align: center;
             margin-bottom: 2px;
             font-size: 1.4em;
         }
-
         .subtitle {
             text-align: center;
             color: var(--text-muted);
             font-size: 0.85em;
             margin-bottom: 12px;
         }
-
         .speed-card {
             display: flex;
             align-items: center;
@@ -61,20 +56,17 @@
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
         }
-
         .speed-card label {
             font-weight: 600;
             font-size: 0.85em;
             color: var(--text-secondary);
         }
-
         .speed-slider {
             display: flex;
             align-items: center;
             gap: 6px;
             flex: 1;
         }
-
         .speed-slider input[type="range"] {
             flex: 1;
             height: 5px;
@@ -82,7 +74,6 @@
             background: #ddd;
             border-radius: 3px;
         }
-
         .speed-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 18px;
@@ -91,9 +82,8 @@
             background: var(--teal);
             cursor: pointer;
             border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
-
         .speed-value {
             font-size: 0.8em;
             font-weight: 700;
@@ -101,14 +91,12 @@
             min-width: 36px;
             text-align: center;
         }
-
         .btn-row {
             display: flex;
             justify-content: center;
             gap: 8px;
             margin-bottom: 8px;
         }
-
         button {
             padding: 12px 18px;
             font-size: 15px;
@@ -122,7 +110,6 @@
             -webkit-appearance: none;
             touch-action: manipulation;
         }
-
         button:active {
             transform: scale(0.95);
             opacity: 0.8;
@@ -131,7 +118,6 @@
             opacity: 0.45;
             cursor: not-allowed;
         }
-
         .btn-play {
             background: var(--green);
             color: #fff;
@@ -148,10 +134,6 @@
         }
         .btn-check {
             background: var(--green);
-            color: #fff;
-        }
-        .btn-answer {
-            background: #66bb6a;
             color: #fff;
         }
         .btn-next {
@@ -176,7 +158,6 @@
             font-size: 0.95em;
             padding: 14px;
         }
-
         .progress-container {
             display: flex;
             align-items: center;
@@ -187,7 +168,6 @@
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow);
         }
-
         .progress-container input[type="range"] {
             flex: 1;
             height: 6px;
@@ -195,7 +175,6 @@
             background: #ddd;
             border-radius: 3px;
         }
-
         .progress-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 20px;
@@ -204,9 +183,8 @@
             background: var(--green);
             cursor: pointer;
             border: 2px solid white;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
-
         .progress-time {
             font-size: 0.8em;
             color: var(--text-secondary);
@@ -214,11 +192,9 @@
             text-align: center;
             font-family: monospace;
         }
-
         .writing-area {
             margin-bottom: 8px;
         }
-
         #userInput {
             width: 100%;
             height: 30vh;
@@ -234,17 +210,14 @@
             line-height: 1.7;
             overflow-y: auto;
         }
-
         #userInput:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(91, 141, 239, 0.08);
+            box-shadow: 0 0 0 4px rgba(91,141,239,0.08);
         }
-
         #userInput::placeholder {
             color: #bbb;
         }
-
         .result {
             padding: 16px;
             background: #fff;
@@ -256,7 +229,6 @@
             min-height: 20px;
             margin-bottom: 8px;
         }
-
         .correct {
             color: #2e7d32;
             font-weight: bold;
@@ -265,7 +237,6 @@
             border-radius: 4px;
             margin: 0 2px;
         }
-
         .wrong {
             color: #c62828;
             text-decoration: underline;
@@ -275,23 +246,19 @@
             border-radius: 4px;
             margin: 0 2px;
         }
-
         .result-empty {
             color: #bbb;
             text-align: center;
             display: block;
         }
-
         .action-row {
             display: flex;
             gap: 8px;
             margin-bottom: 4px;
         }
-
         .action-row button {
             flex: 1;
         }
-
         .add-section {
             background: #fff;
             border-radius: var(--radius-sm);
@@ -299,13 +266,11 @@
             box-shadow: var(--shadow);
             margin-top: 8px;
         }
-
         .add-section .list-title {
             font-weight: 700;
             font-size: 0.95rem;
             margin-bottom: 10px;
         }
-
         .add-section input[type="text"] {
             width: 100%;
             padding: 12px 14px;
@@ -315,13 +280,11 @@
             background: #fff;
             margin-bottom: 4px;
         }
-
         .add-section input[type="text"]:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.08);
+            box-shadow: 0 0 0 3px rgba(91,141,239,0.08);
         }
-
         .toast {
             position: fixed;
             bottom: 30px;
@@ -337,29 +300,25 @@
             pointer-events: none;
             transition: opacity 0.3s;
         }
-
         .toast.show {
             opacity: 1;
             pointer-events: auto;
         }
-
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0,0,0,0.5);
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
         }
-
         .modal-overlay.active {
             display: flex;
         }
-
         .modal-content {
             background: #fff;
             border-radius: var(--radius-sm);
@@ -368,19 +327,16 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-
         .modal-content h3 {
             margin-bottom: 12px;
             font-size: 1.2em;
         }
-
         .modal-content ul {
             list-style: none;
             margin-bottom: 16px;
         }
-
         .modal-content li {
             padding: 10px 0;
             border-bottom: 1px solid #eee;
@@ -388,7 +344,6 @@
             flex-direction: column;
             font-size: 0.9em;
         }
-
         .modal-content li .delete-btn {
             background: var(--red);
             color: #fff;
@@ -400,7 +355,6 @@
             align-self: flex-start;
             margin-top: 4px;
         }
-
         .modal-content .close-btn {
             background: #eee;
             color: #333;
@@ -410,53 +364,22 @@
             border: none;
             cursor: pointer;
         }
-
         @media (max-width: 480px) {
-            body {
-                padding: 12px 12px 30px;
-            }
-            h2 {
-                font-size: 1.2em;
-            }
-            button {
-                padding: 10px 14px;
-                font-size: 14px;
-            }
-            .btn-play,
-            .btn-pause {
-                padding: 12px 22px;
-                font-size: 1em;
-                min-width: 110px;
-            }
-            #userInput {
-                height: 30vh;
-                min-height: 120px;
-                font-size: 15px;
-            }
-            .action-row button {
-                font-size: 14px;
-                padding: 11px 10px;
-            }
-            .progress-container {
-                padding: 6px 10px;
-                gap: 4px;
-            }
-            .progress-time {
-                font-size: 0.72em;
-                min-width: 34px;
-            }
-            .speed-card {
-                padding: 8px 10px;
-                gap: 5px;
-            }
-            .speed-card label {
-                font-size: 0.75em;
-            }
+            body { padding: 12px 12px 30px; }
+            h2 { font-size: 1.2em; }
+            button { padding: 10px 14px; font-size: 14px; }
+            .btn-play,.btn-pause { padding: 12px 22px; font-size: 1em; min-width: 110px; }
+            #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
+            .action-row button { font-size: 14px; padding: 11px 10px; }
+            .progress-container { padding: 6px 10px; gap: 4px; }
+            .progress-time { font-size: 0.72em; min-width: 34px; }
+            .speed-card { padding: 8px 10px; gap: 5px; }
+            .speed-card label { font-size: 0.75em; }
         }
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练</h2>
+    <h2>🎧 小毛快练 · 系统语音版</h2>
     <p class="subtitle"> </p>
 
     <div class="speed-card">
@@ -505,7 +428,7 @@
     </div>
 
     <script>
-        // ========== 存储键（v4 版句库，避免旧缓存干扰）==========
+        // ========== 存储键 ==========
         const STORAGE_KEY_SENTENCES = 'sentencePool_v4';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v2';
@@ -927,16 +850,11 @@
             return {};
         }
 
-        function saveHistory(historyObj) {
-            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyObj));
-        }
+        function saveHistory(historyObj) { localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyObj)); }
         let sentenceHistory = loadHistory();
 
         function updateHistory(sentence, userInput) {
-            sentenceHistory[sentence] = {
-                time: new Date().toISOString(),
-                userInput: userInput
-            };
+            sentenceHistory[sentence] = { time: new Date().toISOString(), userInput: userInput };
             saveHistory(sentenceHistory);
         }
 
@@ -962,6 +880,55 @@
             return hashDateToIndex(getDateString(), sentencePool.length);
         }
 
+        // ========== 系统语音优化选择 ==========
+        let selectedVoice = null;
+        let voicesReady = false;
+
+        function selectBestSystemVoice() {
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || voices.length === 0) {
+                // 语音列表尚未加载，等待 voiceschanged 事件
+                voicesReady = false;
+                return;
+            }
+            voicesReady = true;
+
+            // 1. 优先选择系统默认且语言为英语的语音
+            let best = voices.find(v => v.default && v.lang.startsWith('en'));
+            if (best) { selectedVoice = best; return; }
+
+            // 2. 选择本地服务(localService)且语言为 en-US 的语音
+            best = voices.find(v => v.localService && v.lang === 'en-US');
+            if (best) { selectedVoice = best; return; }
+
+            // 3. 选择本地服务且语言为英语的语音
+            best = voices.find(v => v.localService && v.lang.startsWith('en'));
+            if (best) { selectedVoice = best; return; }
+
+            // 4. 选择任意 en-US 语音
+            best = voices.find(v => v.lang === 'en-US');
+            if (best) { selectedVoice = best; return; }
+
+            // 5. 选择任意英语语音
+            best = voices.find(v => v.lang.startsWith('en'));
+            if (best) { selectedVoice = best; return; }
+
+            // 6. 回退：不指定语音，让浏览器根据 lang='en-US' 自动选择
+            selectedVoice = null;
+        }
+
+        // 监听语音列表变化（iOS Safari 需要此事件）
+        window.speechSynthesis.addEventListener('voiceschanged', () => {
+            selectBestSystemVoice();
+            // 如果之前没有语音，现在有了，可以在控制台看到变化
+            if (selectedVoice) {
+                console.log('✅ 已选择系统语音：' + selectedVoice.name);
+            }
+        });
+
+        // 页面加载时立即尝试选择
+        selectBestSystemVoice();
+
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -974,76 +941,13 @@
         const historyModal = document.getElementById('historyModal');
         const historyList = document.getElementById('historyList');
 
-        let currentIndex = null,
-            playbackSpeed = 0.85;
-        let isPlaying = false,
-            isPaused = false;
-        let fullText = '',
-            totalChars = 0;
-        let startTime = 0,
-            pausedCharPos = 0;
-        let estimatedDuration = 0,
-            progressTimer = null;
+        let currentIndex = null, playbackSpeed = 0.85;
+        let isPlaying = false, isPaused = false;
+        let fullText = '', totalChars = 0;
+        let startTime = 0, pausedCharPos = 0;
+        let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
         let currentUtterance = null;
-        // ========== 系统默认语音（优先使用手机本地语音引擎）==========
-        let selectedVoice = null;
-
-        /**
-         * 选择系统默认语音
-         * 优先级：default语音 > localService英语语音 > 任意英语语音 > 不指定（浏览器自动选择）
-         * 在手机上，localService: true 的语音即为系统内置TTS引擎
-         */
-        function selectSystemVoice() {
-            const voices = window.speechSynthesis.getVoices();
-            if (!voices || voices.length === 0) {
-                // 语音列表尚未加载，等待 voiceschanged 事件
-                return;
-            }
-
-            // 1. 优先选择 default 且语言为英语的语音
-            let bestVoice = voices.find(v => v.default && v.lang.startsWith('en'));
-            if (bestVoice) {
-                selectedVoice = bestVoice;
-                return;
-            }
-
-            // 2. 选择本地服务(localService)且语言为 en-US 的语音
-            bestVoice = voices.find(v => v.localService && v.lang === 'en-US');
-            if (bestVoice) {
-                selectedVoice = bestVoice;
-                return;
-            }
-
-            // 3. 选择本地服务且语言为英语的语音
-            bestVoice = voices.find(v => v.localService && v.lang.startsWith('en'));
-            if (bestVoice) {
-                selectedVoice = bestVoice;
-                return;
-            }
-
-            // 4. 选择任意 en-US 语音
-            bestVoice = voices.find(v => v.lang === 'en-US');
-            if (bestVoice) {
-                selectedVoice = bestVoice;
-                return;
-            }
-
-            // 5. 选择任意英语语音
-            bestVoice = voices.find(v => v.lang.startsWith('en'));
-            if (bestVoice) {
-                selectedVoice = bestVoice;
-                return;
-            }
-
-            // 6. 回退：不指定语音，让浏览器根据 lang='en-US' 自动选择
-            selectedVoice = null;
-        }
-
-        // 监听语音列表变化（iOS Safari 需要此事件才能获取完整语音列表）
-        window.speechSynthesis.addEventListener('voiceschanged', () => {
-            selectSystemVoice();
-        });
 
         function autoResizeTextarea() {
             userInputEl.style.height = 'auto';
@@ -1066,18 +970,15 @@
         }
 
         let toastTimer;
-
         function showToast(msg, d = 2500) {
             if (toastTimer) clearTimeout(toastTimer);
             toastEl.textContent = msg;
             toastEl.classList.add('show');
-            toastTimer = setTimeout(() => { toastEl.classList.remove('show');
-                toastTimer = null; }, d);
+            toastTimer = setTimeout(() => { toastEl.classList.remove('show'); toastTimer = null; }, d);
         }
 
         function formatTime(sec) {
-            const s = Math.max(0, sec),
-                m = Math.floor(s / 60);
+            const s = Math.max(0, sec), m = Math.floor(s / 60);
             return `${String(m).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
         }
 
@@ -1102,8 +1003,7 @@
         function stopPlayback(keepPaused = false) {
             detachUtterance();
             window.speechSynthesis.cancel();
-            if (progressTimer) { clearInterval(progressTimer);
-                progressTimer = null; }
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
             isPlaying = false;
             if (!keepPaused) isPaused = false;
         }
@@ -1119,14 +1019,11 @@
         }
 
         function refocusInput() {
-            const hasFocus = document.activeElement === userInputEl;
-            if (!hasFocus) {
+            if (document.activeElement !== userInputEl) {
                 const start = userInputEl.selectionStart;
                 const end = userInputEl.selectionEnd;
                 userInputEl.focus();
-                setTimeout(() => {
-                    userInputEl.setSelectionRange(start, end);
-                }, 10);
+                setTimeout(() => { userInputEl.setSelectionRange(start, end); }, 10);
             }
         }
 
@@ -1157,9 +1054,15 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            // ========== 使用系统默认语音 ==========
+            // ========== 使用系统内置语音 ==========
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
+                console.log('🎤 使用语音：' + selectedVoice.name);
+            } else {
+                // 如果尚未就绪，尝试再次选择
+                selectBestSystemVoice();
+                if (selectedVoice) utterance.voice = selectedVoice;
+                console.log('🎤 语音未就绪，使用浏览器默认');
             }
 
             utterance.onstart = () => {
@@ -1177,10 +1080,7 @@
                 updatePlayPauseButton();
             };
             utterance.onerror = (e) => {
-                // 在某些移动端环境下，语音合成可能因系统资源不足而失败
-                if (e.error === 'canceled' || e.error === 'interrupted') {
-                    // 被取消或中断是正常操作，不提示
-                } else {
+                if (e.error !== 'canceled' && e.error !== 'interrupted') {
                     showToast('播放出错，请重试', 2000);
                 }
                 isPlaying = false;
@@ -1216,11 +1116,10 @@
             }
 
             if (!isPlaying && !isPaused && !currentUtterance) {
-                // 预热TTS引擎（移动端首次调用可能较慢）
                 const warmUp = new SpeechSynthesisUtterance('');
                 warmUp.volume = 0;
-                if (selectedVoice) warmUp.voice = selectedVoice;
                 warmUp.lang = 'en-US';
+                if (selectedVoice) warmUp.voice = selectedVoice;
                 window.speechSynthesis.cancel();
                 window.speechSynthesis.speak(warmUp);
             }
@@ -1233,8 +1132,7 @@
                 pausedCharPos = Math.min(totalChars, pausedCharPos + Math.floor(elapsed * rate));
                 detachUtterance();
                 window.speechSynthesis.cancel();
-                if (progressTimer) { clearInterval(progressTimer);
-                    progressTimer = null; }
+                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
                 isPlaying = false;
                 isPaused = true;
                 updatePlayPauseButton();
@@ -1264,14 +1162,8 @@
             }
         }
 
-        playPauseBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            handlePlayPause();
-        }, { passive: false });
-        playPauseBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handlePlayPause();
-        });
+        playPauseBtn.addEventListener('touchend', (e) => { e.preventDefault(); handlePlayPause(); }, { passive: false });
+        playPauseBtn.addEventListener('click', (e) => { e.preventDefault(); handlePlayPause(); });
 
         progressBar.addEventListener('mousedown', () => { isDragging = true; });
         progressBar.addEventListener('touchstart', () => { isDragging = true; });
@@ -1284,8 +1176,7 @@
             const p = parseFloat(e.target.value);
             const tc = Math.floor((p / 100) * totalChars);
             currentTimeDisplay.textContent = formatTime((tc / totalChars) * estimatedDuration);
-            if (progressTimer) { clearInterval(progressTimer);
-                progressTimer = null; }
+            if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
         });
         progressBar.addEventListener('change', (e) => {
             if (totalChars <= 0) return;
@@ -1326,17 +1217,9 @@
         }
 
         function nextSentence() {
-            if (sentencePool.length === 0) {
-                showToast('📭 句子库为空', 2500);
-                return;
-            }
-            if (sentencePool.length === 1) {
-                showToast('📌 只有1句，请添加更多。', 2500);
-                return;
-            }
-            const availableIndices = sentencePool
-                .map((_, i) => i)
-                .filter(i => i !== currentIndex);
+            if (sentencePool.length === 0) { showToast('📭 句子库为空', 2500); return; }
+            if (sentencePool.length === 1) { showToast('📌 只有1句，请添加更多。', 2500); return; }
+            const availableIndices = sentencePool.map((_, i) => i).filter(i => i !== currentIndex);
             const ni = availableIndices[Math.floor(Math.random() * availableIndices.length)];
             switchToSentence(ni);
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1367,72 +1250,52 @@
                 resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>';
                 return;
             }
-
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
 
             let html = '';
-            let cIdx = 0;
-            let uIdx = 0;
-
+            let cIdx = 0, uIdx = 0;
             while (cIdx < normCorrect.length && uIdx < normUser.length) {
                 const userClean = normUser[uIdx];
                 const correctClean = normCorrect[cIdx];
-
                 if (userClean === correctClean) {
                     html += `<span class="correct">${escapeHtml(userWords[uIdx])}</span> `;
-                    cIdx++;
-                    uIdx++;
+                    cIdx++; uIdx++;
                 } else {
                     let foundFuture = false;
                     for (let k = cIdx + 1; k < normCorrect.length; k++) {
-                        if (userClean === normCorrect[k]) {
-                            foundFuture = true;
-                            break;
-                        }
+                        if (userClean === normCorrect[k]) { foundFuture = true; break; }
                     }
-                    if (foundFuture) {
-                        cIdx++;
-                    } else {
-                        html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
-                        uIdx++;
-                    }
+                    if (foundFuture) { cIdx++; }
+                    else { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
                 }
             }
-
             while (uIdx < normUser.length) {
                 html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `;
                 uIdx++;
             }
-
             const perfect = normUser.join(' ') === normCorrect.join(' ');
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
                 `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
-
             updateHistory(correct, rawUser);
-
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             userInputEl.focus();
         }
 
-        function checkAndShowAnswer() {
-            checkAnswer();
-        }
+        function checkAndShowAnswer() { checkAnswer(); }
 
         function addNewSentence() {
             const inp = document.getElementById('newSentenceInput');
             const t = inp.value.trim();
             if (!t) { showToast('请输入有效的英语句子', 2000); return; }
-
             if (!sentencePool.includes(t)) {
                 sentencePool.push(t);
                 saveSentencePool(sentencePool);
             }
             inp.value = '';
-
             if (currentIndex === null && sentencePool.length === 1) {
                 currentIndex = 0;
                 clearInputAndResult();
@@ -1456,22 +1319,18 @@
                 historyList.innerHTML = entries.map(([sentence, data]) => {
                     const shortTime = new Date(data.time).toLocaleString();
                     const userInput = data.userInput || '（无输入）';
-                    return `
-                        <li>
-                            <div><strong>原文：</strong>${escapeHtml(sentence)}</div>
-                            <div style="color:#555; margin-top:2px;"><strong>你的输入：</strong>${escapeHtml(userInput)}</div>
-                            <small style="color:#888;">${shortTime}</small>
-                            <button class="delete-btn" onclick="deleteHistoryItem('${escapeHtml(sentence).replace(/'/g, "\\'")}')">删除</button>
-                        </li>
-                    `;
+                    return `<li>
+                        <div><strong>原文：</strong>${escapeHtml(sentence)}</div>
+                        <div style="color:#555; margin-top:2px;"><strong>你的输入：</strong>${escapeHtml(userInput)}</div>
+                        <small style="color:#888;">${shortTime}</small>
+                        <button class="delete-btn" onclick="deleteHistoryItem('${escapeHtml(sentence).replace(/'/g, "\\'")}')">删除</button>
+                    </li>`;
                 }).join('');
             }
             historyModal.classList.add('active');
         }
 
-        function closeHistory() {
-            historyModal.classList.remove('active');
-        }
+        function closeHistory() { historyModal.classList.remove('active'); }
 
         function deleteHistoryItem(sentence) {
             removeHistory(sentence);
@@ -1481,17 +1340,13 @@
             showToast('已删除记录', 1500);
         }
 
-        historyModal.addEventListener('click', (e) => {
-            if (e.target === historyModal) closeHistory();
-        });
+        historyModal.addEventListener('click', (e) => { if (e.target === historyModal) closeHistory(); });
 
         userInputEl.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault();
-                checkAnswer(); }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
         });
         document.getElementById('newSentenceInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault();
-                addNewSentence(); }
+            if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
         });
 
         window.onload = () => {
@@ -1503,10 +1358,9 @@
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
 
-            // ========== 初始化语音选择 ==========
-            selectSystemVoice();
+            // 再次尝试选择系统语音（onload 时 voices 可能已就绪）
+            selectBestSystemVoice();
 
-            // 预热TTS引擎（使用系统默认语音）
             const warmUp = new SpeechSynthesisUtterance('');
             warmUp.volume = 0;
             warmUp.lang = 'en-US';
