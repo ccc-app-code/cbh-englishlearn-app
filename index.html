@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英语听写练习 · 最终版</title>
+    <title>英语听写练习 · 绿色按钮版</title>
     <style>
         :root {
             --bg: #f5f7fa;
@@ -13,6 +13,8 @@
             --text-muted: #888;
             --accent: #5b8def;
             --green: #4CAF50;
+            --green-light: #66bb6a;
+            --green-dark: #388E3C;
             --teal: #009688;
             --red: #c62828;
             --orange: #FF9800;
@@ -37,9 +39,9 @@
         .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
         .speed-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: var(--teal); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            background: var(--green); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
-        .speed-value { font-size: 0.8em; font-weight: 700; color: var(--teal); min-width: 36px; text-align: center; }
+        .speed-value { font-size: 0.8em; font-weight: 700; color: var(--green); min-width: 36px; text-align: center; }
 
         .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
         button {
@@ -50,21 +52,23 @@
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        /* 统一播放和检查按钮的尺寸与字体 */
+        /* 统一播放和检查按钮尺寸与样式 */
         .btn-play, .btn-check {
             font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; line-height: 1.2;
+            color: #fff;
         }
-        .btn-play { background: var(--green); color: #fff; }
-        .btn-pause { background: #66bb6a; color: #fff; font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; }
-        .btn-check { background: var(--green); color: #fff; }
+        .btn-play { background: var(--green); }
+        .btn-pause { background: var(--green-light); font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; color: #fff; }
+        .btn-check { background: var(--green); }
         .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
         .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
-        .btn-history { background: var(--accent); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
-        .record-row { display: flex; gap: 8px; margin-top: 8px; }
-        .btn-record { background: var(--orange); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
-        .btn-play-recording { background: var(--teal); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        /* 录音、播放录音、历史记录 统一绿色系 */
+        .btn-record { background: var(--green); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
         .btn-record.recording { background: var(--red); animation: pulse 1.5s infinite; }
+        .btn-play-recording { background: var(--green-light); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-history { background: var(--green-dark); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
+
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .progress-container {
@@ -144,7 +148,7 @@
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练 · 无语音选择版</h2>
+    <h2>🎧 小毛快练 · 绿色版</h2>
     <p class="subtitle"></p>
 
     <div class="speed-card">
@@ -197,9 +201,9 @@
 
     <script>
         // ==================== 存储 ====================
-        const STORAGE_KEY_SENTENCES = 'sentencePool_v4';
-        const STORAGE_KEY_SPEED = 'playbackSpeed_v3';
-        const STORAGE_KEY_HISTORY = 'sentenceHistory_v2';
+        const STORAGE_KEY_SENTENCES = 'sentencePool_v5';
+        const STORAGE_KEY_SPEED = 'playbackSpeed_v4';
+        const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
 
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -556,9 +560,7 @@
 
         function detachUtterance() {
             if (currentUtterance) {
-                currentUtterance.onstart = null;
-                currentUtterance.onend = null;
-                currentUtterance.onerror = null;
+                currentUtterance.onstart = null; currentUtterance.onend = null; currentUtterance.onerror = null;
                 currentUtterance = null;
             }
         }
@@ -574,8 +576,7 @@
         function resetAll() {
             stopPlayback(false);
             pausedCharPos = 0;
-            progressBar.value = 0;
-            progressBar.disabled = true;
+            progressBar.value = 0; progressBar.disabled = true;
             currentTimeDisplay.textContent = '00:00';
             totalTimeDisplay.textContent = '00:00';
             updatePlayPauseButton();
@@ -616,7 +617,7 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = playbackSpeed;
             utterance.lang = 'en-US';
-            // 不再手动指定语音，完全交给浏览器默认
+            // 直接使用系统默认语音
 
             utterance.onstart = () => {
                 if (!isPlaying) return;
