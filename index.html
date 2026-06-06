@@ -528,6 +528,7 @@
         let estimatedDuration = 0, progressTimer = null;
         let isDragging = false;
         let currentUtterance = null;
+        let sentenceQueue = [], sentenceQueueIdx = 0;
 
         function autoResizeTextarea() {
             userInputEl.style.height = 'auto';
@@ -571,6 +572,8 @@
             detachUtterance();
             window.speechSynthesis.cancel();
             if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+            sentenceQueue = [];
+            sentenceQueueIdx = 0;
             isPlaying = false;
             if (!keepPaused) isPaused = false;
         }
@@ -593,6 +596,63 @@
             }
         }
 
+        function splitSentences(text, offset) {
+            const result = [];
+            const regex = /[^.!?]+[.!?]+\s*/g;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                result.push({ text: match[0], charStart: offset + match.index });
+            }
+            // 处理末尾不含句号/问号/感叹号的剩余文本
+            const lastEnd = result.length > 0
+                ? result[result.length - 1].charStart + result[result.length - 1].text.length - offset
+                : 0;
+            const remaining = text.substring(lastEnd).trim();
+            if (remaining) {
+                result.push({ text: remaining, charStart: offset + lastEnd + text.substring(lastEnd).indexOf(remaining) });
+            }
+            return result;
+        }
+
+        function speakNextSentence() {
+            if (!isPlaying || sentenceQueueIdx >= sentenceQueue.length) {
+                isPlaying = false;
+                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+                progressBar.value = 100;
+                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
+                updatePlayPauseButton();
+                return;
+            }
+
+            const { text, charStart } = sentenceQueue[sentenceQueueIdx];
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = playbackSpeed;
+            utterance.lang = 'en-US';
+
+            utterance.onstart = () => {
+                if (!isPlaying) return;
+                pausedCharPos = charStart;
+                startTime = Date.now();
+                if (progressTimer) clearInterval(progressTimer);
+                progressTimer = setInterval(updateProgress, 100);
+                refocusInput();
+            };
+            utterance.onend = () => {
+                if (!isPlaying) return;
+                sentenceQueueIdx++;
+                speakNextSentence();
+            };
+            utterance.onerror = () => {
+                if (!isPlaying) return;
+                sentenceQueueIdx++;
+                speakNextSentence();
+            };
+
+            currentUtterance = utterance;
+            window.speechSynthesis.speak(utterance);
+        }
+
         function startPlayback(fromChar) {
             stopPlayback(false);
             if (currentIndex === null || !sentencePool[currentIndex]) return;
@@ -606,44 +666,21 @@
             totalTimeDisplay.textContent = formatTime(estimatedDuration);
 
             const startPos = findWordBoundary(fullText, fromChar);
-            const text = fullText.substring(startPos);
             pausedCharPos = startPos;
 
             progressBar.value = (startPos / totalChars) * 100;
             currentTimeDisplay.textContent = formatTime((startPos / totalChars) * estimatedDuration);
 
-            startTime = Date.now();
+            // 将剩余文本拆成句子队列，逐个朗读以保证断句
+            const remainingText = fullText.substring(startPos);
+            sentenceQueue = splitSentences(remainingText, startPos);
+            sentenceQueueIdx = 0;
+
             isPlaying = true;
             updatePlayPauseButton();
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = playbackSpeed;
-            utterance.lang = 'en-US';
-            // 直接使用系统默认语音
-
-            utterance.onstart = () => {
-                if (!isPlaying) return;
-                if (progressTimer) clearInterval(progressTimer);
-                progressTimer = setInterval(updateProgress, 100);
-                refocusInput();
-            };
-            utterance.onend = () => {
-                if (!isPlaying) return;
-                isPlaying = false;
-                if (progressTimer) clearInterval(progressTimer);
-                progressBar.value = 100;
-                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
-                updatePlayPauseButton();
-            };
-            utterance.onerror = () => {
-                isPlaying = false;
-                if (progressTimer) clearInterval(progressTimer);
-                updatePlayPauseButton();
-            };
-
-            currentUtterance = utterance;
             window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
+            speakNextSentence();
         }
 
         function updateProgress() {
@@ -654,11 +691,7 @@
             const curChar = Math.min(totalChars, pausedCharPos + chars);
             progressBar.value = (curChar / totalChars) * 100;
             currentTimeDisplay.textContent = formatTime((curChar / totalChars) * estimatedDuration);
-            if (curChar >= totalChars) {
-                stopPlayback(false);
-                progressBar.value = 100;
-                currentTimeDisplay.textContent = totalTimeDisplay.textContent;
-            }
+
         }
 
         function handlePlayPause() {
