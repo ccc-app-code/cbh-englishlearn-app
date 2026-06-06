@@ -206,6 +206,7 @@
         const STORAGE_KEY_SENTENCES = 'sentencePool_v5';
         const STORAGE_KEY_SPEED = 'playbackSpeed_v4';
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
+        const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
 
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -424,6 +425,28 @@
         }
         function saveSentencePool(pool) { localStorage.setItem(STORAGE_KEY_SENTENCES, JSON.stringify(pool)); }
         let sentencePool = loadSentencePool();
+
+        function loadTranslateCache() {
+            try { const s = localStorage.getItem(STORAGE_KEY_TRANSLATE); return s ? JSON.parse(s) : {}; } catch (e) { return {}; }
+        }
+        function saveTranslateCache(c) { localStorage.setItem(STORAGE_KEY_TRANSLATE, JSON.stringify(c)); }
+        let translateCache = loadTranslateCache();
+
+        async function translateText(text) {
+            const key = text.trim();
+            if (translateCache[key]) return translateCache[key];
+            try {
+                const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(key) + '&langpair=en|zh-CN';
+                const resp = await fetch(url);
+                const data = await resp.json();
+                const translated = (data.responseData && data.responseData.translatedText) || '';
+                if (translated) {
+                    translateCache[key] = translated;
+                    saveTranslateCache(translateCache);
+                }
+                return translated;
+            } catch (e) { return ''; }
+        }
 
         function loadHistory() {
             const stored = localStorage.getItem(STORAGE_KEY_HISTORY);
@@ -766,7 +789,6 @@
             currentTimeDisplay.textContent = '00:00';
             totalTimeDisplay.textContent = formatTime(estimatedDuration);
             updatePlayPauseButton();
-            userInputEl.focus();
         }
 
         function nextSentence() {
@@ -775,8 +797,6 @@
             const availableIndices = sentencePool.map((_, i) => i).filter(i => i !== currentIndex);
             const ni = availableIndices[Math.floor(Math.random() * availableIndices.length)];
             switchToSentence(ni);
-            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            userInputEl.focus();
         }
 
         function clearInputAndResult() { userInputEl.value = ''; resultArea.innerHTML = ''; }
@@ -788,7 +808,7 @@
 
         function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
 
-        function checkAnswer() {
+        async function checkAnswer() {
             if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
             const correct = sentencePool[currentIndex].trim();
@@ -816,9 +836,20 @@
             }
             while (uIdx < normUser.length) { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
             const perfect = normUser.join(' ') === normCorrect.join(' ');
+
+            // 显示翻译结果
             resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
                 (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
-                `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}`;
+                `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}` +
+                `<br><span id="translationLine" style="color:#888;">🌐 翻译中...</span>`;
+
+            // 异步获取翻译
+            const zh = await translateText(correct);
+            const tlEl = document.getElementById('translationLine');
+            if (tlEl) {
+                tlEl.textContent = zh ? `🌐 ${zh}` : '';
+                if (!zh) tlEl.style.display = 'none';
+            }
             updateHistory(correct, rawUser);
             userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             userInputEl.focus();
