@@ -6,44 +6,80 @@
     <title>英语听写练习</title>
     <style>
         :root {
-            --bg: #f5f7fa;
+            --bg-start: #E0F7FA;
+            --bg-end: #E0F2F1;
             --card: #fff;
             --text: #333;
             --text-secondary: #555;
-            --text-muted: #888;
-            --accent: #5b8def;
-            --green: #4CAF50;
-            --green-light: #66bb6a;
-            --green-dark: #388E3C;
+            --text-muted: #777;
+            --accent: #0097A7;
+            --accent2: #00ACC1;
+            --green: #00897B;
+            --green-light: #26A69A;
+            --green-dark: #00695C;
             --teal: #009688;
+            --teal-light: #4DB6AC;
+            --cyan: #00BCD4;
             --red: #c62828;
             --orange: #FF9800;
-            --shadow: 0 1px 4px rgba(0,0,0,0.06);
+            --shadow: 0 2px 8px rgba(0,105,92,0.08);
+            --shadow-lg: 0 4px 16px rgba(0,105,92,0.10);
             --radius-sm: 10px;
             --radius-xs: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent;
-            user-select: none; -webkit-user-select: none; padding: 20px 20px 30px; max-width: 700px; margin: 0 auto;
+            background: linear-gradient(180deg, #FFF5F5 0%, #FFF8E1 20%, #F1F8E9 40%, #E3F2FD 60%, #EDE7F6 80%, #FCE4EC 100%);
+            color: var(--text); -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-select: none; padding: 0; max-width: 700px; margin: 0 auto;
+            min-height: 100vh;
         }
-        h2 { text-align: center; margin-bottom: 2px; font-size: 1.4em; }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 12px; }
+
+        /* ===== 顶部导航标签 ===== */
+        .nav-tabs {
+            display: flex; position: sticky; top: 0; z-index: 100;
+            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .nav-tab {
+            flex: 1; padding: 14px 8px; text-align: center; cursor: pointer;
+            font-weight: 700; font-size: 0.95em; color: rgba(255,255,255,0.7);
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-tab.active { color: #fff; border-bottom-color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-tab:active { background: rgba(255,255,255,0.18); }
+
+        .page { display: none; padding: 16px 18px 30px; }
+        .page.active { display: block; }
+
+        /* ===== 听写页标题 ===== */
+        .page-title {
+            text-align: center; margin-bottom: 2px; font-size: 1.4em; font-weight: 800;
+            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 14px; }
+
+        /* ===== 卡片 ===== */
         .speed-card {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-            background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm); box-shadow: var(--shadow);
+            background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
+            box-shadow: var(--shadow); border-left: 3px solid #E53935;
         }
         .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
         .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
-        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
+        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
         .speed-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: var(--green); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #E53935, #FB8C00); cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
-        .speed-value { font-size: 0.8em; font-weight: 700; color: var(--green); min-width: 36px; text-align: center; }
+        .speed-value { font-size: 0.8em; font-weight: 700; color: #E53935; min-width: 36px; text-align: center; }
 
-        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
+        .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none; cursor: pointer;
             font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
@@ -52,66 +88,70 @@
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        /* 统一播放和检查按钮尺寸与样式 */
-        .btn-play, .btn-check {
-            font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; line-height: 1.2;
+        /* 播放/检查/下一句 按钮：彩虹色系 */
+        .btn-play, .btn-check, .btn-next {
+            font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; line-height: 1.2;
             color: #fff;
         }
-        .btn-play { background: var(--green); }
-        .btn-pause { background: var(--green-light); font-size: 1.05em; padding: 14px 28px; min-width: 130px; height: 52px; color: #fff; }
-        .btn-check { background: var(--green); }
-        .btn-next { background: var(--green); color: #fff; width: 100%; margin-top: 8px; font-size: 1em; padding: 14px; }
-        .btn-add { background: var(--green); color: #fff; width: 100%; margin-top: 6px; }
+        .btn-play { background: linear-gradient(135deg, #E53935, #FB8C00); }
+        .btn-pause { background: linear-gradient(135deg, #EF5350, #FFB74D); font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
+        .btn-check { background: linear-gradient(135deg, #43A047, #1E88E5); }
+        .btn-next { background: linear-gradient(135deg, #1E88E5, #5C6BC0); }
+        .btn-add { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 6px; }
 
-        /* 录音与播放录音按钮区域：增加上下间距，颜色统一为绿色 */
+        /* 录音按钮 */
         .record-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; }
-        .btn-record, .btn-play-recording {
-            background: var(--green); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em;
-        }
+        .btn-record { background: linear-gradient(135deg, #FB8C00, #FDD835); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-play-recording { background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
         .btn-record.recording { background: var(--red); animation: pulse 1.5s infinite; }
-        .btn-history { background: var(--green-dark); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
+        .btn-history { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .progress-container {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-            background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm); box-shadow: var(--shadow);
+            background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
+            box-shadow: var(--shadow); border-left: 3px solid #FB8C00;
         }
-        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #ddd; border-radius: 3px; }
+        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
         .progress-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-            background: var(--green); cursor: pointer; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #FB8C00, #FDD835); cursor: pointer;
+            border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
         #userInput {
             width: 100%; height: 30vh; min-height: 150px; max-height: 50vh; padding: 14px 16px;
-            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #ddd; background: #fff;
+            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #B2DFDB; background: #fff;
             resize: none; font-family: inherit; line-height: 1.7; overflow-y: auto;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        #userInput:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(91,141,239,0.08); }
+        #userInput:focus { outline: none; border-color: #5C6BC0; box-shadow: 0 0 0 4px rgba(92,107,192,0.12); }
         #userInput::placeholder { color: #bbb; }
 
         .result {
             padding: 16px; background: #fff; border-radius: var(--radius-sm); white-space: pre-wrap;
             line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow); min-height: 20px; margin-bottom: 8px;
         }
-        .correct { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .correct { color: #2E7D32; font-weight: bold; background: #C8E6C9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .result-empty { color: #bbb; text-align: center; display: block; }
 
         .add-section {
-            background: #fff; border-radius: var(--radius-sm); padding: 16px; box-shadow: var(--shadow); margin-top: 8px;
+            background: #fff; border-radius: var(--radius-sm); padding: 16px;
+            box-shadow: var(--shadow); margin-top: 8px; border-left: 3px solid #8E24AA;
         }
-        .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; }
+        .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #8E24AA; }
         .add-section input[type="text"] {
             width: 100%; padding: 12px 14px; font-size: 15px; border-radius: var(--radius-xs);
-            border: 2px solid #ddd; background: #fff; margin-bottom: 4px;
+            border: 2px solid #B2DFDB; background: #fff; margin-bottom: 4px;
         }
-        .add-section input[type="text"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,141,239,0.08); }
+        .add-section input[type="text"]:focus { outline: none; border-color: #8E24AA; box-shadow: 0 0 0 3px rgba(142,36,170,0.10); }
 
         .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff;
             padding: 10px 22px; border-radius: 24px; font-size: 0.9em; z-index: 999; opacity: 0;
             pointer-events: none; transition: opacity 0.3s;
         }
@@ -135,22 +175,102 @@
         }
         .modal-content .close-btn { background: #eee; color: #333; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 0.9em; border: none; cursor: pointer; }
 
+        /* ===== 日历页 ===== */
+        #page-calendar { padding-top: 20px; }
+        .cal-hero {
+            text-align: center; margin-bottom: 16px;
+        }
+        .cal-hero .cal-title {
+            font-size: 1.5em; font-weight: 800;
+            background: linear-gradient(135deg, #00695C, #0097A7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cal-stats-row {
+            display: flex; gap: 10px; margin-bottom: 16px;
+        }
+        .cal-stat-card {
+            flex: 1; background: #fff; border-radius: var(--radius-sm); padding: 14px 12px;
+            text-align: center; box-shadow: var(--shadow);
+        }
+        .cal-stat-card .stat-num {
+            font-size: 1.8em; font-weight: 800;
+            background: linear-gradient(135deg, #00695C, #0097A7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .cal-stat-card .stat-label { font-size: 0.72em; color: var(--text-muted); margin-top: 2px; }
+        .calendar-card {
+            background: var(--card); border-radius: var(--radius-sm); padding: 18px 16px;
+            box-shadow: var(--shadow-lg);
+        }
+        .calendar-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+        }
+        .calendar-header .month-label { font-weight: 700; font-size: 1em; color: var(--green-dark); }
+        .calendar-header .month-nav { display: flex; gap: 6px; }
+        .calendar-header .month-nav button {
+            width: 34px; height: 34px; padding: 0; font-size: 18px; border-radius: 50%;
+            background: linear-gradient(135deg, #00897B, #009688); color: #fff;
+            display: flex; align-items: center; justify-content: center; line-height: 1;
+        }
+        .calendar-header .month-nav button:disabled { opacity: 0.3; }
+        .calendar-summary { font-size: 0.8em; color: var(--text-muted); text-align: center; margin-bottom: 10px; }
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;
+        }
+        .cal-day-label {
+            font-size: 0.72em; font-weight: 600; color: var(--text-muted); padding: 4px 0;
+        }
+        .cal-day {
+            aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.85em; font-weight: 600; cursor: default; position: relative;
+            min-width: 30px; min-height: 30px;
+        }
+        .cal-day.empty { background: transparent; }
+        .cal-day.level-0 { background: #ECEFF1; color: #999; }
+        .cal-day.level-1 { background: #B2DFDB; color: #00695C; }
+        .cal-day.level-2 { background: #4DB6AC; color: #fff; }
+        .cal-day.level-3 { background: #009688; color: #fff; }
+        .cal-day.level-4 { background: #00796B; color: #fff; }
+        .cal-day.today { box-shadow: 0 0 0 2px var(--green-dark); }
+        .cal-day.has-data:hover { opacity: 0.8; transform: scale(1.15); transition: 0.15s; }
+
+        .legend-row {
+            display: flex; align-items: center; gap: 6px; justify-content: center;
+            margin-top: 10px; font-size: 0.75em; color: var(--text-muted);
+        }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 4px; }
+
         @media (max-width: 480px) {
-            body { padding: 12px 12px 30px; }
-            h2 { font-size: 1.2em; }
+            .page { padding: 12px 12px 30px; }
+            .page-title { font-size: 1.2em; }
             button { padding: 10px 14px; font-size: 14px; }
-            .btn-play,.btn-pause,.btn-check { padding: 12px 22px; font-size: 1em; min-width: 110px; height: 46px; }
+            .btn-play,.btn-pause,.btn-check,.btn-next { padding: 12px 16px; font-size: 0.9em; min-width: 72px; height: 44px; }
             .btn-record,.btn-play-recording { padding: 12px 10px; font-size: 0.9em; }
             #userInput { height: 30vh; min-height: 120px; font-size: 15px; }
             .progress-container { padding: 6px 10px; gap: 4px; }
             .progress-time { font-size: 0.72em; min-width: 34px; }
             .speed-card { padding: 8px 10px; gap: 5px; }
             .speed-card label { font-size: 0.75em; }
+            .calendar-grid { gap: 2px; }
+            .cal-day { min-width: 24px; min-height: 24px; font-size: 0.72em; }
+            .cal-day-label { font-size: 0.65em; }
+            .cal-stat-card .stat-num { font-size: 1.4em; }
+            .nav-tab { padding: 12px 4px; font-size: 0.85em; }
         }
     </style>
 </head>
 <body>
-    <h2>🎧 小毛快练</h2>
+    <!-- 顶部导航 -->
+    <nav class="nav-tabs">
+        <div class="nav-tab active" id="tabDictation" onclick="switchPage('dictation')">🎧 听写练习</div>
+        <div class="nav-tab" id="tabCalendar" onclick="switchPage('calendar')">📅 学习日历</div>
+    </nav>
+
+    <!-- ========== 听写练习页 ========== -->
+    <div class="page active" id="page-dictation">
+    <h2 class="page-title">🎧 小毛快练</h2>
     <p class="subtitle"></p>
 
     <div class="speed-card">
@@ -172,11 +292,10 @@
     <div class="btn-row">
         <button type="button" class="btn-play" id="playPauseBtn">▶ 播放</button>
         <button type="button" class="btn-check" id="checkBtn" onclick="checkAndShowAnswer()">✅ 检查</button>
+        <button type="button" class="btn-next" onclick="nextSentence()">🎲 下一句</button>
     </div>
 
     <div class="result" id="resultArea"></div>
-
-    <button type="button" class="btn-next" onclick="nextSentence()">🎲 下一句（随机挑选）</button>
 
     <div class="record-row">
         <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音</button>
@@ -200,6 +319,48 @@
             <button class="close-btn" onclick="closeHistory()">关闭</button>
         </div>
     </div>
+    </div><!-- /page-dictation -->
+
+    <!-- ========== 学习日历页 ========== -->
+    <div class="page" id="page-calendar">
+        <div class="cal-hero">
+            <div class="cal-title">📅 学习日历</div>
+        </div>
+
+        <div class="cal-stats-row">
+            <div class="cal-stat-card">
+                <div class="stat-num" id="statTotal">0</div>
+                <div class="stat-label">📝 累计练习句数</div>
+            </div>
+            <div class="cal-stat-card">
+                <div class="stat-num" id="statDays">0</div>
+                <div class="stat-label">🔥 累计学习天数</div>
+            </div>
+            <div class="cal-stat-card">
+                <div class="stat-num" id="statMonth">0</div>
+                <div class="stat-label">📅 本月句数</div>
+            </div>
+        </div>
+
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <button class="month-nav" onclick="changeMonth(-1)" title="上个月">◀</button>
+                <span class="month-label" id="monthLabel">2025年1月</span>
+                <button class="month-nav" onclick="changeMonth(1)" title="下个月">▶</button>
+            </div>
+            <div class="calendar-summary" id="calendarSummary"></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="legend-row">
+                <span>少</span>
+                <span class="legend-swatch" style="background:#ECEFF1;"></span>
+                <span class="legend-swatch" style="background:#B2DFDB;"></span>
+                <span class="legend-swatch" style="background:#4DB6AC;"></span>
+                <span class="legend-swatch" style="background:#009688;"></span>
+                <span class="legend-swatch" style="background:#00796B;"></span>
+                <span>多</span>
+            </div>
+        </div>
+    </div><!-- /page-calendar -->
 
     <script>
         // ==================== 存储 ====================
@@ -207,6 +368,7 @@
         const STORAGE_KEY_SPEED = 'playbackSpeed_v4';
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
         const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
+        const STORAGE_KEY_CALENDAR = 'dailyStats_v1';
 
         const defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -461,10 +623,134 @@
         function updateHistory(sentence, userInput) {
             sentenceHistory[sentence] = { time: new Date().toISOString(), userInput: userInput };
             saveHistory(sentenceHistory);
+            incrementToday();
+            if (typeof calYear !== 'undefined') renderCalendar(calYear, calMonth);
         }
         function removeHistory(sentence) {
             delete sentenceHistory[sentence];
             saveHistory(sentenceHistory);
+        }
+
+        // ==================== 学习日历逻辑 ====================
+        function loadDailyStats() {
+            try { const s = localStorage.getItem(STORAGE_KEY_CALENDAR); return s ? JSON.parse(s) : {}; } catch (e) { return {}; }
+        }
+        function saveDailyStats(stats) { localStorage.setItem(STORAGE_KEY_CALENDAR, JSON.stringify(stats)); }
+        let dailyStats = loadDailyStats();
+
+        function todayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function incrementToday() {
+            const key = todayKey();
+            dailyStats[key] = (dailyStats[key] || 0) + 1;
+            saveDailyStats(dailyStats);
+        }
+
+        // 页面切换
+        function switchPage(page) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            if (page === 'dictation') {
+                document.getElementById('tabDictation').classList.add('active');
+                document.getElementById('page-dictation').classList.add('active');
+                setTimeout(() => userInputEl.focus(), 300);
+            } else {
+                document.getElementById('tabCalendar').classList.add('active');
+                document.getElementById('page-calendar').classList.add('active');
+                const now = new Date();
+                renderCalendar(now.getFullYear(), now.getMonth());
+            }
+        }
+
+        function getTotalStats() {
+            let totalSentences = 0, totalDays = 0;
+            for (const key in dailyStats) {
+                if (dailyStats.hasOwnProperty(key)) {
+                    totalSentences += dailyStats[key];
+                    totalDays++;
+                }
+            }
+            return { totalSentences, totalDays };
+        }
+
+        function getMonthStats(year, month) {
+            let total = 0, days = 0;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let d = 1; d <= daysInMonth; d++) {
+                const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const c = dailyStats[ds] || 0;
+                if (c > 0) { total += c; days++; }
+            }
+            return { total, days };
+        }
+
+        let calYear, calMonth;
+        function renderCalendar(year, month) {
+            calYear = year; calMonth = month;
+            const grid = document.getElementById('calendarGrid');
+            const label = document.getElementById('monthLabel');
+            const summary = document.getElementById('calendarSummary');
+
+            label.textContent = `${year}年${month + 1}月`;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDow = new Date(year, month, 1).getDay();
+
+            let monthTotal = 0, monthDays = 0;
+            const todayStr = todayKey();
+
+            const dowLabels = ['日', '一', '二', '三', '四', '五', '六'];
+            let html = dowLabels.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+
+            for (let i = 0; i < firstDow; i++) {
+                html += '<div class="cal-day empty"></div>';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const count = dailyStats[dateStr] || 0;
+                if (count > 0) { monthTotal += count; monthDays++; }
+
+                let levelClass = 'level-0';
+                if (count >= 6) levelClass = 'level-4';
+                else if (count >= 4) levelClass = 'level-3';
+                else if (count >= 2) levelClass = 'level-2';
+                else if (count >= 1) levelClass = 'level-1';
+
+                const isToday = dateStr === todayStr;
+                const todayClass = isToday ? ' today' : '';
+                const hasDataClass = count > 0 ? ' has-data' : '';
+                const title = count > 0 ? ` title="${count} 句"` : '';
+
+                html += `<div class="cal-day ${levelClass}${todayClass}${hasDataClass}"${title}>${d}</div>`;
+            }
+
+            grid.innerHTML = html;
+            summary.textContent = monthTotal > 0
+                ? `本月共 ${monthDays} 天有练习，累计 ${monthTotal} 句 ✓`
+                : '本月暂无练习记录';
+
+            // 更新统计卡片
+            const allStats = getTotalStats();
+            const elTotal = document.getElementById('statTotal');
+            const elDays = document.getElementById('statDays');
+            const elMonth = document.getElementById('statMonth');
+            if (elTotal) elTotal.textContent = allStats.totalSentences;
+            if (elDays) elDays.textContent = allStats.totalDays;
+            if (elMonth) elMonth.textContent = monthTotal;
+        }
+
+        function changeMonth(delta) {
+            let m = calMonth + delta;
+            let y = calYear;
+            if (m < 0) { m = 11; y--; }
+            if (m > 11) { m = 0; y++; }
+            const now = new Date();
+            if (y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth())) return;
+            renderCalendar(y, m);
         }
 
         // ==================== 录音逻辑 ====================
@@ -919,6 +1205,11 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
+
+            // 初始化日历变量
+            const now = new Date();
+            calYear = now.getFullYear();
+            calMonth = now.getMonth();
 
             if (!sentencePool.length) {
                 showToast('句子库为空，请添加练习句子', 3000);
