@@ -1206,6 +1206,24 @@
             const normCorrect = correctWords.map(normalizeWord);
             const pairs = computeLCS(normCorrect, normUser);
             const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const matchedUser = new Set(pairs.map(p => p[1]));
+
+            // 部分匹配
+            const partialCorrect = new Set();
+            for (let ci = 0; ci < correctWords.length; ci++) {
+                if (matchedCorrect.has(ci)) continue;
+                const cw = normCorrect[ci];
+                for (let ui = 0; ui < userWords.length; ui++) {
+                    if (matchedUser.has(ui)) continue;
+                    const uw = normUser[ui];
+                    if (cw.length >= 3 && uw.length >= 3) {
+                        const mLen = Math.min(cw.length, uw.length);
+                        const pLen = Math.max(1, Math.floor(mLen * 0.55));
+                        if (cw.slice(0, pLen) === uw.slice(0, pLen)) { partialCorrect.add(ci); break; }
+                    }
+                }
+            }
+
             const correctCount = pairs.length;
             const totalCount = correctWords.length;
             const percentage = Math.round((correctCount / totalCount) * 100);
@@ -1216,7 +1234,7 @@
                 `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #E5E0DA;">
                     ${buildScoreRing(percentage)}
                     <div style="font-size:0.82em;color:#7A7A7A;">🎯 ${correctCount}/${totalCount} 词匹配</div>
-                    <div style="line-height:2.2;margin-top:4px;font-size:0.88em;">${buildWordSpans(original, matchedCorrect)}</div>
+                    <div style="line-height:2.2;margin-top:4px;font-size:0.88em;">${buildWordSpans(original, matchedCorrect, partialCorrect)}</div>
                 </div>`;
             scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             updateHistory(original, transcript);
@@ -1238,11 +1256,15 @@
             </div>`;
         }
 
-        function buildWordSpans(text, matchedSet) {
+        function buildWordSpans(text, matchedSet, partialSet) {
             const words = text.split(/\s+/);
             let html = '';
             for (let i = 0; i < words.length; i++) {
-                const cls = matchedSet ? (matchedSet.has(i) ? 'w-exact' : 'w-missed') : 'w-neutral';
+                let cls;
+                if (!matchedSet) { cls = 'w-neutral'; }
+                else if (matchedSet.has(i)) { cls = 'w-exact'; }
+                else if (partialSet && partialSet.has(i)) { cls = 'w-partial'; }
+                else { cls = 'w-missed'; }
                 html += `<span class="word-token ${cls}">${escapeHtml(words[i])}</span>`;
             }
             return html;
@@ -1578,6 +1600,22 @@
             const matchedCorrect = new Set(pairs.map(p => p[0]));
             const matchedUser = new Set(pairs.map(p => p[1]));
 
+            // 部分匹配：未精确匹配的词检查前缀重叠
+            const partialCorrect = new Set();
+            for (let ci = 0; ci < correctWords.length; ci++) {
+                if (matchedCorrect.has(ci)) continue;
+                const cw = normCorrect[ci];
+                for (let ui = 0; ui < userWords.length; ui++) {
+                    if (matchedUser.has(ui)) continue;
+                    const uw = normUser[ui];
+                    if (cw.length >= 3 && uw.length >= 3) {
+                        const mLen = Math.min(cw.length, uw.length);
+                        const pLen = Math.max(1, Math.floor(mLen * 0.55));
+                        if (cw.slice(0, pLen) === uw.slice(0, pLen)) { partialCorrect.add(ci); break; }
+                    }
+                }
+            }
+
             const correctCount = pairs.length;
             const totalCount = correctWords.length;
             const percentage = Math.round((correctCount / totalCount) * 100);
@@ -1611,10 +1649,16 @@
             scoringEl.innerHTML =
                 buildScoreRing(percentage) +
                 `<div style="font-size:0.82em;color:#7A7A7A;margin-bottom:6px;">🎯 ${correctCount}/${totalCount} 词匹配</div>
-                <div style="line-height:2.2;margin-bottom:6px;font-size:0.9em;">${buildWordSpans(original, matchedCorrect)}</div>
+                <div style="line-height:2.2;margin-bottom:6px;font-size:0.9em;">${buildWordSpans(original, matchedCorrect, partialCorrect)}</div>
                 <div style="line-height:2;font-size:0.82em;color:#7A7A7A;margin-bottom:2px;">
                     <span style="font-weight:600;">🗣 识别：</span>${userHtml.trim() || '<span style="color:#bbb;">（空）</span>'}
                 </div>${fluencyHtml}`;
+
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateHistory(original, transcript);
+            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+        }
 
             scoringEl.style.display = 'block';
             scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
