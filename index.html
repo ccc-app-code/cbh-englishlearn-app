@@ -299,7 +299,6 @@
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
-    <div class="stt-status" id="sttStatus" style="display:none; font-size:0.82em; color:#555; text-align:center; margin-bottom:6px; padding:8px 12px; background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06); min-height:20px;"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -827,35 +826,33 @@
         let recordingUrl = null;
         const audioPlayer = new Audio();
 
-        // ==================== 语音识别（STT） ====================
+        // ==================== 语音识别 ====================
         let recognition = null;
         let sttTranscript = '';
-        let sttSupported = false;
 
-        function initSTT() {
+        (function initSTT() {
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) { sttSupported = false; return null; }
+            if (!SR) return;
             const rec = new SR();
             rec.lang = 'en-US';
             rec.continuous = true;
             rec.interimResults = true;
             rec.maxAlternatives = 1;
-            sttSupported = true;
-            return rec;
-        }
-        recognition = initSTT();
+            recognition = rec;
+        })();
 
         const recordBtn = document.getElementById('recordBtn');
         const playRecordingBtn = document.getElementById('playRecordingBtn');
 
         function getSupportedMimeType() {
-            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+            const types = ['audio/mp4', 'audio/aac', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
             for (let type of types) { if (MediaRecorder.isTypeSupported(type)) return type; }
             return '';
         }
 
         async function startRecording() {
             audioChunks = [];
+            userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('❌ 当前浏览器不支持录音功能', 2500); return;
             }
@@ -866,60 +863,61 @@
                 mediaRecorder = new MediaRecorder(stream, options);
                 mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
-                    recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+                    recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/mp4' });
                     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
                     recordingUrl = URL.createObjectURL(recordedBlob);
                     playRecordingBtn.disabled = false;
                     stream.getTracks().forEach(track => track.stop());
-                    showToast('✅ 录音完成，自动检查中…', 1500);
-                    // 录音结束后，用 STT 结果填充输入框并自动检查
                     if (currentIndex !== null) {
                         if (sttTranscript.trim()) {
+                            // Chrome/Android：有 STT 结果，自动填充并检查
                             userInputEl.value = sttTranscript.trim();
                             autoResizeTextarea();
+                            showToast('✅ 识别完成，自动检查中…', 1500);
+                            setTimeout(() => checkAnswer(), 200);
+                        } else {
+                            // 无 STT（Safari/iOS）：引导用键盘语音输入
+                            showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
+                            userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
+                            userInputEl.focus();
+                            // 监听输入变化，一旦有内容就自动检查
+                            const onInput = () => {
+                                if (userInputEl.value.trim()) {
+                                    userInputEl.removeEventListener('input', onInput);
+                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                    setTimeout(() => checkAnswer(), 500);
+                                }
+                            };
+                            userInputEl.addEventListener('input', onInput);
+                            // 15 秒超时清理
+                            setTimeout(() => {
+                                userInputEl.removeEventListener('input', onInput);
+                                userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                            }, 15000);
                         }
-                        setTimeout(() => checkAnswer(), 300);
                     }
                 };
                 mediaRecorder.onerror = () => { showToast('❌ 录音出错', 2000); stopRecordingUI(); };
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
-                // 启动语音识别
+                // 启动语音转写
                 sttTranscript = '';
                 if (recognition) {
-                    try {
-                        recognition.onresult = (event) => {
-                            let interim = '';
-                            let final = '';
-                            for (let i = event.resultIndex; i < event.results.length; i++) {
-                                const r = event.results[i];
-                                if (r.isFinal) { final += r[0].transcript; }
-                                else { interim += r[0].transcript; }
+                    recognition.onresult = (event) => {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            if (event.results[i].isFinal) {
+                                sttTranscript += event.results[i][0].transcript + ' ';
                             }
-                            if (final) { sttTranscript += final + ' '; }
-                            const display = sttTranscript + interim;
-                            const sttEl = document.getElementById('sttStatus');
-                            if (sttEl) {
-                                sttEl.style.display = 'block';
-                                sttEl.textContent = '🎙 ' + (display.trim() || '正在聆听…');
-                            }
-                        };
-                        recognition.onerror = (e) => {
-                            console.warn('STT error:', e.error);
-                            if (e.error === 'not-allowed') showToast('❌ 请授权麦克风权限', 2000);
-                        };
-                        recognition.onend = () => {
-                            if (mediaRecorder && mediaRecorder.state === 'recording' && recognition) {
-                                try { recognition.start(); } catch (_) {}
-                            }
-                        };
-                        recognition.start();
-                    } catch (e) {
-                        console.warn('STT start failed:', e);
-                    }
-                } else {
-                    showToast('⚠️ 当前浏览器不支持语音识别，录音仅保存不回检', 2500);
+                        }
+                    };
+                    recognition.onend = () => {
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            try { recognition.start(); } catch (_) {}
+                        }
+                    };
+                    recognition.onerror = () => {};
+                    try { recognition.start(); } catch (_) {}
                 }
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
@@ -930,15 +928,9 @@
 
         function stopRecordingUI() {
             if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
-            // 停止语音识别
-            if (recognition) {
-                try { recognition.stop(); } catch (_) {}
-            }
+            if (recognition) { try { recognition.stop(); } catch (_) {} }
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
-            // 隐藏转写状态
-            const sttEl = document.getElementById('sttStatus');
-            if (sttEl) sttEl.style.display = 'none';
         }
 
         function toggleRecording() {
