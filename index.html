@@ -6,31 +6,20 @@
     <title>英语听写练习</title>
     <style>
         :root {
-            --bg-start: #E0F7FA;
-            --bg-end: #E0F2F1;
             --card: #fff;
-            --text: #333;
-            --text-secondary: #555;
-            --text-muted: #777;
-            --accent: #0097A7;
-            --accent2: #00ACC1;
-            --green: #00897B;
-            --green-light: #26A69A;
-            --green-dark: #00695C;
-            --teal: #009688;
-            --teal-light: #4DB6AC;
-            --cyan: #00BCD4;
-            --red: #c62828;
-            --orange: #FF9800;
-            --shadow: 0 2px 8px rgba(0,105,92,0.08);
-            --shadow-lg: 0 4px 16px rgba(0,105,92,0.10);
+            --text: #4A4A4A;
+            --text-secondary: #7A7A7A;
+            --text-muted: #A0A0A0;
+            --red: #C49B9B;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
             --radius-sm: 10px;
             --radius-xs: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(180deg, #FFF5F5 0%, #FFF8E1 20%, #F1F8E9 40%, #E3F2FD 60%, #EDE7F6 80%, #FCE4EC 100%);
+            background: #F3F0ED;
             color: var(--text); -webkit-tap-highlight-color: transparent;
             user-select: none; -webkit-user-select: none; padding: 0; max-width: 700px; margin: 0 auto;
             min-height: 100vh;
@@ -39,17 +28,18 @@
         /* ===== 顶部导航标签 ===== */
         .nav-tabs {
             display: flex; position: sticky; top: 0; z-index: 100;
-            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-bottom: 1px solid #E5E0DA;
         }
         .nav-tab {
             flex: 1; padding: 14px 8px; text-align: center; cursor: pointer;
-            font-weight: 700; font-size: 0.95em; color: rgba(255,255,255,0.7);
+            font-weight: 700; font-size: 0.95em; color: #A0A0A0;
             border-bottom: 3px solid transparent; transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-        .nav-tab.active { color: #fff; border-bottom-color: #fff; background: rgba(255,255,255,0.1); }
-        .nav-tab:active { background: rgba(255,255,255,0.18); }
+        .nav-tab.active { color: #8795A5; border-bottom-color: #8795A5; background: rgba(135,149,165,0.06); }
+        .nav-tab:active { background: rgba(135,149,165,0.12); }
 
         .page { display: none; padding: 16px 18px 30px; }
         .page.active { display: block; }
@@ -57,9 +47,7 @@
         /* ===== 听写页标题 ===== */
         .page-title {
             text-align: center; margin-bottom: 2px; font-size: 1.4em; font-weight: 800;
-            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #4A4A4A;
         }
         .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 14px; }
 
@@ -67,79 +55,86 @@
         .speed-card {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); border-left: 3px solid #E53935;
+            box-shadow: var(--shadow); border-left: 3px solid #8795A5;
         }
         .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
         .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
-        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
+        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #D5D0CB; border-radius: 3px; }
         .speed-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: linear-gradient(135deg, #E53935, #FB8C00); cursor: pointer;
+            background: #8795A5; cursor: pointer;
             border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
-        .speed-value { font-size: 0.8em; font-weight: 700; color: #E53935; min-width: 36px; text-align: center; }
+        .speed-value { font-size: 0.8em; font-weight: 700; color: #8795A5; min-width: 36px; text-align: center; }
 
         .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none; cursor: pointer;
-            font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
+            font-weight: 600; transition: all 0.15s; background: #D5D0CB; color: #4A4A4A;
             -webkit-appearance: none; touch-action: manipulation;
         }
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        /* 播放/检查/下一句 按钮：彩虹色系 */
+        /* 播放/检查/下一句 按钮 */
         .btn-play, .btn-check, .btn-next {
             font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; line-height: 1.2;
             color: #fff;
         }
-        .btn-play { background: linear-gradient(135deg, #E53935, #FB8C00); }
-        .btn-pause { background: linear-gradient(135deg, #EF5350, #FFB74D); font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
-        .btn-check { background: linear-gradient(135deg, #43A047, #1E88E5); }
-        .btn-next { background: linear-gradient(135deg, #1E88E5, #5C6BC0); }
+        .btn-play { background: #8795A5; }
+        .btn-pause { background: #B0A090; font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
+        .btn-check { background: #9CAF88; }
+        .btn-next { background: #9B97B5; }
         /* 录音按钮 */
         .record-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; }
-        .btn-record { background: linear-gradient(135deg, #FB8C00, #FDD835); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
-        .btn-play-recording { background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
-        .btn-record.recording { background: var(--red); animation: pulse 1.5s infinite; }
-        .btn-history { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
+        .btn-record { background: #C49B9B; color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-play-recording { background: #A89BB5; color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-record.recording { background: #A07878; animation: pulse 1.5s infinite; }
+        .btn-history { background: #9A9A9A; color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .progress-container {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); border-left: 3px solid #FB8C00;
+            box-shadow: var(--shadow); border-left: 3px solid #8795A5;
         }
-        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
+        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #D5D0CB; border-radius: 3px; }
         .progress-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-            background: linear-gradient(135deg, #FB8C00, #FDD835); cursor: pointer;
+            background: #8795A5; cursor: pointer;
             border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
         #userInput {
             width: 100%; height: 30vh; min-height: 150px; max-height: 50vh; padding: 14px 16px;
-            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #B2DFDB; background: #fff;
+            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #D5D0CB; background: #fff;
             resize: none; font-family: inherit; line-height: 1.7; overflow-y: auto;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        #userInput:focus { outline: none; border-color: #5C6BC0; box-shadow: 0 0 0 4px rgba(92,107,192,0.12); }
+        #userInput:focus { outline: none; border-color: #8795A5; box-shadow: 0 0 0 4px rgba(135,149,165,0.12); }
         #userInput::placeholder { color: #bbb; }
 
         .result {
             padding: 16px; background: #fff; border-radius: var(--radius-sm); white-space: pre-wrap;
             line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow); min-height: 20px; margin-bottom: 8px;
         }
-        .correct { color: #2E7D32; font-weight: bold; background: #C8E6C9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .missed { color: #E65100; font-weight: bold; background: #FFF3E0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; text-decoration: line-through; }
+        .correct { color: #5C7A46; font-weight: bold; background: #D5E0CF; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .wrong { color: #8B3A3A; text-decoration: underline; font-weight: bold; background: #E8D4D4; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .missed { color: #8B6914; font-weight: bold; background: #E8DDD0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; text-decoration: line-through; }
         .result-empty { color: #bbb; text-align: center; display: block; }
+
+        /* ===== 跟读评分结果 ===== */
+        .scoring-result {
+            padding: 10px 14px; background: #fff; border-radius: var(--radius-sm);
+            line-height: 1.6; font-size: 0.9em; box-shadow: var(--shadow); min-height: 20px;
+            margin: 8px 0; border-left: 3px solid #C49B9B;
+        }
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff;
+            background: #5A5A5A; color: #fff;
             padding: 10px 22px; border-radius: 24px; font-size: 0.9em; z-index: 999; opacity: 0;
             pointer-events: none; transition: opacity 0.3s;
         }
@@ -176,9 +171,7 @@
         }
         .cal-hero .cal-title {
             font-size: 1.5em; font-weight: 800;
-            background: linear-gradient(135deg, #00695C, #0097A7);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #4A4A4A;
         }
         .cal-stats-row {
             display: flex; gap: 10px; margin-bottom: 16px;
@@ -189,9 +182,7 @@
         }
         .cal-stat-card .stat-num {
             font-size: 1.8em; font-weight: 800;
-            background: linear-gradient(135deg, #00695C, #0097A7);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #8795A5;
         }
         .cal-stat-card .stat-label { font-size: 0.72em; color: var(--text-muted); margin-top: 2px; }
         .calendar-card {
@@ -201,11 +192,11 @@
         .calendar-header {
             display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
         }
-        .calendar-header .month-label { font-weight: 700; font-size: 1em; color: var(--green-dark); }
+        .calendar-header .month-label { font-weight: 700; font-size: 1em; color: #4A4A4A; }
         .calendar-header .month-nav { display: flex; gap: 6px; }
         .calendar-header .month-nav button {
             width: 34px; height: 34px; padding: 0; font-size: 18px; border-radius: 50%;
-            background: linear-gradient(135deg, #00897B, #009688); color: #fff;
+            background: #8795A5; color: #fff;
             display: flex; align-items: center; justify-content: center; line-height: 1;
         }
         .calendar-header .month-nav button:disabled { opacity: 0.3; }
@@ -217,17 +208,18 @@
             font-size: 0.72em; font-weight: 600; color: var(--text-muted); padding: 4px 0;
         }
         .cal-day {
-            aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-size: 0.85em; font-weight: 600; cursor: default; position: relative;
-            min-width: 30px; min-height: 30px;
+            min-width: 30px; min-height: 30px; gap: 1px; line-height: 1.1;
         }
+        .cal-count { font-size: 0.6em; font-weight: 700; opacity: 0.85; }
         .cal-day.empty { background: transparent; }
-        .cal-day.level-0 { background: #ECEFF1; color: #999; }
-        .cal-day.level-1 { background: #B2DFDB; color: #00695C; }
-        .cal-day.level-2 { background: #4DB6AC; color: #fff; }
-        .cal-day.level-3 { background: #009688; color: #fff; }
-        .cal-day.level-4 { background: #00796B; color: #fff; }
-        .cal-day.today { box-shadow: 0 0 0 2px var(--green-dark); }
+        .cal-day.level-0 { background: #EDEBE8; color: #B0B0B0; }
+        .cal-day.level-1 { background: #D5DFD0; color: #7A8B6F; }
+        .cal-day.level-2 { background: #B4C4AB; color: #fff; }
+        .cal-day.level-3 { background: #8FA88C; color: #fff; }
+        .cal-day.level-4 { background: #6B8468; color: #fff; }
+        .cal-day.today { box-shadow: 0 0 0 2px #8795A5; }
         .cal-day.has-data:hover { opacity: 0.8; transform: scale(1.15); transition: 0.15s; }
 
         .legend-row {
@@ -295,10 +287,12 @@
     <div class="result" id="resultArea"></div>
 
     <div class="record-row">
-        <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音</button>
+        <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音跟读</button>
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
+
+    <div class="scoring-result" id="scoringResult" style="display:none;"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -344,11 +338,11 @@
             <div class="calendar-grid" id="calendarGrid"></div>
             <div class="legend-row">
                 <span>少</span>
-                <span class="legend-swatch" style="background:#ECEFF1;"></span>
-                <span class="legend-swatch" style="background:#B2DFDB;"></span>
-                <span class="legend-swatch" style="background:#4DB6AC;"></span>
-                <span class="legend-swatch" style="background:#009688;"></span>
-                <span class="legend-swatch" style="background:#00796B;"></span>
+                <span class="legend-swatch" style="background:#EDEBE8;"></span>
+                <span class="legend-swatch" style="background:#D5DFD0;"></span>
+                <span class="legend-swatch" style="background:#B4C4AB;"></span>
+                <span class="legend-swatch" style="background:#8FA88C;"></span>
+                <span class="legend-swatch" style="background:#6B8468;"></span>
                 <span>多</span>
             </div>
         </div>
@@ -627,7 +621,7 @@
             canvas.height = window.innerHeight;
             canvas.style.display = 'block';
 
-            const colors = ['#E53935','#FB8C00','#FDD835','#43A047','#1E88E5','#5C6BC0','#8E24AA','#FF4081','#00BCD4','#FF9800','#4CAF50','#FF5722'];
+            const colors = ['#8795A5','#C49B9B','#9CAF88','#B0A090','#A89BB5','#8FA88C','#9B97B5','#7A9A9A','#988BA8','#C49B9B','#8FA88C','#B0A090'];
             const particles = [];
             const total = 120;
 
@@ -791,7 +785,7 @@
                 const hasDataClass = count > 0 ? ' has-data' : '';
                 const title = count > 0 ? ` title="${count} 句"` : '';
 
-                html += `<div class="cal-day ${levelClass}${todayClass}${hasDataClass}"${title}>${d}</div>`;
+                html += `<div class="cal-day ${levelClass}${todayClass}${hasDataClass}"${title}><span>${d}</span>${count > 0 ? `<span class="cal-count">${count}</span>` : ''}</div>`;
             }
 
             grid.innerHTML = html;
@@ -824,6 +818,7 @@
         let audioChunks = [];
         let recordedBlob = null;
         let recordingUrl = null;
+        let isScoringMode = false;
         const audioPlayer = new Audio();
 
         // ==================== 语音识别 ====================
@@ -870,30 +865,52 @@
                     stream.getTracks().forEach(track => track.stop());
                     if (currentIndex !== null) {
                         if (sttTranscript.trim()) {
-                            // Chrome/Android：有 STT 结果，自动填充并检查
-                            userInputEl.value = sttTranscript.trim();
-                            autoResizeTextarea();
-                            showToast('✅ 识别完成，自动检查中…', 1500);
-                            setTimeout(() => checkAnswer(), 200);
+                            if (isScoringMode) {
+                                scorePronunciation(sttTranscript.trim(), sentencePool[currentIndex]);
+                                isScoringMode = false;
+                            } else {
+                                userInputEl.value = sttTranscript.trim();
+                                autoResizeTextarea();
+                                showToast('✅ 识别完成，自动检查中…', 1500);
+                                setTimeout(() => checkAnswer(), 200);
+                            }
                         } else {
-                            // 无 STT（Safari/iOS）：引导用键盘语音输入
-                            showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
-                            userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
-                            userInputEl.focus();
-                            // 监听输入变化，一旦有内容就自动检查
-                            const onInput = () => {
-                                if (userInputEl.value.trim()) {
+                            if (isScoringMode) {
+                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
+                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动评分';
+                                userInputEl.focus();
+                                const onInput = () => {
+                                    if (userInputEl.value.trim()) {
+                                        userInputEl.removeEventListener('input', onInput);
+                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                        scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
+                                        userInputEl.value = '';
+                                        isScoringMode = false;
+                                    }
+                                };
+                                userInputEl.addEventListener('input', onInput);
+                                setTimeout(() => {
                                     userInputEl.removeEventListener('input', onInput);
                                     userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                                    setTimeout(() => checkAnswer(), 500);
-                                }
-                            };
-                            userInputEl.addEventListener('input', onInput);
-                            // 15 秒超时清理
-                            setTimeout(() => {
-                                userInputEl.removeEventListener('input', onInput);
-                                userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                            }, 15000);
+                                    isScoringMode = false;
+                                }, 15000);
+                            } else {
+                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
+                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
+                                userInputEl.focus();
+                                const onInput = () => {
+                                    if (userInputEl.value.trim()) {
+                                        userInputEl.removeEventListener('input', onInput);
+                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                        setTimeout(() => checkAnswer(), 500);
+                                    }
+                                };
+                                userInputEl.addEventListener('input', onInput);
+                                setTimeout(() => {
+                                    userInputEl.removeEventListener('input', onInput);
+                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                }, 15000);
+                            }
                         }
                     }
                 };
@@ -934,7 +951,12 @@
         }
 
         function toggleRecording() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') { startRecording(); }
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                isScoringMode = true;
+                const scoringEl = document.getElementById('scoringResult');
+                if (scoringEl) { scoringEl.style.display = 'none'; }
+                startRecording();
+            }
             else if (mediaRecorder.state === 'recording') { stopRecordingUI(); }
         }
 
@@ -1213,6 +1235,7 @@
             if (currentIndex === idx) return;
             resetAll();
             currentIndex = idx;
+            isScoringMode = false;
             clearInputAndResult();
             resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
@@ -1232,7 +1255,12 @@
             switchToSentence(ni);
         }
 
-        function clearInputAndResult() { userInputEl.value = ''; resultArea.innerHTML = ''; }
+        function clearInputAndResult() {
+            userInputEl.value = '';
+            resultArea.innerHTML = '';
+            const scoringEl = document.getElementById('scoringResult');
+            if (scoringEl) { scoringEl.style.display = 'none'; scoringEl.innerHTML = ''; }
+        }
 
         function normalizeWord(word) {
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
@@ -1259,6 +1287,65 @@
                 else { j--; }
             }
             return pairs.reverse();
+        }
+
+        function scorePronunciation(transcript, original) {
+            const userWords = transcript.split(/\s+/);
+            const correctWords = original.split(/\s+/);
+            const normUser = userWords.map(normalizeWord);
+            const normCorrect = correctWords.map(normalizeWord);
+
+            const pairs = computeLCS(normCorrect, normUser);
+            const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const matchedUser = new Set(pairs.map(p => p[1]));
+
+            const correctCount = pairs.length;
+            const totalCount = correctWords.length;
+            const percentage = Math.round((correctCount / totalCount) * 100);
+
+            // 原文着色：绿=读对，红=未读出/读错
+            let originalHtml = '';
+            for (let i = 0; i < correctWords.length; i++) {
+                if (matchedCorrect.has(i)) {
+                    originalHtml += `<span class="correct">${escapeHtml(correctWords[i])}</span> `;
+                } else {
+                    originalHtml += `<span class="wrong">${escapeHtml(correctWords[i])}</span> `;
+                }
+            }
+
+            // 识别结果着色
+            let userHtml = '';
+            for (let j = 0; j < userWords.length; j++) {
+                if (matchedUser.has(j)) {
+                    userHtml += `<span class="correct">${escapeHtml(userWords[j])}</span> `;
+                } else {
+                    userHtml += `<span class="wrong">${escapeHtml(userWords[j])}</span> `;
+                }
+            }
+
+            let stars = '';
+            if (percentage >= 95) stars = '⭐⭐⭐⭐⭐';
+            else if (percentage >= 85) stars = '⭐⭐⭐⭐';
+            else if (percentage >= 70) stars = '⭐⭐⭐';
+            else if (percentage >= 50) stars = '⭐⭐';
+            else stars = '⭐';
+
+            const scoringEl = document.getElementById('scoringResult');
+            scoringEl.innerHTML =
+                `<div style="margin-bottom:6px;">
+                    🎯 <strong>${correctCount}/${totalCount} (${percentage}%)</strong> ${stars}
+                </div>
+                <div style="line-height:2;margin-bottom:4px;">
+                    <span style="font-weight:600;font-size:0.9em;">📖 原文：</span>${originalHtml.trim()}
+                </div>
+                <div style="line-height:2;font-size:0.85em;color:#7A7A7A;">
+                    <span style="font-weight:600;">🗣 识别：</span>${userHtml.trim() || '<span style="color:#bbb;">（空）</span>'}
+                </div>`;
+
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateHistory(original, transcript);
+            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
         }
 
         async function checkAnswer() {
