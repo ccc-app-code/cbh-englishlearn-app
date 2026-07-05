@@ -132,6 +132,13 @@
             margin: 8px 0; border-left: 3px solid #C49B9B;
         }
 
+        /* ===== 录音波形 ===== */
+        .wave-canvas {
+            display: none; width: 100%; height: 56px; margin: 4px 0 8px;
+            border-radius: var(--radius-xs); background: #fff;
+            box-shadow: var(--shadow);
+        }
+
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: #5A5A5A; color: #fff;
@@ -291,6 +298,7 @@
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
+    <canvas class="wave-canvas" id="waveCanvas" width="600" height="56"></canvas>
 
     <div class="scoring-result" id="scoringResult" style="display:none;"></div>
 
@@ -821,6 +829,12 @@
         let isScoringMode = false;
         const audioPlayer = new Audio();
 
+        // ==================== Web Audio 分析 ====================
+        let audioCtx = null;
+        let analyserNode = null;
+        let pcmChunks = [];
+        let waveAnimId = null;
+
         // ==================== 语音识别 ====================
         let recognition = null;
         let sttTranscript = '';
@@ -851,6 +865,27 @@
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('❌ 当前浏览器不支持录音功能', 2500); return;
             }
+
+            // 先启动 STT（抢在 MediaRecorder 占用麦克风之前）
+            sttTranscript = '';
+            if (recognition) {
+                recognition.onresult = (event) => {
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            sttTranscript += event.results[i][0].transcript + ' ';
+                        }
+                    }
+                };
+                recognition.onend = () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        try { recognition.start(); } catch (_) {}
+                    }
+                };
+                recognition.onerror = () => {}; // 静默降级
+                try { recognition.start(); } catch (_) {}
+                await new Promise(r => setTimeout(r, 100)); // 给 STT 短暂启动窗口
+            }
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mimeType = getSupportedMimeType();
@@ -863,6 +898,7 @@
                     recordingUrl = URL.createObjectURL(recordedBlob);
                     playRecordingBtn.disabled = false;
                     stream.getTracks().forEach(track => track.stop());
+                    if (recognition) { try { recognition.stop(); } catch (_) {} }
                     if (currentIndex !== null) {
                         if (sttTranscript.trim()) {
                             if (isScoringMode) {
@@ -876,24 +912,23 @@
                             }
                         } else {
                             if (isScoringMode) {
-                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
-                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动评分';
-                                userInputEl.focus();
-                                const onInput = () => {
-                                    if (userInputEl.value.trim()) {
-                                        userInputEl.removeEventListener('input', onInput);
-                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                                        scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
-                                        userInputEl.value = '';
-                                        isScoringMode = false;
+                                // 本地音频分析评分
+                                if (pcmChunks.length > 0) {
+                                    const a = analyzeAudio(pcmChunks, audioCtx ? audioCtx.sampleRate : 44100);
+                                    if (a && a.totalSec > 0.3) {
+                                        const score = computeAudioScore(a, estimatedDuration);
+                                        showAudioScore(a, score, estimatedDuration);
+                                    } else {
+                                        const scoringEl = document.getElementById('scoringResult');
+                                        scoringEl.innerHTML = '<span style="color:#999;">⚠️ 未检测到有效语音，请靠近麦克风重试</span>';
+                                        scoringEl.style.display = 'block';
                                     }
-                                };
-                                userInputEl.addEventListener('input', onInput);
-                                setTimeout(() => {
-                                    userInputEl.removeEventListener('input', onInput);
-                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                                    isScoringMode = false;
-                                }, 15000);
+                                } else {
+                                    const scoringEl = document.getElementById('scoringResult');
+                                    scoringEl.innerHTML = '<span style="color:#999;">⚠️ 录音数据为空，请重试</span>';
+                                    scoringEl.style.display = 'block';
+                                }
+                                isScoringMode = false;
                             } else {
                                 showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
                                 userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
@@ -918,27 +953,30 @@
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
-                // 启动语音转写
-                sttTranscript = '';
-                if (recognition) {
-                    recognition.onresult = (event) => {
-                        for (let i = event.resultIndex; i < event.results.length; i++) {
-                            if (event.results[i].isFinal) {
-                                sttTranscript += event.results[i][0].transcript + ' ';
-                            }
-                        }
+
+                // 启动 Web Audio 分析管线
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioCtx.createMediaStreamSource(stream);
+                    analyserNode = audioCtx.createAnalyser();
+                    analyserNode.fftSize = 2048;
+                    source.connect(analyserNode);
+                    // PCM 采集（ScriptProcessor）
+                    const proc = audioCtx.createScriptProcessor(4096, 1, 1);
+                    pcmChunks = [];
+                    proc.onaudioprocess = (e) => {
+                        pcmChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
                     };
-                    recognition.onend = () => {
-                        if (mediaRecorder && mediaRecorder.state === 'recording') {
-                            try { recognition.start(); } catch (_) {}
-                        }
-                    };
-                    recognition.onerror = () => {};
-                    try { recognition.start(); } catch (_) {}
-                }
+                    source.connect(proc);
+                    proc.connect(audioCtx.destination);
+                    document.getElementById('waveCanvas').style.display = 'block';
+                    drawWaveform();
+                } catch (e) { console.warn('AudioContext 启动失败:', e); }
+
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
                 console.error(err);
+                if (recognition) { try { recognition.stop(); } catch (_) {} }
                 showToast('❌ 无法访问麦克风，请检查权限设置', 2500);
             }
         }
@@ -946,6 +984,10 @@
         function stopRecordingUI() {
             if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
             if (recognition) { try { recognition.stop(); } catch (_) {} }
+            // 停止波形动画 + 关闭 AudioContext
+            if (waveAnimId) { cancelAnimationFrame(waveAnimId); waveAnimId = null; }
+            if (audioCtx && audioCtx.state !== 'closed') { audioCtx.close(); audioCtx = null; analyserNode = null; }
+            document.getElementById('waveCanvas').style.display = 'none';
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
         }
@@ -965,6 +1007,149 @@
             audioPlayer.src = recordingUrl;
             audioPlayer.load();
             audioPlayer.play().catch(e => { console.error(e); showToast('❌ 播放失败', 2500); });
+        }
+
+        // ==================== 实时波形绘制 ====================
+        function drawWaveform() {
+            if (!analyserNode) return;
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            const bufLen = analyserNode.fftSize;
+            const dataArr = new Uint8Array(bufLen);
+
+            function draw() {
+                if (!analyserNode) return;
+                waveAnimId = requestAnimationFrame(draw);
+                const w = canvas.width = canvas.offsetWidth;
+                const h = canvas.height;
+                analyserNode.getByteTimeDomainData(dataArr);
+
+                // 背景
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, w, h);
+
+                // 波形曲线
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#8795A5';
+                ctx.beginPath();
+                const sliceW = w / bufLen;
+                for (let i = 0; i < bufLen; i++) {
+                    const v = dataArr[i] / 128.0;
+                    const y = (v * h) / 2;
+                    if (i === 0) ctx.moveTo(0, y);
+                    else ctx.lineTo(i * sliceW, y);
+                }
+                ctx.stroke();
+
+                // RMS 音量指示条（右侧）
+                let sumSq = 0;
+                for (let i = 0; i < bufLen; i++) { const n = (dataArr[i] - 128) / 128; sumSq += n * n; }
+                const rms = Math.sqrt(sumSq / bufLen);
+                const barW = 3, barH = Math.max(2, rms * h * 0.85);
+                const barColor = rms < 0.08 ? '#B0B0B0' : rms < 0.25 ? '#9CAF88' : rms < 0.5 ? '#D4A843' : '#C49B9B';
+                ctx.fillStyle = barColor;
+                ctx.fillRect(w - barW - 6, (h - barH) / 2, barW, barH);
+            }
+            draw();
+        }
+
+        // ==================== 本地音频分析 ====================
+        function encodeWAV(samples, sampleRate) {
+            const numCh = 1, bps = 16, blockAlign = numCh * bps / 8;
+            const dataLen = samples.length * blockAlign;
+            const buf = new ArrayBuffer(44 + dataLen), v = new DataView(buf);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+            w(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true); w(8, 'WAVE');
+            w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+            v.setUint16(22, numCh, true); v.setUint32(24, sampleRate, true);
+            v.setUint32(28, sampleRate * numCh * bps / 8, true);
+            v.setUint16(32, blockAlign, true); v.setUint16(34, bps, true);
+            w(36, 'data'); v.setUint32(40, dataLen, true);
+            let o = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2;
+            }
+            return new Blob([buf], { type: 'audio/wav' });
+        }
+
+        function analyzeAudio(chunks, sampleRate) {
+            const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+            if (totalLen === 0) return null;
+            const samples = new Float32Array(totalLen);
+            let off = 0;
+            for (const c of chunks) { samples.set(c, off); off += c.length; }
+
+            const frameLen = Math.floor(sampleRate * 0.04);
+            const rmsArr = [];
+            for (let i = 0; i < totalLen; i += frameLen) {
+                let ss = 0; const end = Math.min(i + frameLen, totalLen);
+                for (let j = i; j < end; j++) ss += samples[j] * samples[j];
+                rmsArr.push(Math.sqrt(ss / (end - i)));
+            }
+            const maxRms = Math.max(...rmsArr, 0.0001);
+            const thresh = maxRms * 0.08;
+            let spF = 0, paF = 0, paC = 0, inP = true;
+            const spRms = [];
+            for (const r of rmsArr) {
+                if (r > thresh) { spF++; if (inP && paF > 0) { paC++; inP = false; } spRms.push(r); }
+                else { paF++; inP = true; }
+            }
+            const totalF = rmsArr.length, totalSec = totalLen / sampleRate;
+            const spRatio = spF / totalF, spSec = spRatio * totalSec, paSec = (1 - spRatio) * totalSec;
+            const avgVol = spRms.length ? spRms.reduce((a, b) => a + b, 0) / spRms.length : 0;
+            const volVar = spRms.length ? spRms.reduce((s, r) => s + (r - avgVol) * (r - avgVol), 0) / spRms.length : 0;
+            const volStd = Math.sqrt(volVar);
+
+            // 基频 F0（自相关，50-400Hz）
+            let f0 = 0;
+            if (spRms.length > 0) {
+                const seg = samples.slice(Math.floor(totalLen * 0.2), Math.floor(totalLen * 0.6));
+                const minLag = Math.floor(sampleRate / 400), maxLag = Math.floor(sampleRate / 50);
+                let bestC = -Infinity, bestL = 0;
+                for (let lag = minLag; lag <= Math.min(maxLag, seg.length - 1); lag++) {
+                    let corr = 0;
+                    for (let i = 0; i < seg.length - lag; i++) corr += seg[i] * seg[i + lag];
+                    if (corr > bestC) { bestC = corr; bestL = lag; }
+                }
+                if (bestL > 0) f0 = sampleRate / bestL;
+            }
+            return { totalSec, spRatio, spSec, paSec, paC, avgVol, volStd, f0, maxRms, sampleRate, totalLen };
+        }
+
+        function computeAudioScore(a, ttsDur) {
+            const { totalSec, spRatio, paC, avgVol, volStd, spSec } = a;
+            let rateS = 70;
+            if (ttsDur > 0) { const r = spSec / ttsDur; rateS = r > 0.7 && r < 1.3 ? 100 : r > 0.5 && r < 1.6 ? 70 : 40; }
+            const ppm = totalSec > 0 ? paC / (totalSec / 60) : 0;
+            let pauseS = ppm < 6 ? 100 : ppm < 12 ? 75 : ppm < 20 ? 50 : 30;
+            let ratioS = spRatio > 0.6 && spRatio < 0.9 ? 100 : spRatio > 0.4 ? 70 : 40;
+            const cv = avgVol > 0.001 ? volStd / avgVol : 1;
+            let volS = cv < 0.6 ? 100 : cv < 1.2 ? 70 : cv < 2.0 ? 45 : 25;
+            let levelS = avgVol > 0.04 && avgVol < 0.5 ? 100 : avgVol > 0.02 ? 70 : 40;
+            return {
+                total: Math.round(rateS * 0.30 + pauseS * 0.25 + ratioS * 0.15 + volS * 0.20 + levelS * 0.10),
+                rateS, pauseS, ratioS, volS, levelS, ppm
+            };
+        }
+
+        function showAudioScore(a, score, ttsDur) {
+            const stars = score.total >= 95 ? '⭐⭐⭐⭐⭐' : score.total >= 85 ? '⭐⭐⭐⭐' : score.total >= 70 ? '⭐⭐⭐' : score.total >= 50 ? '⭐⭐' : '⭐';
+            const scoringEl = document.getElementById('scoringResult');
+            scoringEl.innerHTML =
+                `<div style="margin-bottom:6px;">
+                    🎤 <strong>流利度评分: ${score.total}%</strong> ${stars}
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.78em;color:#7A7A7A;line-height:1.6;">
+                    <span>🗣 语速: ${a.spSec.toFixed(1)}s${ttsDur > 0 ? ' / 参考'+ttsDur.toFixed(1)+'s' : ''} (${score.rateS}%)</span>
+                    <span>⏸ 停顿: ${a.paC}次 (${score.pauseS}%)</span>
+                    <span>📊 连贯: ${Math.round(a.spRatio*100)}% (${score.ratioS}%)</span>
+                    <span>🔊 音量: ${score.volS}%</span>
+                    <span>📈 语调: ${a.f0 > 0 ? a.f0.toFixed(0)+'Hz' : '—'} (${score.levelS}%)</span>
+                </div>`;
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (score.total >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
         }
 
         // ==================== 听写逻辑 ====================
@@ -1484,6 +1669,8 @@
             window.speechSynthesis.cancel();
             if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
             if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+            if (waveAnimId) cancelAnimationFrame(waveAnimId);
+            if (audioCtx && audioCtx.state !== 'closed') audioCtx.close();
         });
     </script>
 </body>
