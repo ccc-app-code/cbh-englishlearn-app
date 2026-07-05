@@ -132,6 +132,29 @@
             margin: 8px 0; border-left: 3px solid #C49B9B;
         }
 
+        /* ===== STT 设置面板 ===== */
+        .settings-toggle {
+            display: block; margin: 0 auto 8px; background: none; border: 1px solid #D5D0CB;
+            color: #A0A0A0; padding: 3px 12px; font-size: 0.75em; cursor: pointer;
+            border-radius: 12px; font-weight: 500;
+        }
+        .settings-panel {
+            display: none; background: #fff; border-radius: var(--radius-sm);
+            padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow);
+            font-size: 0.82em;
+        }
+        .settings-panel.active { display: block; }
+        .settings-panel label { display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
+        .settings-panel input[type="text"], .settings-panel input[type="password"] {
+            width: 100%; padding: 7px 10px; margin-bottom: 8px; font-size: 0.9em;
+            border: 1px solid #D5D0CB; border-radius: 6px; background: #F8F7F5; box-sizing: border-box;
+        }
+        .settings-panel .btn-save {
+            background: #8795A5; color: #fff; padding: 7px 16px; font-size: 0.85em;
+            border-radius: 6px; border: none; cursor: pointer; font-weight: 600;
+        }
+        .settings-panel .btn-save:active { opacity: 0.8; }
+
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: #5A5A5A; color: #fff;
@@ -261,6 +284,17 @@
     <div class="page active" id="page-dictation">
     <h2 class="page-title">🎧 小毛快练</h2>
     <p class="subtitle"></p>
+    <button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()">⚙️ STT 设置</button>
+    <div class="settings-panel" id="settingsPanel">
+        <label>🔑 API Key</label>
+        <input type="password" id="sttApiKey" placeholder="sk-...（OpenAI / 兼容接口）">
+        <label style="margin-top:4px;">📡 接口地址（可选）</label>
+        <input type="text" id="sttApiUrl" placeholder="默认 OpenAI Whisper，可填兼容地址">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn-save" onclick="saveSettings()">保存</button>
+            <span id="settingsMsg" style="font-size:0.85em;color:#9CAF88;"></span>
+        </div>
+    </div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -356,6 +390,7 @@
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
         const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
         const STORAGE_KEY_CALENDAR = 'dailyStats_v1';
+        const STORAGE_KEY_STT = 'sttSettings_v1';
 
         let defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -820,6 +855,7 @@
         let recordingUrl = null;
         let isScoringMode = false;
         const audioPlayer = new Audio();
+        let sttSettings = { apiKey: '', apiUrl: '' };
 
         // ==================== 语音识别 ====================
         let recognition = null;
@@ -898,32 +934,21 @@
                             }
                         } else {
                             if (isScoringMode) {
-                                // iOS/无STT：在评分区展示原文和引导，聚焦输入框等待键盘语音
-                                const scoringEl = document.getElementById('scoringResult');
-                                const original = sentencePool[currentIndex];
-                                scoringEl.innerHTML =
-                                    `<div style="text-align:center;margin-bottom:8px;">📱 <strong>请朗读以下原文</strong></div>
-                                    <div style="font-size:0.85em;color:#7A7A7A;margin-bottom:10px;text-align:center;">点击下方输入框 → 按键盘右下角 🎤 → 朗读 → 自动评分</div>
-                                    <div style="background:#F3F0ED;padding:10px 14px;border-radius:8px;line-height:1.8;font-size:0.9em;word-break:break-word;">${escapeHtml(original)}</div>`;
-                                scoringEl.style.display = 'block';
-                                scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                userInputEl.placeholder = '按键盘 🎤 朗读，自动评分…';
-                                userInputEl.focus();
-                                const onInput = () => {
-                                    if (userInputEl.value.trim()) {
-                                        userInputEl.removeEventListener('input', onInput);
-                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                                        scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
-                                        userInputEl.value = '';
-                                        isScoringMode = false;
-                                    }
-                                };
-                                userInputEl.addEventListener('input', onInput);
-                                setTimeout(() => {
-                                    userInputEl.removeEventListener('input', onInput);
-                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                                    isScoringMode = false;
-                                }, 20000);
+                                // 优先尝试云端 STT
+                                if (sttSettings.apiKey && recordedBlob && recordedBlob.size > 0) {
+                                    showToast('🔄 云端转写中…', 3000);
+                                    const blob = recordedBlob;
+                                    (async () => {
+                                        try {
+                                            const t = await transcribeWithAPI(blob);
+                                            if (t) { scorePronunciation(t, sentencePool[currentIndex]); isScoringMode = false; return; }
+                                        } catch (e) { console.error('STT API:', e); }
+                                        showToast('⚠️ 云端转写失败，使用键盘语音', 3000);
+                                        showKeyboardFallback();
+                                    })();
+                                } else {
+                                    showKeyboardFallback();
+                                }
                             } else {
                                 showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
                                 userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
@@ -978,6 +1003,72 @@
             audioPlayer.src = recordingUrl;
             audioPlayer.load();
             audioPlayer.play().catch(e => { console.error(e); showToast('❌ 播放失败', 2500); });
+        }
+
+        // ==================== 云端 STT ====================
+        function loadSttSettings() {
+            try {
+                const s = localStorage.getItem(STORAGE_KEY_STT);
+                if (s) sttSettings = JSON.parse(s);
+            } catch(e) {}
+            document.getElementById('sttApiKey').value = sttSettings.apiKey || '';
+            document.getElementById('sttApiUrl').value = sttSettings.apiUrl || '';
+        }
+        function saveSettings() {
+            sttSettings.apiKey = document.getElementById('sttApiKey').value.trim();
+            sttSettings.apiUrl = document.getElementById('sttApiUrl').value.trim();
+            localStorage.setItem(STORAGE_KEY_STT, JSON.stringify(sttSettings));
+            document.getElementById('settingsMsg').textContent = '✅ 已保存';
+            setTimeout(() => { document.getElementById('settingsMsg').textContent = ''; }, 2000);
+        }
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('active');
+        }
+        async function transcribeWithAPI(audioBlob) {
+            const apiUrl = sttSettings.apiUrl || 'https://api.openai.com/v1/audio/transcriptions';
+            const ext = (audioBlob.type || '').includes('webm') ? 'webm' : 'm4a';
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.' + ext);
+            formData.append('model', 'whisper-1');
+            formData.append('language', 'en');
+            const resp = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + sttSettings.apiKey },
+                body: formData
+            });
+            if (!resp.ok) {
+                const errText = await resp.text();
+                throw new Error('API ' + resp.status + ': ' + errText.slice(0, 200));
+            }
+            const data = await resp.json();
+            return (data.text || '').trim();
+        }
+        function showKeyboardFallback() {
+            const scoringEl = document.getElementById('scoringResult');
+            const original = sentencePool[currentIndex];
+            scoringEl.innerHTML =
+                `<div style="text-align:center;margin-bottom:8px;">📱 <strong>请朗读以下原文</strong></div>
+                <div style="font-size:0.85em;color:#7A7A7A;margin-bottom:10px;text-align:center;">点击下方输入框 → 按键盘右下角 🎤 → 朗读 → 自动评分</div>
+                <div style="background:#F3F0ED;padding:10px 14px;border-radius:8px;line-height:1.8;font-size:0.9em;word-break:break-word;">${escapeHtml(original)}</div>`;
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            userInputEl.placeholder = '按键盘 🎤 朗读，自动评分…';
+            userInputEl.focus();
+            const onInput = () => {
+                if (userInputEl.value.trim()) {
+                    userInputEl.removeEventListener('input', onInput);
+                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                    scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
+                    userInputEl.value = '';
+                    isScoringMode = false;
+                }
+            };
+            userInputEl.addEventListener('input', onInput);
+            setTimeout(() => {
+                userInputEl.removeEventListener('input', onInput);
+                userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                isScoringMode = false;
+            }, 20000);
         }
 
         // ==================== 听写逻辑 ====================
@@ -1471,6 +1562,7 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
+            loadSttSettings();
 
             // 初始化日历变量
             const now = new Date();
