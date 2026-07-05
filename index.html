@@ -902,7 +902,13 @@
                     if (currentIndex !== null) {
                         if (sttTranscript.trim()) {
                             if (isScoringMode) {
-                                scorePronunciation(sttTranscript.trim(), sentencePool[currentIndex]);
+                                // 词级评分 + 流利度分析
+                                let audioData = null;
+                                if (pcmChunks.length > 0) {
+                                    const a = analyzeAudio(pcmChunks, audioCtx ? audioCtx.sampleRate : 44100);
+                                    if (a && a.totalSec > 0.3) audioData = a;
+                                }
+                                scorePronunciation(sttTranscript.trim(), sentencePool[currentIndex], audioData);
                                 isScoringMode = false;
                             } else {
                                 userInputEl.value = sttTranscript.trim();
@@ -1474,7 +1480,7 @@
             return pairs.reverse();
         }
 
-        function scorePronunciation(transcript, original) {
+        function scorePronunciation(transcript, original, audioA) {
             const userWords = transcript.split(/\s+/);
             const correctWords = original.split(/\s+/);
             const normUser = userWords.map(normalizeWord);
@@ -1515,6 +1521,23 @@
             else if (percentage >= 50) stars = '⭐⭐';
             else stars = '⭐';
 
+            // 流利度指标（如果有音频分析数据）
+            let fluencyHtml = '';
+            if (audioA) {
+                const score = computeAudioScore(audioA, estimatedDuration);
+                const starsF = score.total >= 95 ? '⭐⭐⭐⭐⭐' : score.total >= 85 ? '⭐⭐⭐⭐' : score.total >= 70 ? '⭐⭐⭐' : score.total >= 50 ? '⭐⭐' : '⭐';
+                fluencyHtml =
+                    `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #E5E0DA;">
+                        <div style="margin-bottom:4px;">🎤 <strong>流利度: ${score.total}%</strong> ${starsF}</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.78em;color:#7A7A7A;line-height:1.6;">
+                            <span>🗣 语速: ${audioA.spSec.toFixed(1)}s (${score.rateS}%)</span>
+                            <span>⏸ 停顿: ${audioA.paC}次 (${score.pauseS}%)</span>
+                            <span>📊 连贯: ${Math.round(audioA.spRatio*100)}% (${score.ratioS}%)</span>
+                            <span>🔊 音量: ${score.volS}%</span>
+                        </div>
+                    </div>`;
+            }
+
             const scoringEl = document.getElementById('scoringResult');
             scoringEl.innerHTML =
                 `<div style="margin-bottom:6px;">
@@ -1525,7 +1548,7 @@
                 </div>
                 <div style="line-height:2;font-size:0.85em;color:#7A7A7A;">
                     <span style="font-weight:600;">🗣 识别：</span>${userHtml.trim() || '<span style="color:#bbb;">（空）</span>'}
-                </div>`;
+                </div>${fluencyHtml}`;
 
             scoringEl.style.display = 'block';
             scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
