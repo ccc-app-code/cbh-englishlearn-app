@@ -6,31 +6,20 @@
     <title>英语听写练习</title>
     <style>
         :root {
-            --bg-start: #E0F7FA;
-            --bg-end: #E0F2F1;
             --card: #fff;
-            --text: #333;
-            --text-secondary: #555;
-            --text-muted: #777;
-            --accent: #0097A7;
-            --accent2: #00ACC1;
-            --green: #00897B;
-            --green-light: #26A69A;
-            --green-dark: #00695C;
-            --teal: #009688;
-            --teal-light: #4DB6AC;
-            --cyan: #00BCD4;
-            --red: #c62828;
-            --orange: #FF9800;
-            --shadow: 0 2px 8px rgba(0,105,92,0.08);
-            --shadow-lg: 0 4px 16px rgba(0,105,92,0.10);
+            --text: #4A4A4A;
+            --text-secondary: #7A7A7A;
+            --text-muted: #A0A0A0;
+            --red: #C49B9B;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
             --radius-sm: 10px;
             --radius-xs: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(180deg, #FFF5F5 0%, #FFF8E1 20%, #F1F8E9 40%, #E3F2FD 60%, #EDE7F6 80%, #FCE4EC 100%);
+            background: #F3F0ED;
             color: var(--text); -webkit-tap-highlight-color: transparent;
             user-select: none; -webkit-user-select: none; padding: 0; max-width: 700px; margin: 0 auto;
             min-height: 100vh;
@@ -39,17 +28,18 @@
         /* ===== 顶部导航标签 ===== */
         .nav-tabs {
             display: flex; position: sticky; top: 0; z-index: 100;
-            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-bottom: 1px solid #E5E0DA;
         }
         .nav-tab {
             flex: 1; padding: 14px 8px; text-align: center; cursor: pointer;
-            font-weight: 700; font-size: 0.95em; color: rgba(255,255,255,0.7);
+            font-weight: 700; font-size: 0.95em; color: #A0A0A0;
             border-bottom: 3px solid transparent; transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-        .nav-tab.active { color: #fff; border-bottom-color: #fff; background: rgba(255,255,255,0.1); }
-        .nav-tab:active { background: rgba(255,255,255,0.18); }
+        .nav-tab.active { color: #8795A5; border-bottom-color: #8795A5; background: rgba(135,149,165,0.06); }
+        .nav-tab:active { background: rgba(135,149,165,0.12); }
 
         .page { display: none; padding: 16px 18px 30px; }
         .page.active { display: block; }
@@ -57,9 +47,7 @@
         /* ===== 听写页标题 ===== */
         .page-title {
             text-align: center; margin-bottom: 2px; font-size: 1.4em; font-weight: 800;
-            background: linear-gradient(90deg, #E53935, #FB8C00, #FDD835, #43A047, #1E88E5, #5C6BC0, #8E24AA);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #4A4A4A;
         }
         .subtitle { text-align: center; color: var(--text-muted); font-size: 0.85em; margin-bottom: 14px; }
 
@@ -67,91 +55,86 @@
         .speed-card {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 10px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); border-left: 3px solid #E53935;
+            box-shadow: var(--shadow); border-left: 3px solid #8795A5;
         }
         .speed-card label { font-weight: 600; font-size: 0.85em; color: var(--text-secondary); }
         .speed-slider { display: flex; align-items: center; gap: 6px; flex: 1; }
-        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
+        .speed-slider input[type="range"] { flex: 1; height: 5px; -webkit-appearance: none; background: #D5D0CB; border-radius: 3px; }
         .speed-slider input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-            background: linear-gradient(135deg, #E53935, #FB8C00); cursor: pointer;
+            background: #8795A5; cursor: pointer;
             border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
-        .speed-value { font-size: 0.8em; font-weight: 700; color: #E53935; min-width: 36px; text-align: center; }
+        .speed-value { font-size: 0.8em; font-weight: 700; color: #8795A5; min-width: 36px; text-align: center; }
 
         .btn-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         button {
             padding: 12px 18px; font-size: 15px; border-radius: var(--radius-sm); border: none; cursor: pointer;
-            font-weight: 600; transition: all 0.15s; background: #e0e0e0; color: #333;
+            font-weight: 600; transition: all 0.15s; background: #D5D0CB; color: #4A4A4A;
             -webkit-appearance: none; touch-action: manipulation;
         }
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        /* 播放/检查/下一句 按钮：彩虹色系 */
+        /* 播放/检查/下一句 按钮 */
         .btn-play, .btn-check, .btn-next {
             font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; line-height: 1.2;
             color: #fff;
         }
-        .btn-play { background: linear-gradient(135deg, #E53935, #FB8C00); }
-        .btn-pause { background: linear-gradient(135deg, #EF5350, #FFB74D); font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
-        .btn-check { background: linear-gradient(135deg, #43A047, #1E88E5); }
-        .btn-next { background: linear-gradient(135deg, #1E88E5, #5C6BC0); }
-        .btn-add { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 6px; }
-
+        .btn-play { background: #8795A5; }
+        .btn-pause { background: #B0A090; font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
+        .btn-check { background: #9CAF88; }
+        .btn-next { background: #9B97B5; }
         /* 录音按钮 */
         .record-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; }
-        .btn-record { background: linear-gradient(135deg, #FB8C00, #FDD835); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
-        .btn-play-recording { background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
-        .btn-record.recording { background: var(--red); animation: pulse 1.5s infinite; }
-        .btn-history { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
+        .btn-record { background: #C49B9B; color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-play-recording { background: #A89BB5; color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
+        .btn-record.recording { background: #A07878; animation: pulse 1.5s infinite; }
+        .btn-history { background: #9A9A9A; color: #fff; width: 100%; margin-top: 12px; font-size: 0.95em; padding: 14px; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .progress-container {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
             background: var(--card); padding: 8px 14px; border-radius: var(--radius-sm);
-            box-shadow: var(--shadow); border-left: 3px solid #FB8C00;
+            box-shadow: var(--shadow); border-left: 3px solid #8795A5;
         }
-        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #B2DFDB; border-radius: 3px; }
+        .progress-container input[type="range"] { flex: 1; height: 6px; -webkit-appearance: none; background: #D5D0CB; border-radius: 3px; }
         .progress-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-            background: linear-gradient(135deg, #FB8C00, #FDD835); cursor: pointer;
+            background: #8795A5; cursor: pointer;
             border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
         }
         .progress-time { font-size: 0.8em; color: var(--text-secondary); min-width: 42px; text-align: center; font-family: monospace; }
 
         #userInput {
             width: 100%; height: 30vh; min-height: 150px; max-height: 50vh; padding: 14px 16px;
-            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #B2DFDB; background: #fff;
+            font-size: 16px; border-radius: var(--radius-sm); border: 2px solid #D5D0CB; background: #fff;
             resize: none; font-family: inherit; line-height: 1.7; overflow-y: auto;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        #userInput:focus { outline: none; border-color: #5C6BC0; box-shadow: 0 0 0 4px rgba(92,107,192,0.12); }
+        #userInput:focus { outline: none; border-color: #8795A5; box-shadow: 0 0 0 4px rgba(135,149,165,0.12); }
         #userInput::placeholder { color: #bbb; }
 
         .result {
             padding: 16px; background: #fff; border-radius: var(--radius-sm); white-space: pre-wrap;
             line-height: 1.9; font-size: 0.95em; box-shadow: var(--shadow); min-height: 20px; margin-bottom: 8px;
         }
-        .correct { color: #2E7D32; font-weight: bold; background: #C8E6C9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
-        .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .correct { color: #5C7A46; font-weight: bold; background: #D5E0CF; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .wrong { color: #8B3A3A; text-decoration: underline; font-weight: bold; background: #E8D4D4; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .missed { color: #8B6914; font-weight: bold; background: #E8DDD0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; text-decoration: line-through; }
         .result-empty { color: #bbb; text-align: center; display: block; }
 
-        .add-section {
-            background: #fff; border-radius: var(--radius-sm); padding: 16px;
-            box-shadow: var(--shadow); margin-top: 8px; border-left: 3px solid #8E24AA;
+        /* ===== 跟读评分结果 ===== */
+        .scoring-result {
+            padding: 10px 14px; background: #fff; border-radius: var(--radius-sm);
+            line-height: 1.6; font-size: 0.9em; box-shadow: var(--shadow); min-height: 20px;
+            margin: 8px 0; border-left: 3px solid #C49B9B;
         }
-        .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #8E24AA; }
-        .add-section input[type="text"] {
-            width: 100%; padding: 12px 14px; font-size: 15px; border-radius: var(--radius-xs);
-            border: 2px solid #B2DFDB; background: #fff; margin-bottom: 4px;
-        }
-        .add-section input[type="text"]:focus { outline: none; border-color: #8E24AA; box-shadow: 0 0 0 3px rgba(142,36,170,0.10); }
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(135deg, #5C6BC0, #8E24AA); color: #fff;
+            background: #5A5A5A; color: #fff;
             padding: 10px 22px; border-radius: 24px; font-size: 0.9em; z-index: 999; opacity: 0;
             pointer-events: none; transition: opacity 0.3s;
         }
@@ -188,9 +171,7 @@
         }
         .cal-hero .cal-title {
             font-size: 1.5em; font-weight: 800;
-            background: linear-gradient(135deg, #00695C, #0097A7);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #4A4A4A;
         }
         .cal-stats-row {
             display: flex; gap: 10px; margin-bottom: 16px;
@@ -201,9 +182,7 @@
         }
         .cal-stat-card .stat-num {
             font-size: 1.8em; font-weight: 800;
-            background: linear-gradient(135deg, #00695C, #0097A7);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #8795A5;
         }
         .cal-stat-card .stat-label { font-size: 0.72em; color: var(--text-muted); margin-top: 2px; }
         .calendar-card {
@@ -213,11 +192,11 @@
         .calendar-header {
             display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
         }
-        .calendar-header .month-label { font-weight: 700; font-size: 1em; color: var(--green-dark); }
+        .calendar-header .month-label { font-weight: 700; font-size: 1em; color: #4A4A4A; }
         .calendar-header .month-nav { display: flex; gap: 6px; }
         .calendar-header .month-nav button {
             width: 34px; height: 34px; padding: 0; font-size: 18px; border-radius: 50%;
-            background: linear-gradient(135deg, #00897B, #009688); color: #fff;
+            background: #8795A5; color: #fff;
             display: flex; align-items: center; justify-content: center; line-height: 1;
         }
         .calendar-header .month-nav button:disabled { opacity: 0.3; }
@@ -229,17 +208,18 @@
             font-size: 0.72em; font-weight: 600; color: var(--text-muted); padding: 4px 0;
         }
         .cal-day {
-            aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-size: 0.85em; font-weight: 600; cursor: default; position: relative;
-            min-width: 30px; min-height: 30px;
+            min-width: 30px; min-height: 30px; gap: 1px; line-height: 1.1;
         }
+        .cal-count { font-size: 0.6em; font-weight: 700; opacity: 0.85; }
         .cal-day.empty { background: transparent; }
-        .cal-day.level-0 { background: #ECEFF1; color: #999; }
-        .cal-day.level-1 { background: #B2DFDB; color: #00695C; }
-        .cal-day.level-2 { background: #4DB6AC; color: #fff; }
-        .cal-day.level-3 { background: #009688; color: #fff; }
-        .cal-day.level-4 { background: #00796B; color: #fff; }
-        .cal-day.today { box-shadow: 0 0 0 2px var(--green-dark); }
+        .cal-day.level-0 { background: #EDEBE8; color: #B0B0B0; }
+        .cal-day.level-1 { background: #D5DFD0; color: #7A8B6F; }
+        .cal-day.level-2 { background: #B4C4AB; color: #fff; }
+        .cal-day.level-3 { background: #8FA88C; color: #fff; }
+        .cal-day.level-4 { background: #6B8468; color: #fff; }
+        .cal-day.today { box-shadow: 0 0 0 2px #8795A5; }
         .cal-day.has-data:hover { opacity: 0.8; transform: scale(1.15); transition: 0.15s; }
 
         .legend-row {
@@ -307,17 +287,14 @@
     <div class="result" id="resultArea"></div>
 
     <div class="record-row">
-        <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音</button>
+        <button type="button" class="btn-record" id="recordBtn" onclick="toggleRecording()">🎤 录音跟读</button>
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
-    <div class="toast" id="toast"></div>
 
-    <div class="add-section">
-        <div class="list-title">➕ 添加新句子到句库</div>
-        <input type="text" id="newSentenceInput" placeholder="输入英语句子，按 Enter 添加">
-        <button type="button" class="btn-add" onclick="addNewSentence()">添加句子</button>
-    </div>
+    <div class="scoring-result" id="scoringResult" style="display:none;"></div>
+
+    <div class="toast" id="toast"></div>
 
     <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录</button>
 
@@ -361,16 +338,17 @@
             <div class="calendar-grid" id="calendarGrid"></div>
             <div class="legend-row">
                 <span>少</span>
-                <span class="legend-swatch" style="background:#ECEFF1;"></span>
-                <span class="legend-swatch" style="background:#B2DFDB;"></span>
-                <span class="legend-swatch" style="background:#4DB6AC;"></span>
-                <span class="legend-swatch" style="background:#009688;"></span>
-                <span class="legend-swatch" style="background:#00796B;"></span>
+                <span class="legend-swatch" style="background:#EDEBE8;"></span>
+                <span class="legend-swatch" style="background:#D5DFD0;"></span>
+                <span class="legend-swatch" style="background:#B4C4AB;"></span>
+                <span class="legend-swatch" style="background:#8FA88C;"></span>
+                <span class="legend-swatch" style="background:#6B8468;"></span>
                 <span>多</span>
             </div>
         </div>
     </div><!-- /page-calendar -->
 
+    <script src="sentences.js"></script>
     <script>
         // ==================== 存储 ====================
         const STORAGE_KEY_SENTENCES = 'sentencePool_v7';
@@ -378,120 +356,12 @@
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
         const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
         const STORAGE_KEY_CALENDAR = 'dailyStats_v1';
-        const STORAGE_KEY_COMPLETION = 'completionCount_v1';
-
-        // ==================== 商务英语 100 句 ====================
-        const businessEnglishSentences = [
-            "In order to effectively negotiate a comprehensive international trade agreement that satisfies all stakeholders involved, we must first conduct a thorough analysis of the current market conditions, regulatory frameworks, and potential risks that could significantly impact the long-term viability of this partnership across multiple jurisdictions and economic cycles",
-            "I would strongly recommend that we schedule a follow-up meeting with the senior management team next Tuesday afternoon at two o'clock to discuss the quarterly financial projections and to review the strategic initiatives that were outlined during our previous board meeting last month",
-            "Despite the challenging economic environment characterized by rising inflation rates and increased market volatility, our company has managed to outperform industry benchmarks by maintaining a disciplined approach to cost management while simultaneously investing in innovation and talent development across all business units",
-            "The marketing department has proposed an ambitious digital transformation strategy that would leverage artificial intelligence and machine learning algorithms to personalize customer experiences, optimize campaign performance in real time, and ultimately drive a twenty-five percent increase in conversion rates over the next fiscal year",
-            "Before we finalize the merger and acquisition agreement with our prospective partners in the Asia-Pacific region, it is absolutely essential that we engage external legal counsel to conduct a comprehensive due diligence review covering intellectual property rights, existing contractual obligations, and potential antitrust concerns",
-            "Our supply chain optimization initiative has identified several critical bottlenecks in the distribution network that, if properly addressed through strategic investments in warehouse automation and predictive analytics, could reduce delivery lead times by approximately thirty percent while simultaneously lowering operational costs",
-            "The human resources department has been working diligently to develop a comprehensive employee wellness program that encompasses mental health support, flexible working arrangements, professional development opportunities, and competitive compensation packages designed to attract and retain top talent in an increasingly competitive labor market",
-            "Following extensive consultation with our external auditors and the finance committee, we have decided to implement a new enterprise resource planning system that will streamline our accounting processes, enhance financial reporting accuracy, and provide real-time visibility into key performance indicators across all business segments",
-            "I would like to take this opportunity to express my sincere appreciation for the outstanding efforts that each and every team member has contributed toward the successful completion of this complex project, which was delivered ahead of schedule and under budget despite numerous unforeseen challenges along the way",
-            "The board of directors has unanimously approved the proposed sustainability initiative that aims to reduce our carbon footprint by forty percent over the next five years through investments in renewable energy, waste reduction programs, and the adoption of circular economy principles throughout our manufacturing operations",
-            "When presenting the annual business review to our key stakeholders at the upcoming investor conference, we should emphasize the significant progress we have made in expanding our market presence internationally, particularly in emerging economies where demand for our products and services has grown substantially over the past eighteen months",
-            "The procurement department is currently evaluating multiple vendor proposals for the upcoming infrastructure upgrade project, and we expect to make a final decision within the next two weeks based on a weighted scoring matrix that considers technical capability, total cost of ownership, implementation timeline, and post-deployment support services",
-            "After carefully reviewing the competitive landscape and analyzing consumer behavior trends across multiple demographic segments, our strategic planning team has recommended that we reposition our flagship product line to target the rapidly growing millennial and Gen Z markets, which are expected to account for over sixty percent of total consumer spending by 2028",
-            "It has come to my attention that several departments have been experiencing difficulties with the new project management software, and I would therefore like to arrange a series of training workshops led by our IT support team to ensure that all employees are able to utilize the system effectively and efficiently going forward",
-            "The cross-functional task force established to investigate the recent decline in customer satisfaction scores has identified three primary areas for improvement, including faster response times to customer inquiries, enhanced product quality control procedures, and more transparent communication regarding shipping delays and inventory shortages",
-            "As part of our ongoing commitment to corporate social responsibility and ethical business practices, we will be publishing our first annual sustainability report next quarter, which will provide detailed information about our environmental impact, community engagement initiatives, diversity and inclusion metrics, and governance structures",
-            "Given the increasing importance of data-driven decision making in today's competitive business environment, I strongly believe that we should allocate additional resources toward building our business intelligence capabilities, including hiring experienced data scientists, investing in advanced analytics platforms, and establishing a company-wide data governance framework",
-            "The joint venture agreement that we have been negotiating with our European counterparts over the past six months is expected to be finalized by the end of this quarter, pending resolution of a few outstanding issues related to intellectual property ownership, profit-sharing arrangements, and the composition of the joint management committee",
-            "In light of the recent regulatory changes affecting cross-border data transfers between the European Union and other jurisdictions, our legal and compliance teams are working around the clock to ensure that all of our data processing activities remain fully compliant with the latest requirements under the General Data Protection Regulation and related privacy frameworks",
-            "I would like to propose that we establish a formal mentorship program within the organization that pairs junior employees with experienced senior leaders, as research consistently shows that such programs significantly improve employee engagement, accelerate professional development, and contribute to higher retention rates across all levels of the organization",
-            "The feasibility study commissioned by the operations department has concluded that relocating our primary manufacturing facility to a more cost-competitive location would yield annual savings of approximately twelve million dollars, though we must carefully weigh these benefits against the potential disruption to our existing workforce and supplier relationships",
-            "Our customer success team has developed an innovative onboarding program that incorporates personalized training sessions, interactive video tutorials, and a dedicated support portal, which has already resulted in a measurable improvement in customer retention rates and a significant reduction in churn during the critical first ninety days of subscription",
-            "During the quarterly business review meeting scheduled for this coming Friday morning at nine o'clock sharp, each department head will be expected to present a concise summary of their respective team's achievements, challenges, and strategic priorities for the upcoming quarter, along with specific, measurable key performance indicators that will be tracked throughout the period",
-            "The information technology steering committee has unanimously endorsed the recommendation to migrate our legacy systems to a cloud-based infrastructure over the next eighteen months, citing significant benefits in terms of scalability, disaster recovery capabilities, operational flexibility, and long-term total cost of ownership compared to our current on-premises architecture",
-            "In response to the growing demand for sustainable and ethically sourced products among environmentally conscious consumers, our product development team is actively exploring alternative materials and manufacturing processes that minimize environmental impact while maintaining the high quality standards that our customers have come to expect from our brand",
-            "The annual employee engagement survey has revealed several key insights regarding workplace culture and organizational communication, and I am pleased to report that overall satisfaction scores have improved by eight percentage points compared to last year, though there remains significant room for improvement in areas such as career development pathways and cross-departmental collaboration",
-            "As we prepare to enter the rapidly evolving Southeast Asian market, our international business development team is conducting extensive market research to understand local consumer preferences, regulatory requirements, distribution channel dynamics, and competitive positioning strategies that will inform our market entry approach over the next twelve to eighteen months",
-            "I am writing to formally request approval for the proposed budget allocation of two point five million dollars to fund the research and development phase of our next-generation product platform, which is expected to deliver breakthrough innovations in terms of performance, energy efficiency, and user experience based on preliminary prototype testing results",
-            "The risk management committee has conducted a comprehensive assessment of our organization's exposure to various categories of operational, financial, and strategic risks, and has developed a detailed mitigation plan that includes enhanced internal controls, expanded insurance coverage, and the establishment of a dedicated crisis management team to coordinate our response to potential adverse events",
-            "Following extensive market testing and customer feedback analysis, we have decided to pivot our product strategy toward a subscription-based software-as-a-service model, which we believe will provide more predictable recurring revenue streams, deeper customer relationships, and greater opportunities for continuous product improvement based on usage analytics",
-            "The logistics team has successfully renegotiated our contracts with several key shipping partners, resulting in an average reduction of fifteen percent in freight costs across our primary distribution routes, while simultaneously improving delivery speed and reliability through the implementation of real-time tracking and automated routing optimization technologies",
-            "Given the increasing frequency and sophistication of cybersecurity threats targeting organizations in our industry, I strongly recommend that we immediately implement the enhanced security protocols recommended by our external IT security consultants, including multi-factor authentication, regular penetration testing, and comprehensive employee security awareness training",
-            "Our talent acquisition strategy for the coming fiscal year will focus on building a more diverse and inclusive workforce through targeted outreach to underrepresented communities, partnerships with leading academic institutions, and the implementation of blind resume review processes designed to minimize unconscious bias in our hiring decisions",
-            "The comprehensive market analysis prepared by our strategic planning division indicates that the total addressable market for our core product category is expected to grow at a compound annual growth rate of twelve percent over the next five years, driven primarily by technological advancements, changing consumer behaviors, and increasing adoption in previously underserved geographic regions",
-            "During our negotiation with the potential strategic partner from South Korea, we should emphasize the complementary nature of our respective product portfolios, the operational synergies that could be realized through shared distribution networks, and the significant market opportunities that would become accessible through a coordinated go-to-market strategy in the Asia-Pacific region",
-            "The customer relationship management system implementation project has been progressing according to plan, with phase one successfully deployed across the sales organization last month, and phase two, which encompasses marketing automation and customer service integration, scheduled for rollout at the beginning of the next calendar quarter",
-            "I would like to draw your attention to the attached quarterly financial report, which provides a detailed breakdown of our revenue performance by business segment, geographic region, and product category, along with variance analysis comparing actual results against our budget and the corresponding period in the prior fiscal year, as well as revised forecasts for the remainder of the year",
-            "As we continue to expand our operations globally, it is becoming increasingly important to establish standardized business processes and knowledge management systems that ensure consistency in service delivery, facilitate knowledge transfer across regional teams, and enable our organization to scale efficiently without compromising quality or customer satisfaction",
-            "The executive leadership team will be hosting a town hall meeting next Wednesday afternoon to discuss the company's strategic vision for the next three years, address any questions or concerns that employees may have regarding the recent organizational restructuring, and celebrate the significant achievements and milestones that we have collectively accomplished over the past twelve months",
-            "After conducting an exhaustive evaluation of multiple enterprise software solutions, the selection committee has recommended that we proceed with the implementation of an integrated business management platform that combines enterprise resource planning, customer relationship management, and business intelligence capabilities within a single, unified cloud-based architecture",
-            "In order to strengthen our competitive position in the increasingly crowded e-commerce marketplace, we must invest strategically in enhancing the user experience across all digital touchpoints, including website performance optimization, mobile application usability, personalized product recommendations, and streamlined checkout processes that minimize cart abandonment and maximize conversion",
-            "The quarterly business review presentation should highlight not only our financial performance against targets but also the strategic initiatives we have undertaken to strengthen our intellectual property portfolio, including the filing of twelve new patent applications and the successful defense of our existing patents against challenges from competitors in multiple jurisdictions",
-            "I am pleased to inform you that the due diligence process for the proposed acquisition of the technology startup has been successfully completed, and based on the findings of our financial, legal, and technical review teams, I recommend that we proceed with the transaction under the terms that were outlined in the preliminary agreement signed last month",
-            "The transformation of our organizational culture to embrace agility, innovation, and continuous improvement will require sustained commitment from leadership at all levels, clear communication of the vision and expectations, and the implementation of supporting systems and processes that empower employees to experiment, learn from failures, and contribute their best ideas toward the achievement of our collective goals",
-            "During our meeting with the investment banking team earlier this week, we discussed various strategic options for funding our expansion plans, including a potential initial public offering, private equity investment, strategic partnership arrangements, and debt financing through the issuance of corporate bonds in international capital markets",
-            "The comprehensive review of our manufacturing operations has identified significant opportunities to improve efficiency through the adoption of lean manufacturing principles, including the implementation of just-in-time inventory management, the elimination of non-value-added activities, and the empowerment of frontline workers to identify and resolve quality issues in real time",
-            "As the global business environment continues to evolve at an unprecedented pace driven by technological disruption, shifting consumer expectations, and changing regulatory landscapes, organizations that fail to adapt their strategies, capabilities, and operating models will increasingly find themselves at a competitive disadvantage relative to more agile and forward-thinking rivals",
-            "I would like to propose that we establish a cross-functional innovation council comprising representatives from each major business unit, tasked with identifying emerging trends and technologies that could impact our industry, evaluating potential opportunities and threats, and recommending strategic responses that position our organization for long-term success in an uncertain future",
-            "The analysis of customer lifetime value across different acquisition channels has revealed that customers acquired through organic search and referral programs demonstrate significantly higher retention rates and average order values compared to those acquired through paid advertising, suggesting that we should allocate a greater proportion of our marketing budget toward content marketing and customer referral initiatives",
-            "In response to the growing demand for greater transparency in corporate supply chains, we will be implementing a comprehensive supplier auditing program that evaluates our key suppliers against internationally recognized standards for labor practices, environmental sustainability, and ethical business conduct, with results to be published in our annual corporate responsibility report",
-            "Following the successful completion of the pilot program in three regional markets, the executive committee has approved the nationwide rollout of our new customer loyalty program, which is expected to drive a fifteen percent increase in repeat purchase frequency and a twenty percent improvement in customer lifetime value over the next two fiscal years based on the pilot data analysis",
-            "The finance department has completed the preparation of our annual budget for the upcoming fiscal year, which reflects a cautious yet optimistic outlook with projected revenue growth of eight percent year-over-year, driven primarily by new product launches, geographic expansion into adjacent markets, and continued improvements in operational efficiency across all business units",
-            "I am writing to recommend that we establish a formal business continuity and disaster recovery program that encompasses not only our information technology systems but also critical business processes, supply chain dependencies, and key personnel succession planning, ensuring that our organization can maintain essential operations during and after any significant disruptive event",
-            "The competitive intelligence team has prepared a detailed analysis of our three primary competitors' product strategies, pricing models, and go-to-market approaches over the past eighteen months, which reveals several key insights regarding market positioning opportunities and potential vulnerabilities that we can exploit to strengthen our competitive advantage in the marketplace",
-            "During the upcoming negotiation with the labor union representatives regarding the renewal of the collective bargaining agreement, we should approach the discussions with a collaborative mindset focused on finding mutually beneficial solutions that address the legitimate concerns of our workforce while preserving the operational flexibility and cost structure necessary to maintain our competitiveness",
-            "The strategic planning offsite scheduled for early next month will bring together the top thirty leaders from across the organization to engage in intensive discussions about our long-term vision, core strategic priorities, resource allocation decisions, and the organizational capabilities we need to develop in order to achieve our ambitious growth objectives over the next five years",
-            "I would like to acknowledge the exceptional contributions of the project team that successfully delivered the enterprise software implementation on time and under budget, overcoming significant technical challenges and organizational resistance through effective stakeholder management, clear communication, and unwavering commitment to achieving the project objectives",
-            "As part of our commitment to fostering an inclusive and equitable workplace, we will be launching a series of diversity and inclusion initiatives over the coming months, including unconscious bias training for all managers, the establishment of employee resource groups, and the implementation of transparent criteria for promotion and compensation decisions across all levels of the organization",
-            "The detailed analysis of our customer support ticket data over the past twelve months has revealed several recurring issues that, if systematically addressed through product improvements and enhanced documentation, could reduce support volume by approximately thirty percent while simultaneously improving customer satisfaction scores and reducing churn among our enterprise client base",
-            "Given the rapidly evolving regulatory landscape surrounding artificial intelligence and data privacy, our legal and compliance teams are working proactively to develop a comprehensive AI governance framework that ensures our use of these powerful technologies remains ethical, transparent, and fully compliant with both current regulations and anticipated future requirements across all markets in which we operate",
-            "I would like to propose the formation of a dedicated innovation lab within our research and development organization, staffed by a small, cross-functional team empowered to explore emerging technologies and business models without the constraints of our normal operational processes, with the explicit mandate to identify and validate new growth opportunities that extend beyond our current core business",
-            "The quarterly earnings call presentation should clearly articulate not only our financial results but also the strategic rationale behind our recent investment decisions, the progress we have made in executing against our stated priorities, and our confident outlook for the remainder of the fiscal year based on the strength of our product pipeline and the favorable demand trends we are observing across our key markets",
-            "As we prepare for the annual audit by our external accounting firm, I would like to remind all department heads of the importance of maintaining complete and accurate documentation for all financial transactions, ensuring that supporting evidence is readily accessible, and promptly responding to any inquiries or requests for additional information from the audit team throughout the engagement period",
-            "The global expansion strategy that we have been refining over the past several months incorporates a phased approach to entering new geographic markets, beginning with a thorough assessment of market potential and competitive dynamics, followed by the establishment of local partnerships, the adaptation of our products to meet local requirements, and ultimately the build-out of dedicated in-country operations in our highest priority markets",
-            "In order to enhance our organization's resilience in the face of increasingly frequent and severe supply chain disruptions, we are implementing a multi-sourcing strategy for critical components, increasing safety stock levels for high-risk items, and investing in advanced supply chain visibility tools that provide real-time monitoring and early warning of potential disruptions across our global supplier network",
-            "I am pleased to announce that our company has been recognized as one of the top employers in our industry for the third consecutive year, reflecting our sustained commitment to creating a workplace culture that values innovation, collaboration, professional growth, and work-life balance, as evidenced by our consistently high scores across all categories in the independent employee satisfaction survey",
-            "The market entry strategy for the Latin American region should be carefully tailored to the unique characteristics of each target country, taking into account differences in regulatory environments, consumer preferences, competitive landscapes, and infrastructure maturity, rather than applying a one-size-fits-all approach that fails to account for the significant heterogeneity across this diverse and rapidly evolving region",
-            "I would like to request your input and feedback on the proposed organizational restructuring plan that was distributed last week, which aims to streamline decision-making processes, reduce management layers, and create clearer accountability for business outcomes in order to make our organization more responsive to market changes and evolving customer needs",
-            "The analysis of our sales pipeline data indicates that while our lead generation efforts have been highly successful in producing a large volume of qualified opportunities, our conversion rates in the middle and late stages of the sales process are lagging behind industry benchmarks, suggesting the need for enhanced sales enablement resources, more effective competitive positioning, and improved negotiation training for our account executives",
-            "During the quarterly risk review meeting, the compliance officer highlighted several emerging regulatory developments in the European Union and China that could potentially impact our business operations, and recommended that we engage local legal experts in each jurisdiction to assess the specific implications for our products, data practices, and contractual arrangements with customers and partners in those markets",
-            "As we continue to navigate the complexities of the post-pandemic business environment characterized by hybrid work models, evolving employee expectations, and intensifying competition for specialized talent, it is essential that we remain flexible and adaptive in our approach to workforce management while maintaining a strong focus on employee engagement, productivity, and well-being",
-            "I would like to propose that we allocate a portion of our annual budget to establish a corporate venture capital fund that invests in early-stage startups developing technologies and business models relevant to our industry, providing us with both financial returns and strategic insights into emerging trends that could shape the future competitive landscape",
-            "The customer advisory board meeting held last quarter provided invaluable insights into the evolving needs and priorities of our largest enterprise clients, and I recommend that we establish a formal process for incorporating this feedback into our product development roadmap, with regular progress updates communicated back to the advisory board members to demonstrate that their input is being taken seriously and acted upon",
-            "In light of the increasing importance of environmental, social, and governance factors in investment decisions and corporate reputation, I strongly recommend that we accelerate our sustainability initiatives and enhance our ESG reporting practices to align with the recommendations of the Task Force on Climate-related Financial Disclosures and other internationally recognized frameworks",
-            "The competitive analysis conducted by our market intelligence team indicates that several of our key rivals are investing heavily in artificial intelligence capabilities, and I believe it is imperative that we develop a clear AI strategy that identifies the highest-impact use cases across our value chain, builds the necessary data infrastructure and talent base, and establishes ethical guidelines for the responsible deployment of AI technologies",
-            "I am writing to confirm that the steering committee has approved the recommendation to proceed with the implementation of the new customer data platform, which will unify our fragmented customer data sources into a single comprehensive view, enabling more personalized marketing campaigns, more accurate customer segmentation, and more effective cross-selling and upselling initiatives across all customer touchpoints",
-            "During our discussions with potential technology partners for the digital transformation initiative, we should carefully evaluate not only the technical capabilities and total cost of ownership of each proposed solution, but also the cultural fit, long-term viability, and strategic alignment of each vendor with our organization's values, operating philosophy, and future direction",
-            "The employee retention analysis conducted by the human resources analytics team has revealed that the primary drivers of voluntary turnover in our organization are limited career advancement opportunities, inadequate recognition and rewards, and insufficient work-life balance, providing clear direction for the development of targeted retention strategies that address these specific pain points",
-            "As we finalize the annual operating plan for the upcoming fiscal year, I would encourage all business unit leaders to think beyond incremental improvements and consider more transformative initiatives that could fundamentally change our cost structure, accelerate our revenue growth, or strengthen our competitive positioning in ways that are not easily replicated by our competitors",
-            "The comprehensive review of our pricing strategy across all product lines and customer segments has identified several opportunities to optimize our pricing architecture, including the introduction of value-based pricing for our premium offerings, the simplification of our discount structure, and the implementation of dynamic pricing algorithms for selected product categories where demand patterns exhibit significant variability",
-            "I am delighted to report that our customer satisfaction scores have reached an all-time high in the most recent quarterly survey, reflecting the cumulative impact of our sustained investments in product quality, customer service excellence, and user experience design over the past several years, as well as the dedication and professionalism of our customer-facing teams across all channels and touchpoints",
-            "In preparation for the annual strategic planning cycle, I have asked each functional leader to prepare a comprehensive assessment of their respective area's performance over the past year, including an honest appraisal of what worked well and what did not, a clear articulation of the key challenges and opportunities ahead, and a set of specific, measurable objectives for the coming year that align with our overall corporate strategy",
-            "The board of directors has requested a detailed analysis of the potential implications of artificial intelligence and automation on our workforce over the next decade, including an assessment of which roles are most likely to be impacted, the skills that will be in greatest demand, and the retraining and upskilling programs we should invest in now to prepare our employees for the future of work",
-            "Following extensive research and pilot testing, our innovation team has developed a proof of concept for a new product that leverages generative artificial intelligence to address a previously unmet customer need, and I am seeking approval for the next phase of development, which would involve a larger-scale beta program with select customers and the allocation of additional engineering resources to accelerate time to market",
-            "As we celebrate our company's tenth anniversary this month, I want to take a moment to reflect on the remarkable journey we have undertaken together, from our humble beginnings as a small startup with just five employees working out of a garage, to the thriving organization we have become today with operations spanning three continents and a team of over two thousand talented professionals dedicated to serving our customers",
-            "The partnership negotiation with the leading technology company in Silicon Valley has reached a critical juncture, and I believe that securing this strategic alliance would provide us with access to cutting-edge technology, a broader distribution network, and enhanced brand credibility that could accelerate our growth trajectory significantly over the next three to five years",
-            "I would like to recommend that we adopt a more disciplined approach to project portfolio management, including the establishment of clear stage-gate criteria for project progression, regular portfolio reviews to ensure alignment with strategic priorities, and the willingness to terminate projects that are no longer viable or strategically relevant, even if significant resources have already been invested",
-            "The internal audit function has completed its review of our procurement processes and has identified several areas where controls could be strengthened, including more rigorous vendor due diligence procedures, enhanced segregation of duties in the approval workflow, and the implementation of automated monitoring systems to detect potential anomalies or policy violations in real time",
-            "During our upcoming meeting with the external public relations agency, we should brief them thoroughly on the product launch timeline, key messaging themes, target audience segments, and potential reputational risks so that they can develop a comprehensive communications strategy that maximizes positive media coverage while preparing contingency plans for any issues that may arise during the launch period",
-            "The quarterly operations review has highlighted the need for significant investment in our manufacturing infrastructure to address capacity constraints that are limiting our ability to meet growing customer demand, and I recommend that we accelerate the previously planned factory expansion project by at least six months to avoid potential revenue losses from unfulfilled orders",
-            "As part of our commitment to continuous improvement and operational excellence, I am proposing the establishment of a formal lessons-learned process that captures insights from completed projects and major initiatives, documents best practices and common pitfalls, and systematically disseminates this knowledge across the organization to prevent the repetition of past mistakes and accelerate the adoption of proven approaches",
-            "I am writing to provide you with an update on the status of the intellectual property litigation that we initiated against our competitor last year, including the favorable preliminary ruling we received from the district court last week, the remaining procedural steps before a final judgment is rendered, and our assessment of the potential financial and strategic implications of various possible outcomes",
-            "The brand perception study commissioned by our marketing department has yielded some surprising and actionable insights regarding how our target customers perceive our brand relative to key competitors, revealing both areas of strength that we can leverage more effectively in our messaging and areas of weakness that require attention through rebranding initiatives and enhanced customer experience efforts",
-            "In order to build a more resilient and adaptable organization capable of thriving in an increasingly uncertain business environment, we must cultivate a culture that embraces change, encourages intelligent risk-taking, values diverse perspectives, and empowers employees at all levels to make decisions and take ownership of outcomes within their areas of responsibility",
-            "The strategic review of our product portfolio conducted by the executive team has concluded that we should divest two non-core business units that have been underperforming and redirect the released capital and management attention toward our higher-growth, higher-margin core businesses where we have the strongest competitive advantages and the greatest potential for long-term value creation",
-            "I would like to extend my sincere gratitude to all members of the crisis management team for their tireless efforts in navigating our organization through the recent supply chain disruption, which required close coordination with suppliers, transparent communication with affected customers, and creative problem-solving to identify alternative sourcing arrangements and minimize the impact on our operations",
-            "As we embark on the implementation of our new enterprise-wide sustainability program, I would ask each department head to identify specific initiatives within their area of responsibility that could contribute to our sustainability goals, whether through energy efficiency improvements, waste reduction, sustainable sourcing practices, or the development of products and services that help our customers reduce their own environmental footprints",
-            "The comprehensive compensation benchmarking study conducted by our human resources department indicates that our salary structures for certain critical technical roles have fallen behind market rates, and I recommend that we implement a targeted adjustment program to ensure we remain competitive in attracting and retaining the specialized talent required to execute our technology strategy",
-            "The final recommendation from the strategic review committee is that we should pursue a dual-track approach over the next eighteen months, simultaneously investing in the digital transformation of our core business while establishing a separate innovation unit that operates with startup-like agility and autonomy to explore adjacent market opportunities and emerging technology platforms",
-            "As I reflect on the lessons learned from this challenging but ultimately successful fiscal year, I believe the most important takeaway is that organizational resilience stems not from rigid planning but from cultivating a culture of adaptability, continuous learning, and genuine collaboration that enables teams to respond effectively to unexpected challenges and capitalize on emerging opportunities"
-        ];
 
         let defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
-            "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
             "The faster a car is going at the point it starts to spin, the faster it will be at all points during deceleration, as it always stops in the same place. Therefore ... before the spin. Hence, says Mosley, reduced grip equals increased safety, everything else being equal",
             "On the macro level RCVD deals with general principles of vehicle dynamics but on the micro level was specifically geared towards racing; it synthesizes fundamental theory and practical application",
-            "While the bicycle model provides a simplified framework for analyzing steady-state cornering behavior by collapsing four wheels into two axles, it fails to capture the nonlinear characteristics of tire force degradation, dynamic load transfer, and roll-induced camber changes that dominate vehicle response near the friction limit",
             "Although aerodynamic downforce increases normal load on the tires and thus enhances lateral and longitudinal grip at elevated speeds, its effectiveness is inherently constrained by tire load sensitivity, which causes friction coefficient to decline as vertical load rises",
-            "Because the distribution of roll stiffness between the front and rear axles directly determines the proportion of lateral load transfer carried by each end of the vehicle, it represents the most influential tuning parameter for adjusting understeer and oversteer characteristics in practical chassis setup",
             "Even though anti-roll bars do not alter the total amount of lateral load transfer acting on the vehicle during steady-state cornering, they redistribute this transfer across axles and thereby modify the relative lateral force capacity of the front and rear tire pairs",
             "Since tire lateral force does not reach its steady-state magnitude instantaneously but requires the contact patch to travel through a relaxation length, a first-order time lag exists between the application of slip angle and the generation of full cornering force",
             "Not only does the height of the vehicles center of mass influence the magnitude of load transfer during cornering, acceleration, and braking, but it also interacts with track width and roll-center height to define the fundamental limit of lateral acceleration capability",
@@ -691,110 +561,7 @@
             "Handling is really the sum of the driver and the vehicle. The driver provides the input and the vehicle responds with feedback. ... we are left to study the vehicle response, or the vehicle dynamics"
         ];
 
-        // ==================== 车辆动态性能主观评价 100 句 ====================
-        const vehicleEvalSentences = [
-            "When evaluating the on-center steering feel during highway cruising at speeds between one hundred and one hundred thirty kilometers per hour, particular attention should be paid to the level of steering effort required to maintain a straight path, the presence of any dead zone or friction that creates a sticky sensation around the center position, and the linearity of the torque buildup as the driver applies small steering corrections to compensate for road camber and crosswind disturbances",
-            "The steering response during rapid lane-change maneuvers exhibited a slight initial hesitation followed by a progressive and well-weighted buildup of lateral force, which inspired confidence and allowed the driver to accurately place the vehicle without the need for mid-corner corrections or steering angle adjustments once the intended path was established",
-            "Throughout the winding mountain road section of our evaluation route, the vehicle demonstrated remarkably neutral handling balance with a subtle tendency toward mild understeer at the limit, which provided a reassuring safety margin without compromising the engaging and responsive character that enthusiasts expect from a performance-oriented chassis",
-            "Ride comfort over coarse chip surfaces and expansion joints was generally well-controlled, with the suspension absorbing most high-frequency harshness before it reached the cabin, though some secondary ride motion was perceptible through the seat base on particularly broken sections of pavement at lower urban speeds",
-            "The brake pedal feel during moderate to heavy deceleration events was consistently firm and progressive, with excellent initial bite that inspired immediate confidence, and the transition from regenerative to friction braking was completely seamless and imperceptible to the driver under all tested conditions",
-            "Body control during abrupt throttle transitions and aggressive cornering maneuvers was exemplary for a vehicle in this weight class, with minimal pitch under hard acceleration, negligible dive during threshold braking, and well-contained roll angles that allowed the suspension to maintain optimal tire contact throughout the cornering phase",
-            "The secondary ride characteristics over low-frequency undulations and long-wave road inputs revealed a slight but noticeable float sensation at the rear axle when the vehicle was fully laden with five occupants and a full cargo compartment, suggesting that rear damper rebound tuning could benefit from slight additional firmness to improve body motion control in heavily loaded conditions",
-            "Steering feedback through the rim was richly communicative, transmitting a clear and unfiltered sense of the available grip level at the front contact patches, with the effort building naturally and progressively as cornering forces increased, allowing the driver to confidently explore the limits of adhesion without sudden or unexpected changes in steering weight",
-            "The powertrain calibration during part-throttle acceleration from low engine speeds demonstrated smooth and linear torque delivery with no perceptible turbocharger lag or driveline shunt, making the vehicle exceptionally easy to drive smoothly in dense urban traffic while still providing ample performance when the accelerator was pressed more assertively",
-            "When traversing sharp-edged imperfections such as potholes and transverse ridges at moderate urban speeds, the initial impact harshness transmitted through the suspension was somewhat more pronounced than expected for a vehicle positioned in the premium segment, though the disturbance was rapidly damped and did not generate any secondary oscillations or residual body movement",
-            "The vehicle's resistance to crosswind disturbances during high-speed cruising on exposed sections of the evaluation route was commendable, requiring only minimal steering corrections to maintain the intended lane position, and the stability control system intervened subtly and progressively without any abrupt or disconcerting interventions that might alarm less experienced drivers",
-            "Turn-in response when initiating corner entry was crisp and immediate, with the front axle reacting to steering inputs without perceptible delay, and the rear axle following faithfully without any sensation of lag or disconnection between the two ends of the vehicle, resulting in a cohesive and well-integrated cornering experience that felt natural and intuitive from the very first kilometer behind the wheel",
-            "The tire noise transmitted into the cabin over coarse asphalt surfaces at highway speeds was somewhat elevated relative to the class benchmark, generating a constant background roar that required slightly raised voices for conversation between front and rear seat occupants, though wind noise isolation around the A-pillars and door mirrors was outstanding and made a significant positive contribution to overall high-speed refinement",
-            "During our comprehensive evaluation of the suspension's ability to isolate the cabin from road surface irregularities, we noted that the primary ride over gentle undulations and long-wave inputs was exceptional, providing a genuinely luxurious level of comfort that rivals vehicles positioned a full segment above, with the body remaining flat and composed even over pronounced crests and dips encountered at extra-urban speeds",
-            "The steering system's self-centering behavior after corner exit was natural and progressive, with the wheel unwinding smoothly in the driver's hands without any sticky or notchy sensations that would require manual correction, and the return rate felt well-matched to the vehicle's yaw damping characteristics, creating a harmonious and polished dynamic signature",
-            "When pushed to the limit of adhesion on the dry handling circuit, the chassis transitioned from neutral balance to mild and progressive understeer in a manner that was entirely predictable and easily managed with small throttle adjustments, providing a wide and accessible window of performance that flattered drivers of varying skill levels without dulling the overall experience",
-            "The transmission calibration during spirited driving on challenging back roads was generally excellent, with well-timed downshifts under braking and intelligent gear-holding behavior through corners, though there were occasional instances of reluctance to downshift when requesting maximum acceleration from mid-range engine speeds after a period of steady-state cruising",
-            "Impact isolation from sharp-edged road irregularities such as bridge expansion joints, cat's eyes, and broken pavement edges was well-managed by the suspension system, with the initial high-frequency disturbance being effectively rounded off before reaching the steering wheel or seat structure, contributing to a refined and premium-quality driving experience that belied the vehicle's relatively affordable price point",
-            "The vehicle's high-speed stability during sustained Autobahn cruising at velocities approaching the electronically limited top speed was absolutely exemplary, with the chassis feeling planted and secure, the steering delivering appropriate on-center weighting that inspired confidence, and the aerodynamic package clearly generating meaningful downforce that kept the body settled and resistant to lift-induced float",
-            "During repeated heavy braking from high speeds on the evaluation loop, the pedal remained consistently firm and the stopping distance showed no significant degradation even after ten consecutive full-ABS stops, demonstrating that the brake cooling package and friction material specification were well-engineered for sustained thermal capacity under demanding real-world conditions",
-            "The overall refinement of the powertrain at idle and during low-speed urban maneuvering was exceptionally good for a direct-injection turbocharged engine in this displacement class, with minimal injector ticking noise, no perceptible vibration transmitted through the steering wheel or seat, and a well-suppressed engine note that remained discreetly in the background during relaxed driving",
-            "Steering accuracy and linearity during mid-corner adjustments on constant-radius sweepers was outstanding, with small changes in steering angle producing precisely proportional changes in the vehicle's cornering line without any deadband or nonlinearity that would require the driver to consciously compensate for inconsistencies in the steering system's response characteristics",
-            "The damping calibration achieved an excellent balance between body control and ride comfort across the majority of road surfaces encountered during our evaluation, though we noted that at lower speeds over broken urban pavement, the compression damping felt slightly aggressive, transmitting more road texture through the suspension than was strictly necessary for adequate body motion control",
-            "When executing an emergency lane-change maneuver at the maximum speed achievable without electronic stability control intervention, the vehicle responded with impressive agility and composure, completing the directional change rapidly and settling immediately into the new lane without any residual yaw oscillation or the need for corrective steering inputs from the driver",
-            "The level of steering assistance at parking speeds was generous without feeling over-boosted, making low-speed maneuvers effortless while still retaining sufficient feedback through the rim to allow the driver to accurately judge the proximity of curbs and obstacles, striking an excellent balance that many manufacturers struggle to achieve in electrically assisted steering systems",
-            "NVH refinement at wide-open throttle acceleration from low engine speeds revealed an appealing, characterful engine note that was clearly audible in the cabin without being intrusive or unrefined, with the sound quality having been carefully tuned to emphasize the more pleasant combustion frequencies while suppressing the harsher, less melodious components of the engine's acoustic signature",
-            "The vehicle's behavior during wet-weather handling evaluation on the artificially watered skidpad was progressive and reassuring, with the breakaway characteristics remaining fundamentally similar to the dry handling behavior albeit at appropriately reduced grip levels, and the stability control calibration intervening early enough to prevent excessive slip angles while still allowing enthusiastic drivers to explore a modest degree of yaw before electronic intervention",
-            "Despite riding on relatively large-diameter wheels fitted with low-profile tires that typically compromise ride quality, the suspension tuning managed to deliver an acceptable level of impact comfort over the majority of road surfaces, though the combination of short sidewalls and firm spring rates inevitably resulted in some sharpness over square-edged bumps that would likely be fatiguing during extended journeys on poorly maintained secondary roads",
-            "The steering weighting during constant-radius cornering at moderate lateral accelerations felt entirely natural and well-judged, with the effort building progressively from the straight-ahead position and reaching a plateau that communicated the available grip reserve without becoming unnecessarily heavy or fatiguing during extended periods of spirited driving on demanding roads",
-            "When driving through a series of linked medium-speed corners with rapidly changing direction, the vehicle's yaw response was immediate and accurately proportional to the steering input, with the chassis rotating eagerly around the driver without any sensation of excessive inertia or reluctance to change direction, yet never feeling nervous or overly sensitive to small steering corrections",
-            "The body structure's torsional rigidity was clearly evident when traversing diagonal bumps and uneven surfaces that typically excite chassis flex, with no creaks, rattles, or perceptible body quiver transmitted into the cabin, demonstrating excellent structural engineering that provides a solid foundation for precise suspension tuning and contributes significantly to the overall sense of quality and durability",
-            "Road noise isolation over concrete highway surfaces, which typically generate the most challenging acoustic environment for tire cavity resonance, was well-managed with only a moderate increase in cabin noise levels compared to smooth asphalt, suggesting that the sound insulation package and tire selection were carefully optimized for the specific acoustic challenges presented by different road surface types",
-            "The accelerator pedal mapping during the initial portion of its travel was well-calibrated for smooth urban driving, providing a linear and predictable relationship between pedal angle and engine torque output that made it easy to execute smooth standing starts and maintain consistent speeds in heavy traffic without the jerkiness that often afflicts vehicles with overly aggressive throttle calibrations",
-            "Following an extended period of spirited driving on technically demanding roads, the brake pedal feel remained entirely consistent with no perceptible increase in pedal travel or reduction in initial bite, demonstrating that the brake fluid specification and cooling design were fully capable of managing the thermal loads generated during enthusiastic road driving without approaching the limits of the system's thermal capacity",
-            "The vehicle's roll behavior during steady-state cornering was progressive and well-controlled, with the initial roll angle building in a linear relationship to lateral acceleration that provided clear cues to the driver about the increasing cornering load, and the roll gradient remaining consistent throughout the corner without any sudden changes in body attitude that might undermine the driver's confidence in the chassis behavior",
-            "When evaluating the secondary ride on undulating rural roads at typical cruising speeds, the body motion over long-wave inputs was well-controlled with excellent wheel control that maintained consistent tire contact throughout the suspension travel, though there was a mild but perceptible pitching motion on particularly rhythmic sections of road that could become slightly unsettling during extended journeys",
-            "The electrically assisted power steering calibration demonstrated a notable absence of the synthetic, artificial feel that plagues many systems in this segment, with the assistance map clearly having been tuned by engineers who understand that steering feel is not merely about effort levels but about the quality and fidelity of the information transmitted from the tire contact patches to the driver's hands",
-            "Cabin isolation from wind noise at extra-urban speeds was exemplary, with only a subtle rustle from the door mirror area becoming audible above approximately one hundred forty kilometers per hour, and no perceptible whistles or air leaks from door seals or window frames even when traveling at velocities significantly in excess of typical highway cruising speeds",
-            "The damping characteristics during high-frequency, low-amplitude inputs such as those generated by coarse chip seal surfaces demonstrated excellent initial compliance that effectively absorbed the fine texture before it could be transmitted through to the occupants, while still maintaining sufficient body control to prevent the float sensation that overly soft compression damping can produce",
-            "When initiating turn-in aggressively with a rapid steering input designed to evaluate the transient response characteristics, the vehicle's front axle responded immediately without any perceptible delay or hesitation, generating lateral force that built quickly and progressively, while the rear axle followed the intended path faithfully without exhibiting any tendency toward excessive rotation or early slide",
-            "The overall integration of the various chassis subsystems was particularly impressive, with the steering, suspension, powertrain, and braking systems all operating in harmony to create a cohesive and satisfying driving experience that felt greater than the sum of its individual components, suggesting that significant development effort had been invested in fine-tuning the interactions between subsystems",
-            "During our evaluation of the vehicle's behavior when encountering mid-corner bumps under moderate lateral acceleration, the suspension demonstrated excellent bump absorption without any significant disruption to the cornering line, and the steering wheel remained largely undisturbed by the impact forces, indicating well-designed suspension geometry with minimal bump steer and favorable kingpin offset characteristics",
-            "The vehicle exhibited very good straight-line stability at all tested speeds, requiring only minimal steering corrections to maintain the intended lane position even when subjected to road camber changes, truck-induced bow waves on multi-lane highways, and gusty crosswinds on exposed sections of the evaluation route, contributing to a relaxed and fatigue-free long-distance driving experience",
-            "When evaluating the chassis balance during trail braking into a tightening-radius corner, the vehicle demonstrated a willingness to rotate slightly with the rear axle, helping to point the nose toward the apex without any sensation of instability, and the transition to power-on exit was seamless, with the rear axle settling into a stable attitude as torque was progressively applied",
-            "The shift quality of the dual-clutch transmission during low-speed urban driving, which is often the most challenging condition for this type of gearbox, was generally smooth and well-calibrated, with only occasional mild hesitation when transitioning from a rolling stop to acceleration, a characteristic that is common to most dual-clutch transmissions and was well within acceptable limits for the class",
-            "The vehicle's ability to absorb large, single-event impacts such as speed humps and deep potholes without generating harsh bottoming sensations or significant secondary body movements was commendable, with the suspension utilizing its full travel in a progressive and well-damped manner that prevented any abrupt force transmission to the occupants",
-            "When driving on a smooth, flowing road that allowed the chassis to settle into a consistent rhythm, the vehicle demonstrated a wonderfully balanced and engaging character that encouraged the driver to explore its capabilities, with the controls all operating in harmony and the feedback from each interface combining to create a rich and satisfying sensory experience",
-            "The brake pedal's initial response during light to moderate applications in normal driving conditions was well-calibrated, providing a reassuring firmness and immediate deceleration that inspired confidence, while the modulation during threshold braking allowed precise control of the vehicle's deceleration rate right up to the point of ABS intervention, which itself was smooth and relatively unobtrusive",
-            "Although the vehicle was fitted with run-flat tires that typically introduce additional ride harshness due to their reinforced sidewall construction, the suspension tuning had been carefully optimized to compensate, resulting in ride quality that, while not quite matching the best conventional-tire setups in the segment, was entirely acceptable given the practical benefits of continued mobility after a puncture",
-            "The vehicle's behavior during high-speed slalom testing revealed well-balanced transient response characteristics, with the chassis transitioning rapidly from one direction to the other without excessive body roll or yaw overshoot, and the steering providing accurate feedback about the available grip at each axle throughout the rapid directional changes",
-            "Throughout the entire evaluation, the vehicle exhibited a consistent and predictable dynamic character that did not change significantly with variations in road surface, ambient temperature, or driving style, demonstrating that the chassis engineering team had achieved a robust tuning that would deliver confidence-inspiring behavior across the full range of real-world operating conditions",
-            "The suspension's ability to maintain consistent tire contact over rapidly varying road surfaces was outstanding, with the dampers effectively controlling wheel movement over both compression and rebound strokes, ensuring that the tires remained in contact with the road surface even when traversing sections of pavement that would have caused many competitor vehicles to exhibit momentary losses of grip or directional stability",
-            "When driving enthusiastically on wet roads, the vehicle's handling balance remained fundamentally similar to its dry behavior, with the transition to understeer occurring at appropriately lower grip levels, and the stability control system providing a well-judged safety net that intervened progressively rather than abruptly, allowing the driver to explore the available grip with confidence",
-            "The steering weight during parking maneuvers was light enough to make low-speed operations effortless, yet the assistance faded smoothly as speed increased, providing appropriate weighting that contributed to the confident high-speed stability without any artificial step changes or inconsistencies in the assistance map that would require conscious adaptation by the driver",
-            "The vehicle's resistance to bump steer, which is the unwanted change in steering angle caused by suspension movement, was excellent, with the steering wheel remaining essentially undisturbed when traversing single-wheel bumps and road irregularities, indicating that the suspension geometry and steering linkage design had been carefully optimized to minimize this undesirable characteristic",
-            "When performing a maximum-effort standing start on a high-friction surface, the launch control system managed wheelspin effectively while still delivering strong acceleration, with the engine speed being held precisely at the optimal point for maximum tractive effort, and the shift from first to second gear was executed with minimal interruption to the forward momentum",
-            "The overall interior sound quality during relaxed cruising was dominated by a pleasant and muted mechanical harmony rather than any single intrusive noise source, with the tire, wind, and powertrain contributions being carefully balanced to create a premium acoustic environment that supported effortless conversation and high-quality audio system enjoyment",
-            "During aggressive driving on a closed handling circuit, the vehicle's brake-based torque vectoring system provided subtle but meaningful assistance in rotating the car toward the apex, reducing the understeer that would otherwise be present during power-on corner exit without the abrupt intervention or artificial feel that some torque vectoring systems can produce",
-            "The vehicle's ability to maintain a consistent and predictable contact patch load distribution during combined cornering and braking was commendable, with the chassis resisting the tendency to develop excessive understeer under these demanding conditions, a characteristic that reflects careful attention to suspension kinematics and the interaction between anti-dive geometry and lateral load transfer",
-            "When encountering mid-corner surface changes such as patches of different grip levels or transitions between asphalt types, the vehicle's response was measured and predictable, with the steering faithfully communicating the change in available grip and the chassis maintaining its line without any sudden or alarming changes in behavior that might catch an unwary driver by surprise",
-            "The gearshift paddles provided satisfying tactile feedback with a precise, metallic click action that communicated each gear change clearly to the driver, and the transmission's response to manual shift requests was satisfyingly quick, with the requested gear being engaged after only a brief delay that felt appropriate for a sporty but not track-focused application",
-            "When evaluating the vehicle's behavior on a long, constant-radius freeway on-ramp taken at progressively increasing speeds, the chassis initially exhibited mild understeer that transitioned to a neutral balance as speed and lateral acceleration increased, providing clear and unambiguous feedback about the approach to the limit without any sudden or disconcerting changes in the handling balance",
-            "The suspension's ability to absorb repeated impacts from closely spaced road irregularities, such as those found on worn concrete freeway sections with regular expansion joints, was good, with the dampers recovering fully between impacts and no evidence of packing down or reduced suspension travel as the frequency of the inputs increased, maintaining consistent ride quality throughout extended highway journeys",
-            "The steering torque feedback during corner exit with power applied was particularly noteworthy, with the self-aligning torque providing a natural and progressive unwinding action that communicated the reducing lateral force at the front axle as the steering angle was reduced, allowing the driver to precisely meter the steering release for a smooth and efficient corner exit",
-            "Throughout the evaluation route, the vehicle demonstrated excellent body control that successfully suppressed the pitching and heaving motions that can be induced by undulating road surfaces, with the suspension kinematics and damping working together to keep the body attitude consistent and the occupants comfortable even when traveling at elevated speeds over roads with significant vertical curvature",
-            "The brake system's ability to provide consistent, reliable stopping power in wet conditions was verified through repeated high-speed stops on a wetted surface, with the pad and disc combination demonstrating good water clearance characteristics and the ABS calibration effectively preventing wheel lockup while maintaining directional stability and achieving stopping distances appropriate for the vehicle's weight and tire specification",
-            "When evaluating the impact of different drive mode settings on the vehicle's dynamic character, the spread between the most comfort-oriented and most sport-oriented calibrations was meaningful and allowed the driver to tailor the vehicle's responses to their preferences and the driving conditions, with the sport setting providing noticeably sharper throttle response, heavier steering, and firmer damper settings without becoming excessively aggressive or unpleasant",
-            "The vehicle's composure during emergency braking while cornering, a particularly challenging scenario that combines high longitudinal and lateral tire forces, was exemplary, with the chassis maintaining its line faithfully and the stability control system intervening subtly to prevent any tendency toward excessive oversteer that might otherwise be induced by the rear axle load reduction during heavy deceleration",
-            "When driving on a smooth, high-grip surface that allowed the chassis to be explored right up to its dynamic limits, the vehicle demonstrated a beautifully balanced and engaging character with a slight rearward bias to the handling balance under power that allowed the driver to subtly adjust the cornering attitude with the accelerator pedal, providing an involving and rewarding experience for the enthusiastic driver",
-            "The overall refinement of the vehicle when considered holistically across all aspects of noise, vibration, and harshness was highly competitive within its class, with no single area standing out as significantly below expectations and several areas, particularly wind noise isolation and powertrain smoothness, exceeding the benchmarks established by the best vehicles in the segment",
-            "When evaluating the steering's on-center precision during extended highway driving, the system demonstrated excellent straight-line stability with a clearly defined center feel that did not require constant minor corrections, and the off-center response was linear and predictable, allowing precise lane positioning without the vagueness or nonlinearity that can make some vehicles feel imprecise and wandering at highway speeds",
-            "The vehicle's ability to maintain consistent damping performance during extended periods of enthusiastic driving was verified, with no evidence of damper fade or changes in body control characteristics even after prolonged exposure to the high-energy inputs generated by repeated aggressive cornering, braking, and acceleration cycles on demanding roads",
-            "During the low-speed ride evaluation over the deliberately challenging urban surfaces of our test route, which included cobblestones, raised ironworks, and uneven paving slabs, the suspension absorbed the majority of the surface texture effectively, though there was a distinct high-frequency tremor transmitted through the structure on the most severe surfaces that reminded the occupants of the vehicle's inherently sporting bias",
-            "The vehicle's yaw damping characteristics, which govern how quickly the chassis settles after a directional change, were well-calibrated to provide rapid stabilization without overshoot, resulting in a sensation of agility and responsiveness during quick transitions while still maintaining the composed and reassuring character that is essential for driver confidence during high-speed maneuvers",
-            "When ascending a steep gradient with a broken, uneven surface that challenged the traction control and suspension systems simultaneously, the vehicle maintained composed progress with minimal wheelspin and good body control, the electronic systems working harmoniously with the mechanical components to deliver forward motion without drama or excessive intervention",
-            "The tire and wheel package specified for this vehicle represented an excellent compromise between the competing demands of steering response, ride comfort, rolling resistance, and aesthetic appeal, with the chosen tire model providing good grip in both wet and dry conditions while generating acceptable levels of road noise and contributing positively to the vehicle's overall dynamic character",
-            "Throughout every phase of the evaluation, the consistency and predictability of the vehicle's responses to driver inputs stood out as a defining characteristic, with the chassis never surprising the driver with unexpected behavior and always responding in a manner that aligned with the expectations established during the initial familiarization period, a quality that is fundamental to building driver confidence and enabling the safe exploration of performance",
-            "The vehicle's regeneration and friction braking blend in the hybrid variant was particularly well-executed, with the transition from regenerative deceleration to friction braking being completely imperceptible in terms of pedal feel, and the overall brake response remaining linear and predictable regardless of the state of charge of the high-voltage battery or the proportion of braking effort being provided by each system",
-            "When pushing hard on a demanding road that required intense concentration and precise car control, the vehicle revealed a deeply satisfying depth of dynamic capability that rewarded the committed driver with a level of engagement and feedback often missing from modern vehicles, while still providing the comfort, refinement, and everyday usability expected of a premium vehicle in this segment",
-            "The evaluation concluded that this vehicle represents a well-rounded and carefully developed package that successfully balances the often conflicting requirements of ride comfort, handling precision, steering feel, and refinement, demonstrating that the engineering team clearly understood the needs and preferences of the target customer and executed the chassis tuning with skill and attention to detail",
-            "When driving at low speeds over uneven surfaces with significant steering angle applied, such as when maneuvering in a tight parking structure with broken concrete floors, the suspension and steering systems worked together harmoniously without generating any disconcerting kickback through the steering wheel or excessive body shudder that would betray a lack of structural rigidity or poorly resolved suspension bushing compliance characteristics",
-            "The vehicle demonstrated exceptionally well-judged traction control intervention during wet standing-start acceleration tests, allowing just enough wheel slip to maximize forward progress on low-friction surfaces without allowing the driven wheels to break into uncontrolled wheelspin that would have required the driver to modulate the accelerator pedal to regain forward momentum",
-            "Throughout the sustained high-speed evaluation on the demanding mountain passes of our test route, the brake system exhibited no signs of thermal degradation, with pedal travel, effort, and overall effectiveness remaining consistent and predictable, a testament to the effectiveness of the brake cooling package and the appropriate specification of friction materials for the vehicle's performance envelope and intended usage profile",
-            "The vehicle's ability to maintain consistent dynamic behavior as fuel load decreased from full to near-empty was commendable, with no perceptible shift in handling balance attributable to the changing weight distribution, indicating that the suspension geometry and spring rate selection were sufficiently robust to accommodate the range of operating masses encountered during normal use",
-            "When evaluating the steering's response to very small, high-frequency inputs around the straight-ahead position, the system demonstrated excellent resolution and minimal friction, transmitting useful information about the road surface texture without the nervousness or hyperactivity that can make some highly-strung vehicles feel darty and fatiguing during extended highway journeys",
-            "The vehicle exhibited excellent bump absorption characteristics when encountering unexpected mid-corner surface irregularities during committed driving, with the suspension effectively dissipating the impact energy without transmitting it to the chassis in a way that would alter the cornering line or unsettle the driver, a quality that contributes significantly to both real-world pace and driver confidence",
-            "The integration of the various electronic chassis control systems was seamlessly executed, with the stability control, traction control, torque vectoring, and anti-lock braking systems all operating harmoniously without any perceptible conflicts or inconsistencies in their intervention strategies, creating a cohesive safety net that supported rather than frustrated the driver's intentions",
-            "When performing repeated standing-start acceleration tests with the launch control system engaged, the consistency of the acceleration times across ten consecutive runs was noteworthy, with variation of less than two-tenths of a second, demonstrating that the powertrain and chassis electronic control systems were well-calibrated to deliver repeatable performance without excessive clutch or tire wear",
-            "The vehicle's ride quality over the standardized comfort evaluation route, which includes representative samples of urban, rural, and highway surfaces, was scored at the upper end of the competitive set, with particular praise directed at the suspension's ability to absorb large-amplitude, low-frequency inputs such as speed humps and road undulations while still providing the body control expected of a vehicle with sporting pretensions",
-            "The overall dynamic character of this vehicle can be summarized as engaging yet accessible, capable of rewarding the skilled driver with genuine feedback and adjustability at the limit while remaining stable, predictable, and unintimidating for less experienced drivers, striking a balance that few manufacturers manage to achieve and that represents an impressive engineering accomplishment",
-            "The regenerative braking calibration in the strongest energy recovery mode was initially quite aggressive and required a period of acclimatization to achieve smooth deceleration in urban traffic, though after familiarization, the ability to drive predominantly using only the accelerator pedal added a satisfying dimension to the driving experience and contributed meaningfully to overall energy efficiency",
-            "When traversing the cobblestone section of our evaluation route, which is designed to expose weaknesses in body structure rigidity and suspension refinement, the vehicle impressed with its solid, one-piece feeling and the absence of the secondary vibrations and trim resonances that often afflict vehicles in this segment when subjected to sustained high-frequency excitation from irregular road surfaces",
-            "The steering effort gradient as a function of lateral acceleration was carefully judged to provide meaningful feedback about the increasing cornering load without becoming unnecessarily heavy or introducing artificial resistance that would mask the genuine information being transmitted from the tire contact patches through the steering linkage and ultimately to the driver's fingertips",
-            "During highway cruising on rain-soaked surfaces with standing water in the wheel tracks, the vehicle tracked straight and true without any tendency toward tramlining or aquaplaning, the tire tread pattern and the chassis geometry working together to maintain consistent contact with the road surface and inspiring confidence in conditions that often reveal weaknesses in vehicle stability",
-            "The vehicle's dynamic behavior remained entirely consistent and predictable throughout the full duration of our extended evaluation, with no deterioration in damper performance, no change in steering feel as tires reached their optimal operating temperature window, and no degradation in brake performance even after multiple high-energy stops from elevated speeds on demanding downhill sections",
-            "When driving on a challenging road with frequent elevation changes that continuously altered the vehicle's vertical load distribution, the chassis maintained its composure without any tendency toward float over crests or excessive compression at the bottom of dips, allowing the driver to maintain a consistent rhythm and enjoy the flow of the road without being distracted by chassis behavior",
-            "The overall steering feel calibration represented one of the best examples of electrically assisted steering tuning we have encountered in recent evaluations, combining natural weighting across the speed range, genuine feedback from the road surface, and excellent precision around the straight-ahead position, qualities that are increasingly rare in an era of over-assisted, synthetically-weighted steering systems",
-            "The vehicle's suspension successfully navigated the difficult compromise between the body control required for confident high-speed driving and the compliance needed for acceptable low-speed ride comfort, achieving a balance that, while not quite class-leading in either individual attribute, delivered a well-rounded and satisfying dynamic character that will meet the expectations of the vast majority of buyers in this segment",
-            "In summary, the vehicle's dynamic performance represents a well-executed blend of the attributes that matter most to drivers who enjoy the act of driving while still demanding the comfort, refinement, and everyday usability that are essential for a vehicle intended to serve as primary transportation, and the chassis engineering team deserves significant credit for achieving this difficult balance"
-        ];
-
-        // 合并所有语料
+        // 合并所有语料（超长句子已在 sentences.js 中删除）
         defaultSentences = [...defaultSentences, ...businessEnglishSentences, ...vehicleEvalSentences];
 
         function loadSentencePool() {
@@ -845,34 +612,16 @@
             saveHistory(sentenceHistory);
             incrementToday();
             if (typeof calYear !== 'undefined') renderCalendar(calYear, calMonth);
-
-            // 完成计数 + 庆祝
-            const count = incrementCompletion();
-            if (count % 10 === 0) triggerCelebration(count);
         }
 
-        // ==================== 完成计数与庆祝 ====================
-        function loadCompletionCount() {
-            const v = localStorage.getItem(STORAGE_KEY_COMPLETION);
-            return v ? parseInt(v, 10) || 0 : 0;
-        }
-        function saveCompletionCount(c) { localStorage.setItem(STORAGE_KEY_COMPLETION, String(c)); }
-        let completionCount = loadCompletionCount();
-
-        function incrementCompletion() {
-            completionCount++;
-            saveCompletionCount(completionCount);
-            return completionCount;
-        }
-
-        function triggerCelebration(count) {
+        function triggerConfetti(count) {
             const canvas = document.getElementById('confettiCanvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             canvas.style.display = 'block';
 
-            const colors = ['#E53935','#FB8C00','#FDD835','#43A047','#1E88E5','#5C6BC0','#8E24AA','#FF4081','#00BCD4','#FF9800','#4CAF50','#FF5722'];
+            const colors = ['#8795A5','#C49B9B','#9CAF88','#B0A090','#A89BB5','#8FA88C','#9B97B5','#7A9A9A','#988BA8','#C49B9B','#8FA88C','#B0A090'];
             const particles = [];
             const total = 120;
 
@@ -1036,7 +785,7 @@
                 const hasDataClass = count > 0 ? ' has-data' : '';
                 const title = count > 0 ? ` title="${count} 句"` : '';
 
-                html += `<div class="cal-day ${levelClass}${todayClass}${hasDataClass}"${title}>${d}</div>`;
+                html += `<div class="cal-day ${levelClass}${todayClass}${hasDataClass}"${title}><span>${d}</span>${count > 0 ? `<span class="cal-count">${count}</span>` : ''}</div>`;
             }
 
             grid.innerHTML = html;
@@ -1069,19 +818,36 @@
         let audioChunks = [];
         let recordedBlob = null;
         let recordingUrl = null;
+        let isScoringMode = false;
         const audioPlayer = new Audio();
+
+        // ==================== 语音识别 ====================
+        let recognition = null;
+        let sttTranscript = '';
+
+        (function initSTT() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) return;
+            const rec = new SR();
+            rec.lang = 'en-US';
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+            recognition = rec;
+        })();
 
         const recordBtn = document.getElementById('recordBtn');
         const playRecordingBtn = document.getElementById('playRecordingBtn');
 
         function getSupportedMimeType() {
-            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+            const types = ['audio/mp4', 'audio/aac', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
             for (let type of types) { if (MediaRecorder.isTypeSupported(type)) return type; }
             return '';
         }
 
         async function startRecording() {
             audioChunks = [];
+            userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('❌ 当前浏览器不支持录音功能', 2500); return;
             }
@@ -1092,17 +858,84 @@
                 mediaRecorder = new MediaRecorder(stream, options);
                 mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
-                    recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/webm' });
+                    recordedBlob = new Blob(audioChunks, { type: mimeType || 'audio/mp4' });
                     if (recordingUrl) URL.revokeObjectURL(recordingUrl);
                     recordingUrl = URL.createObjectURL(recordedBlob);
                     playRecordingBtn.disabled = false;
                     stream.getTracks().forEach(track => track.stop());
-                    showToast('✅ 录音完成', 1500);
+                    if (currentIndex !== null) {
+                        if (sttTranscript.trim()) {
+                            if (isScoringMode) {
+                                scorePronunciation(sttTranscript.trim(), sentencePool[currentIndex]);
+                                isScoringMode = false;
+                            } else {
+                                userInputEl.value = sttTranscript.trim();
+                                autoResizeTextarea();
+                                showToast('✅ 识别完成，自动检查中…', 1500);
+                                setTimeout(() => checkAnswer(), 200);
+                            }
+                        } else {
+                            if (isScoringMode) {
+                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
+                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动评分';
+                                userInputEl.focus();
+                                const onInput = () => {
+                                    if (userInputEl.value.trim()) {
+                                        userInputEl.removeEventListener('input', onInput);
+                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                        scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
+                                        userInputEl.value = '';
+                                        isScoringMode = false;
+                                    }
+                                };
+                                userInputEl.addEventListener('input', onInput);
+                                setTimeout(() => {
+                                    userInputEl.removeEventListener('input', onInput);
+                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                    isScoringMode = false;
+                                }, 15000);
+                            } else {
+                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
+                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
+                                userInputEl.focus();
+                                const onInput = () => {
+                                    if (userInputEl.value.trim()) {
+                                        userInputEl.removeEventListener('input', onInput);
+                                        userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                        setTimeout(() => checkAnswer(), 500);
+                                    }
+                                };
+                                userInputEl.addEventListener('input', onInput);
+                                setTimeout(() => {
+                                    userInputEl.removeEventListener('input', onInput);
+                                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                                }, 15000);
+                            }
+                        }
+                    }
                 };
                 mediaRecorder.onerror = () => { showToast('❌ 录音出错', 2000); stopRecordingUI(); };
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
+                // 启动语音转写
+                sttTranscript = '';
+                if (recognition) {
+                    recognition.onresult = (event) => {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            if (event.results[i].isFinal) {
+                                sttTranscript += event.results[i][0].transcript + ' ';
+                            }
+                        }
+                    };
+                    recognition.onend = () => {
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            try { recognition.start(); } catch (_) {}
+                        }
+                    };
+                    recognition.onerror = () => {};
+                    try { recognition.start(); } catch (_) {}
+                }
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
                 console.error(err);
@@ -1112,12 +945,18 @@
 
         function stopRecordingUI() {
             if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
+            if (recognition) { try { recognition.stop(); } catch (_) {} }
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
         }
 
         function toggleRecording() {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') { startRecording(); }
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                isScoringMode = true;
+                const scoringEl = document.getElementById('scoringResult');
+                if (scoringEl) { scoringEl.style.display = 'none'; }
+                startRecording();
+            }
             else if (mediaRecorder.state === 'recording') { stopRecordingUI(); }
         }
 
@@ -1183,6 +1022,7 @@
 
         function detachUtterance() {
             if (currentUtterance) {
+                if (currentUtterance._retryTimer) clearTimeout(currentUtterance._retryTimer);
                 currentUtterance.onstart = null; currentUtterance.onend = null; currentUtterance.onerror = null;
                 currentUtterance = null;
             }
@@ -1271,6 +1111,19 @@
 
             currentUtterance = utterance;
             window.speechSynthesis.speak(utterance);
+
+            // Chrome 偶发 speak 被静默忽略：若 150ms 后仍未开始，重试一次
+            const retryTimer = setTimeout(() => {
+                if (isPlaying && currentUtterance === utterance && !window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    setTimeout(() => {
+                        if (isPlaying && currentUtterance === utterance) {
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    }, 30);
+                }
+            }, 150);
+            utterance._retryTimer = retryTimer;
         }
 
         function startPlayback(fromChar) {
@@ -1299,8 +1152,8 @@
             isPlaying = true;
             updatePlayPauseButton();
 
-            window.speechSynthesis.cancel();
-            speakNextSentence();
+            // 用微延迟规避 Chrome 的 cancel/speak 竞态
+            setTimeout(() => speakNextSentence(), 50);
         }
 
         function updateProgress() {
@@ -1316,7 +1169,13 @@
 
         function handlePlayPause() {
             if (currentIndex === null || !sentencePool.length) { showToast('没有句子', 2000); return; }
-            if (!isPlaying && !isPaused) { startPlayback(0); }
+            if (!isPlaying && !isPaused) {
+                // 若 speechSynthesis 处于残留 speaking/pending 状态，先清理
+                if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                    window.speechSynthesis.cancel();
+                }
+                startPlayback(0);
+            }
             else if (isPlaying) {
                 const elapsed = (Date.now() - startTime) / 1000;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
@@ -1340,7 +1199,6 @@
         }
 
         playPauseBtn.addEventListener('click', (e) => { e.preventDefault(); handlePlayPause(); });
-        playPauseBtn.addEventListener('touchend', (e) => { e.preventDefault(); handlePlayPause(); });
 
         progressBar.addEventListener('mousedown', () => { isDragging = true; });
         progressBar.addEventListener('touchstart', () => { isDragging = true; });
@@ -1377,6 +1235,7 @@
             if (currentIndex === idx) return;
             resetAll();
             currentIndex = idx;
+            isScoringMode = false;
             clearInputAndResult();
             resetTextareaHeight();
             totalChars = sentencePool[currentIndex].length;
@@ -1396,7 +1255,12 @@
             switchToSentence(ni);
         }
 
-        function clearInputAndResult() { userInputEl.value = ''; resultArea.innerHTML = ''; }
+        function clearInputAndResult() {
+            userInputEl.value = '';
+            resultArea.innerHTML = '';
+            const scoringEl = document.getElementById('scoringResult');
+            if (scoringEl) { scoringEl.style.display = 'none'; scoringEl.innerHTML = ''; }
+        }
 
         function normalizeWord(word) {
             const cleaned = word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').toLowerCase();
@@ -1405,39 +1269,130 @@
 
         function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
 
+        // LCS 比对：返回 [correctIdx, userIdx] 匹配对
+        function computeLCS(a, b) {
+            const m = a.length, n = b.length;
+            const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (a[i-1] === b[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+                    else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+            const pairs = [];
+            let i = m, j = n;
+            while (i > 0 && j > 0) {
+                if (a[i-1] === b[j-1]) { pairs.push([i-1, j-1]); i--; j--; }
+                else if (dp[i-1][j] >= dp[i][j-1]) { i--; }
+                else { j--; }
+            }
+            return pairs.reverse();
+        }
+
+        function scorePronunciation(transcript, original) {
+            const userWords = transcript.split(/\s+/);
+            const correctWords = original.split(/\s+/);
+            const normUser = userWords.map(normalizeWord);
+            const normCorrect = correctWords.map(normalizeWord);
+
+            const pairs = computeLCS(normCorrect, normUser);
+            const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const matchedUser = new Set(pairs.map(p => p[1]));
+
+            const correctCount = pairs.length;
+            const totalCount = correctWords.length;
+            const percentage = Math.round((correctCount / totalCount) * 100);
+
+            // 原文着色：绿=读对，红=未读出/读错
+            let originalHtml = '';
+            for (let i = 0; i < correctWords.length; i++) {
+                if (matchedCorrect.has(i)) {
+                    originalHtml += `<span class="correct">${escapeHtml(correctWords[i])}</span> `;
+                } else {
+                    originalHtml += `<span class="wrong">${escapeHtml(correctWords[i])}</span> `;
+                }
+            }
+
+            // 识别结果着色
+            let userHtml = '';
+            for (let j = 0; j < userWords.length; j++) {
+                if (matchedUser.has(j)) {
+                    userHtml += `<span class="correct">${escapeHtml(userWords[j])}</span> `;
+                } else {
+                    userHtml += `<span class="wrong">${escapeHtml(userWords[j])}</span> `;
+                }
+            }
+
+            let stars = '';
+            if (percentage >= 95) stars = '⭐⭐⭐⭐⭐';
+            else if (percentage >= 85) stars = '⭐⭐⭐⭐';
+            else if (percentage >= 70) stars = '⭐⭐⭐';
+            else if (percentage >= 50) stars = '⭐⭐';
+            else stars = '⭐';
+
+            const scoringEl = document.getElementById('scoringResult');
+            scoringEl.innerHTML =
+                `<div style="margin-bottom:6px;">
+                    🎯 <strong>${correctCount}/${totalCount} (${percentage}%)</strong> ${stars}
+                </div>
+                <div style="line-height:2;margin-bottom:4px;">
+                    <span style="font-weight:600;font-size:0.9em;">📖 原文：</span>${originalHtml.trim()}
+                </div>
+                <div style="line-height:2;font-size:0.85em;color:#7A7A7A;">
+                    <span style="font-weight:600;">🗣 识别：</span>${userHtml.trim() || '<span style="color:#bbb;">（空）</span>'}
+                </div>`;
+
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateHistory(original, transcript);
+            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+        }
+
         async function checkAnswer() {
             if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
             const correct = sentencePool[currentIndex].trim();
             if (!rawUser) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
+
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
-            let html = '';
-            let cIdx = 0, uIdx = 0;
-            while (cIdx < normCorrect.length && uIdx < normUser.length) {
-                const userClean = normUser[uIdx];
-                const correctClean = normCorrect[cIdx];
-                if (userClean === correctClean) {
-                    html += `<span class="correct">${escapeHtml(userWords[uIdx])}</span> `;
-                    cIdx++; uIdx++;
+
+            const pairs = computeLCS(normCorrect, normUser);
+            const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const matchedUser = new Set(pairs.map(p => p[1]));
+
+            // 用户输入行：绿=匹配, 红=多余/错误
+            let userHtml = '';
+            for (let j = 0; j < userWords.length; j++) {
+                if (matchedUser.has(j)) {
+                    userHtml += `<span class="correct">${escapeHtml(userWords[j])}</span> `;
                 } else {
-                    let foundFuture = false;
-                    for (let k = cIdx + 1; k < normCorrect.length; k++) {
-                        if (userClean === normCorrect[k]) { foundFuture = true; break; }
-                    }
-                    if (foundFuture) { cIdx++; }
-                    else { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
+                    userHtml += `<span class="wrong">${escapeHtml(userWords[j])}</span> `;
                 }
             }
-            while (uIdx < normUser.length) { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
-            const perfect = normUser.join(' ') === normCorrect.join(' ');
 
-            // 显示翻译结果
-            resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
-                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
-                `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}` +
+            // 参考答案行：绿=用户写对, 橙=缺失
+            let correctHtml = '';
+            for (let i = 0; i < correctWords.length; i++) {
+                if (matchedCorrect.has(i)) {
+                    correctHtml += `<span class="correct">${escapeHtml(correctWords[i])}</span> `;
+                } else {
+                    correctHtml += `<span class="missed">${escapeHtml(correctWords[i])}</span> `;
+                }
+            }
+
+            const correctCount = pairs.length;
+            const missedCount = correctWords.length - correctCount;
+            const extraCount = userWords.length - correctCount;
+            const perfect = missedCount === 0 && extraCount === 0;
+
+            resultArea.innerHTML =
+                `📝 <strong>你的输入：</strong><br>${userHtml.trim() || '<span class="result-empty">（空）</span>'}<br><br>` +
+                `✅ <strong>参考答案：</strong><br>${correctHtml.trim()}<br><br>` +
+                `📊 <strong>统计：</strong>✅ ${correctCount} 词正确 ｜ ⚠️ ${missedCount} 词缺失 ｜ ❌ ${extraCount} 词错误/多余` +
+                (perfect ? '<br>🎉 <strong>完全正确！</strong>' : '<br>💡 还有差距，仔细听原音再试试。') +
                 `<br><span id="translationLine" style="color:#888;">🌐 翻译中...</span>`;
 
             // 异步获取翻译
@@ -1448,25 +1403,12 @@
                 if (!zh) tlEl.style.display = 'none';
             }
             updateHistory(correct, rawUser);
-            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (perfect && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
             userInputEl.focus();
         }
 
         function checkAndShowAnswer() { checkAnswer(); }
-
-        function addNewSentence() {
-            const inp = document.getElementById('newSentenceInput');
-            const t = inp.value.trim();
-            if (!t) { showToast('请输入有效的英语句子', 2000); return; }
-            if (!sentencePool.includes(t)) { sentencePool.push(t); saveSentencePool(sentencePool); }
-            inp.value = '';
-            if (currentIndex === null && sentencePool.length === 1) {
-                currentIndex = 0; clearInputAndResult(); resetTextareaHeight();
-                totalChars = t.length; estimatedDuration = Math.max(1, totalChars / (Math.max(0.5, playbackSpeed) * 14));
-                totalTimeDisplay.textContent = formatTime(estimatedDuration); updatePlayPauseButton();
-            }
-            showToast('✅ 句子已添加！', 1800);
-        }
 
         function showHistory() {
             const history = loadHistory();
@@ -1503,12 +1445,12 @@
         userInputEl.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
         });
-        document.getElementById('newSentenceInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
-        });
 
         // 初始化
         window.onload = () => {
+            // 预热 SpeechSynthesis，解决 Chrome 静默失败
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (savedSpeed) {
                 playbackSpeed = parseFloat(savedSpeed);
