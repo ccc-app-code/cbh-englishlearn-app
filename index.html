@@ -125,6 +125,18 @@
         .missed { color: #8B6914; font-weight: bold; background: #E8DDD0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; text-decoration: line-through; }
         .result-empty { color: #bbb; text-align: center; display: block; }
 
+        /* ===== 词级着色 & 评分环 ===== */
+        .score-ring-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .score-ring-svg { flex-shrink: 0; }
+        .score-ring-svg .bg { fill: none; stroke: #EDEBE8; stroke-width: 4.5; }
+        .score-ring-svg .fg { fill: none; stroke: #9CAF88; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+        .score-ring-text { font-size: 1.1rem; font-weight: 800; color: #4A4A4A; }
+        .word-token { display: inline-block; padding: 1px 4px; border-radius: 3px; margin: 0 1px; transition: background 0.3s, color 0.3s; }
+        .w-exact { background: rgba(0,184,148,0.12); color: #008b6e; font-weight: 600; }
+        .w-partial { background: rgba(253,203,110,0.25); color: #b8860b; }
+        .w-missed { background: rgba(225,112,85,0.1); color: #d63031; text-decoration: line-through; text-decoration-color: rgba(225,112,85,0.3); }
+        .w-neutral { color: #4A4A4A; }
+
         /* ===== 跟读评分结果 ===== */
         .scoring-result {
             padding: 10px 14px; background: #fff; border-radius: var(--radius-sm);
@@ -924,6 +936,7 @@
                                     if (a && a.totalSec > 0.3) {
                                         const score = computeAudioScore(a, estimatedDuration);
                                         showAudioScore(a, score, estimatedDuration);
+                                        triggerDictationForWordScore();
                                     } else {
                                         const scoringEl = document.getElementById('scoringResult');
                                         scoringEl.innerHTML = '<span style="color:#999;">⚠️ 未检测到有效语音，请靠近麦克风重试</span>';
@@ -1142,11 +1155,12 @@
         function showAudioScore(a, score, ttsDur) {
             const stars = score.total >= 95 ? '⭐⭐⭐⭐⭐' : score.total >= 85 ? '⭐⭐⭐⭐' : score.total >= 70 ? '⭐⭐⭐' : score.total >= 50 ? '⭐⭐' : '⭐';
             const scoringEl = document.getElementById('scoringResult');
+            const original = sentencePool[currentIndex] || '';
             scoringEl.innerHTML =
-                `<div style="margin-bottom:6px;">
-                    🎤 <strong>流利度评分: ${score.total}%</strong> ${stars}
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.78em;color:#7A7A7A;line-height:1.6;">
+                buildScoreRing(score.total) +
+                `<div style="margin-bottom:4px;font-size:0.85em;color:#7A7A7A;">🎤 流利度 ${stars}</div>
+                <div style="line-height:2.2;margin-bottom:6px;font-size:0.9em;">${buildWordSpans(original, null)}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.74em;color:#7A7A7A;line-height:1.6;">
                     <span>🗣 语速: ${a.spSec.toFixed(1)}s${ttsDur > 0 ? ' / 参考'+ttsDur.toFixed(1)+'s' : ''} (${score.rateS}%)</span>
                     <span>⏸ 停顿: ${a.paC}次 (${score.pauseS}%)</span>
                     <span>📊 连贯: ${Math.round(a.spRatio*100)}% (${score.ratioS}%)</span>
@@ -1158,7 +1172,81 @@
             if (score.total >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
         }
 
-        // ==================== 听写逻辑 ====================
+        // ===== iOS 键盘语音 → 词级评分 =====
+        function triggerDictationForWordScore() {
+            const scoringEl = document.getElementById('scoringResult');
+            scoringEl.innerHTML +=
+                `<div id="dictationHint" style="margin-top:8px;padding-top:8px;border-top:1px dashed #E5E0DA;font-size:0.8em;color:#A0A0A0;text-align:center;">
+                    点击输入框 → 键盘🎤 → 朗读 → 获取词级评分
+                </div>`;
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            userInputEl.placeholder = '按键盘 🎤 朗读，获取词级评分…';
+            userInputEl.focus();
+            const onInput = () => {
+                if (userInputEl.value.trim()) {
+                    userInputEl.removeEventListener('input', onInput);
+                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                    appendWordScore(userInputEl.value.trim(), sentencePool[currentIndex]);
+                    userInputEl.value = '';
+                }
+            };
+            userInputEl.addEventListener('input', onInput);
+            setTimeout(() => {
+                userInputEl.removeEventListener('input', onInput);
+                userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
+                const hint = document.getElementById('dictationHint');
+                if (hint) hint.remove();
+            }, 25000);
+        }
+
+        function appendWordScore(transcript, original) {
+            const userWords = transcript.split(/\s+/);
+            const correctWords = original.split(/\s+/);
+            const normUser = userWords.map(normalizeWord);
+            const normCorrect = correctWords.map(normalizeWord);
+            const pairs = computeLCS(normCorrect, normUser);
+            const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const correctCount = pairs.length;
+            const totalCount = correctWords.length;
+            const percentage = Math.round((correctCount / totalCount) * 100);
+            const scoringEl = document.getElementById('scoringResult');
+            const hint = document.getElementById('dictationHint');
+            if (hint) hint.remove();
+            scoringEl.innerHTML +=
+                `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #E5E0DA;">
+                    ${buildScoreRing(percentage)}
+                    <div style="font-size:0.82em;color:#7A7A7A;">🎯 ${correctCount}/${totalCount} 词匹配</div>
+                    <div style="line-height:2.2;margin-top:4px;font-size:0.88em;">${buildWordSpans(original, matchedCorrect)}</div>
+                </div>`;
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateHistory(original, transcript);
+            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+        }
+
+        // ===== 评分展示组件 =====
+        function buildScoreRing(pct) {
+            const r = 26, circ = 2 * Math.PI * r, offset = circ * (1 - pct / 100);
+            const color = pct >= 85 ? '#9CAF88' : pct >= 60 ? '#D4A843' : '#C49B9B';
+            return `<div class="score-ring-wrap">
+                <svg class="score-ring-svg" viewBox="0 0 60 60" width="56" height="56">
+                    <circle class="bg" cx="30" cy="30" r="${r}"/>
+                    <circle class="fg" cx="30" cy="30" r="${r}" stroke="${color}"
+                        stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+                        transform="rotate(-90 30 30)"/>
+                </svg>
+                <span class="score-ring-text">${pct}%</span>
+            </div>`;
+        }
+
+        function buildWordSpans(text, matchedSet) {
+            const words = text.split(/\s+/);
+            let html = '';
+            for (let i = 0; i < words.length; i++) {
+                const cls = matchedSet ? (matchedSet.has(i) ? 'w-exact' : 'w-missed') : 'w-neutral';
+                html += `<span class="word-token ${cls}">${escapeHtml(words[i])}</span>`;
+            }
+            return html;
+        }
         const speedSlider = document.getElementById('speedSlider');
         const speedValueEl = document.getElementById('speedValue');
         const playPauseBtn = document.getElementById('playPauseBtn');
@@ -1494,17 +1582,6 @@
             const totalCount = correctWords.length;
             const percentage = Math.round((correctCount / totalCount) * 100);
 
-            // 原文着色：绿=读对，红=未读出/读错
-            let originalHtml = '';
-            for (let i = 0; i < correctWords.length; i++) {
-                if (matchedCorrect.has(i)) {
-                    originalHtml += `<span class="correct">${escapeHtml(correctWords[i])}</span> `;
-                } else {
-                    originalHtml += `<span class="wrong">${escapeHtml(correctWords[i])}</span> `;
-                }
-            }
-
-            // 识别结果着色
             let userHtml = '';
             for (let j = 0; j < userWords.length; j++) {
                 if (matchedUser.has(j)) {
@@ -1514,41 +1591,36 @@
                 }
             }
 
-            let stars = '';
-            if (percentage >= 95) stars = '⭐⭐⭐⭐⭐';
-            else if (percentage >= 85) stars = '⭐⭐⭐⭐';
-            else if (percentage >= 70) stars = '⭐⭐⭐';
-            else if (percentage >= 50) stars = '⭐⭐';
-            else stars = '⭐';
-
-            // 流利度指标（如果有音频分析数据）
             let fluencyHtml = '';
             if (audioA) {
                 const score = computeAudioScore(audioA, estimatedDuration);
                 const starsF = score.total >= 95 ? '⭐⭐⭐⭐⭐' : score.total >= 85 ? '⭐⭐⭐⭐' : score.total >= 70 ? '⭐⭐⭐' : score.total >= 50 ? '⭐⭐' : '⭐';
                 fluencyHtml =
-                    `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #E5E0DA;">
-                        <div style="margin-bottom:4px;">🎤 <strong>流利度: ${score.total}%</strong> ${starsF}</div>
-                        <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.78em;color:#7A7A7A;line-height:1.6;">
-                            <span>🗣 语速: ${audioA.spSec.toFixed(1)}s (${score.rateS}%)</span>
-                            <span>⏸ 停顿: ${audioA.paC}次 (${score.pauseS}%)</span>
-                            <span>📊 连贯: ${Math.round(audioA.spRatio*100)}% (${score.ratioS}%)</span>
-                            <span>🔊 音量: ${score.volS}%</span>
+                    `<div style="margin-top:6px;padding-top:6px;border-top:1px solid #E5E0DA;">
+                        <div style="font-size:0.82em;color:#7A7A7A;">🎤 流利度 ${starsF}</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:3px 12px;font-size:0.72em;color:#7A7A7A;line-height:1.6;">
+                            <span>🗣 ${audioA.spSec.toFixed(1)}s (${score.rateS}%)</span>
+                            <span>⏸ ${audioA.paC}次 (${score.pauseS}%)</span>
+                            <span>📊 ${Math.round(audioA.spRatio*100)}% (${score.ratioS}%)</span>
+                            <span>🔊 ${score.volS}%</span>
                         </div>
                     </div>`;
             }
 
             const scoringEl = document.getElementById('scoringResult');
             scoringEl.innerHTML =
-                `<div style="margin-bottom:6px;">
-                    🎯 <strong>${correctCount}/${totalCount} (${percentage}%)</strong> ${stars}
-                </div>
-                <div style="line-height:2;margin-bottom:4px;">
-                    <span style="font-weight:600;font-size:0.9em;">📖 原文：</span>${originalHtml.trim()}
-                </div>
-                <div style="line-height:2;font-size:0.85em;color:#7A7A7A;">
+                buildScoreRing(percentage) +
+                `<div style="font-size:0.82em;color:#7A7A7A;margin-bottom:6px;">🎯 ${correctCount}/${totalCount} 词匹配</div>
+                <div style="line-height:2.2;margin-bottom:6px;font-size:0.9em;">${buildWordSpans(original, matchedCorrect)}</div>
+                <div style="line-height:2;font-size:0.82em;color:#7A7A7A;margin-bottom:2px;">
                     <span style="font-weight:600;">🗣 识别：</span>${userHtml.trim() || '<span style="color:#bbb;">（空）</span>'}
                 </div>${fluencyHtml}`;
+
+            scoringEl.style.display = 'block';
+            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateHistory(original, transcript);
+            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+        }
 
             scoringEl.style.display = 'block';
             scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
