@@ -97,8 +97,6 @@
         .btn-pause { background: linear-gradient(135deg, #EF5350, #FFB74D); font-size: 1.05em; padding: 14px 22px; min-width: 100px; height: 52px; color: #fff; }
         .btn-check { background: linear-gradient(135deg, #43A047, #1E88E5); }
         .btn-next { background: linear-gradient(135deg, #1E88E5, #5C6BC0); }
-        .btn-add { background: linear-gradient(135deg, #8E24AA, #E53935); color: #fff; width: 100%; margin-top: 6px; }
-
         /* 录音按钮 */
         .record-row { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 8px; }
         .btn-record { background: linear-gradient(135deg, #FB8C00, #FDD835); color: #fff; flex: 1; padding: 14px 10px; font-size: 1em; }
@@ -136,18 +134,8 @@
         }
         .correct { color: #2E7D32; font-weight: bold; background: #C8E6C9; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
         .wrong { color: #c62828; text-decoration: underline; font-weight: bold; background: #ffebee; padding: 2px 7px; border-radius: 4px; margin: 0 2px; }
+        .missed { color: #E65100; font-weight: bold; background: #FFF3E0; padding: 2px 7px; border-radius: 4px; margin: 0 2px; text-decoration: line-through; }
         .result-empty { color: #bbb; text-align: center; display: block; }
-
-        .add-section {
-            background: #fff; border-radius: var(--radius-sm); padding: 16px;
-            box-shadow: var(--shadow); margin-top: 8px; border-left: 3px solid #8E24AA;
-        }
-        .add-section .list-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: #8E24AA; }
-        .add-section input[type="text"] {
-            width: 100%; padding: 12px 14px; font-size: 15px; border-radius: var(--radius-xs);
-            border: 2px solid #B2DFDB; background: #fff; margin-bottom: 4px;
-        }
-        .add-section input[type="text"]:focus { outline: none; border-color: #8E24AA; box-shadow: 0 0 0 3px rgba(142,36,170,0.10); }
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -311,13 +299,9 @@
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div class="stt-status" id="sttStatus" style="display:none; font-size:0.82em; color:#555; text-align:center; margin-bottom:6px; padding:8px 12px; background:#fff; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06); min-height:20px;"></div>
 
-    <div class="add-section">
-        <div class="list-title">➕ 添加新句子到句库</div>
-        <input type="text" id="newSentenceInput" placeholder="输入英语句子，按 Enter 添加">
-        <button type="button" class="btn-add" onclick="addNewSentence()">添加句子</button>
-    </div>
+    <div class="toast" id="toast"></div>
 
     <button type="button" class="btn-history" onclick="showHistory()">📜 历史记录</button>
 
@@ -379,16 +363,12 @@
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
         const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
         const STORAGE_KEY_CALENDAR = 'dailyStats_v1';
-        const STORAGE_KEY_COMPLETION = 'completionCount_v1';
 
         let defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
-            "Vehicle dynamics is often perceived as a quite intuitive subject. As a matter of fact, lots of people are able to drive a car. Nevertheless, without a rigorous mathematical formulation it is very difficult to understand the physical phenomena involved in the motion of a road vehicle",
             "The faster a car is going at the point it starts to spin, the faster it will be at all points during deceleration, as it always stops in the same place. Therefore ... before the spin. Hence, says Mosley, reduced grip equals increased safety, everything else being equal",
             "On the macro level RCVD deals with general principles of vehicle dynamics but on the micro level was specifically geared towards racing; it synthesizes fundamental theory and practical application",
-            "While the bicycle model provides a simplified framework for analyzing steady-state cornering behavior by collapsing four wheels into two axles, it fails to capture the nonlinear characteristics of tire force degradation, dynamic load transfer, and roll-induced camber changes that dominate vehicle response near the friction limit",
             "Although aerodynamic downforce increases normal load on the tires and thus enhances lateral and longitudinal grip at elevated speeds, its effectiveness is inherently constrained by tire load sensitivity, which causes friction coefficient to decline as vertical load rises",
-            "Because the distribution of roll stiffness between the front and rear axles directly determines the proportion of lateral load transfer carried by each end of the vehicle, it represents the most influential tuning parameter for adjusting understeer and oversteer characteristics in practical chassis setup",
             "Even though anti-roll bars do not alter the total amount of lateral load transfer acting on the vehicle during steady-state cornering, they redistribute this transfer across axles and thereby modify the relative lateral force capacity of the front and rear tire pairs",
             "Since tire lateral force does not reach its steady-state magnitude instantaneously but requires the contact patch to travel through a relaxation length, a first-order time lag exists between the application of slip angle and the generation of full cornering force",
             "Not only does the height of the vehicles center of mass influence the magnitude of load transfer during cornering, acceleration, and braking, but it also interacts with track width and roll-center height to define the fundamental limit of lateral acceleration capability",
@@ -588,108 +568,7 @@
             "Handling is really the sum of the driver and the vehicle. The driver provides the input and the vehicle responds with feedback. ... we are left to study the vehicle response, or the vehicle dynamics"
         ];
 
-/*
-            "When evaluating the on-center steering feel during highway cruising at speeds between one hundred and one hundred thirty kilometers per hour, particular attention should be paid to the level of steering effort required to maintain a straight path, the presence of any dead zone or friction that creates a sticky sensation around the center position, and the linearity of the torque buildup as the driver applies small steering corrections to compensate for road camber and crosswind disturbances",
-            "The steering response during rapid lane-change maneuvers exhibited a slight initial hesitation followed by a progressive and well-weighted buildup of lateral force, which inspired confidence and allowed the driver to accurately place the vehicle without the need for mid-corner corrections or steering angle adjustments once the intended path was established",
-            "Throughout the winding mountain road section of our evaluation route, the vehicle demonstrated remarkably neutral handling balance with a subtle tendency toward mild understeer at the limit, which provided a reassuring safety margin without compromising the engaging and responsive character that enthusiasts expect from a performance-oriented chassis",
-            "Ride comfort over coarse chip surfaces and expansion joints was generally well-controlled, with the suspension absorbing most high-frequency harshness before it reached the cabin, though some secondary ride motion was perceptible through the seat base on particularly broken sections of pavement at lower urban speeds",
-            "The brake pedal feel during moderate to heavy deceleration events was consistently firm and progressive, with excellent initial bite that inspired immediate confidence, and the transition from regenerative to friction braking was completely seamless and imperceptible to the driver under all tested conditions",
-            "Body control during abrupt throttle transitions and aggressive cornering maneuvers was exemplary for a vehicle in this weight class, with minimal pitch under hard acceleration, negligible dive during threshold braking, and well-contained roll angles that allowed the suspension to maintain optimal tire contact throughout the cornering phase",
-            "The secondary ride characteristics over low-frequency undulations and long-wave road inputs revealed a slight but noticeable float sensation at the rear axle when the vehicle was fully laden with five occupants and a full cargo compartment, suggesting that rear damper rebound tuning could benefit from slight additional firmness to improve body motion control in heavily loaded conditions",
-            "Steering feedback through the rim was richly communicative, transmitting a clear and unfiltered sense of the available grip level at the front contact patches, with the effort building naturally and progressively as cornering forces increased, allowing the driver to confidently explore the limits of adhesion without sudden or unexpected changes in steering weight",
-            "The powertrain calibration during part-throttle acceleration from low engine speeds demonstrated smooth and linear torque delivery with no perceptible turbocharger lag or driveline shunt, making the vehicle exceptionally easy to drive smoothly in dense urban traffic while still providing ample performance when the accelerator was pressed more assertively",
-            "When traversing sharp-edged imperfections such as potholes and transverse ridges at moderate urban speeds, the initial impact harshness transmitted through the suspension was somewhat more pronounced than expected for a vehicle positioned in the premium segment, though the disturbance was rapidly damped and did not generate any secondary oscillations or residual body movement",
-            "The vehicle's resistance to crosswind disturbances during high-speed cruising on exposed sections of the evaluation route was commendable, requiring only minimal steering corrections to maintain the intended lane position, and the stability control system intervened subtly and progressively without any abrupt or disconcerting interventions that might alarm less experienced drivers",
-            "Turn-in response when initiating corner entry was crisp and immediate, with the front axle reacting to steering inputs without perceptible delay, and the rear axle following faithfully without any sensation of lag or disconnection between the two ends of the vehicle, resulting in a cohesive and well-integrated cornering experience that felt natural and intuitive from the very first kilometer behind the wheel",
-            "The tire noise transmitted into the cabin over coarse asphalt surfaces at highway speeds was somewhat elevated relative to the class benchmark, generating a constant background roar that required slightly raised voices for conversation between front and rear seat occupants, though wind noise isolation around the A-pillars and door mirrors was outstanding and made a significant positive contribution to overall high-speed refinement",
-            "During our comprehensive evaluation of the suspension's ability to isolate the cabin from road surface irregularities, we noted that the primary ride over gentle undulations and long-wave inputs was exceptional, providing a genuinely luxurious level of comfort that rivals vehicles positioned a full segment above, with the body remaining flat and composed even over pronounced crests and dips encountered at extra-urban speeds",
-            "The steering system's self-centering behavior after corner exit was natural and progressive, with the wheel unwinding smoothly in the driver's hands without any sticky or notchy sensations that would require manual correction, and the return rate felt well-matched to the vehicle's yaw damping characteristics, creating a harmonious and polished dynamic signature",
-            "When pushed to the limit of adhesion on the dry handling circuit, the chassis transitioned from neutral balance to mild and progressive understeer in a manner that was entirely predictable and easily managed with small throttle adjustments, providing a wide and accessible window of performance that flattered drivers of varying skill levels without dulling the overall experience",
-            "The transmission calibration during spirited driving on challenging back roads was generally excellent, with well-timed downshifts under braking and intelligent gear-holding behavior through corners, though there were occasional instances of reluctance to downshift when requesting maximum acceleration from mid-range engine speeds after a period of steady-state cruising",
-            "Impact isolation from sharp-edged road irregularities such as bridge expansion joints, cat's eyes, and broken pavement edges was well-managed by the suspension system, with the initial high-frequency disturbance being effectively rounded off before reaching the steering wheel or seat structure, contributing to a refined and premium-quality driving experience that belied the vehicle's relatively affordable price point",
-            "The vehicle's high-speed stability during sustained Autobahn cruising at velocities approaching the electronically limited top speed was absolutely exemplary, with the chassis feeling planted and secure, the steering delivering appropriate on-center weighting that inspired confidence, and the aerodynamic package clearly generating meaningful downforce that kept the body settled and resistant to lift-induced float",
-            "During repeated heavy braking from high speeds on the evaluation loop, the pedal remained consistently firm and the stopping distance showed no significant degradation even after ten consecutive full-ABS stops, demonstrating that the brake cooling package and friction material specification were well-engineered for sustained thermal capacity under demanding real-world conditions",
-            "The overall refinement of the powertrain at idle and during low-speed urban maneuvering was exceptionally good for a direct-injection turbocharged engine in this displacement class, with minimal injector ticking noise, no perceptible vibration transmitted through the steering wheel or seat, and a well-suppressed engine note that remained discreetly in the background during relaxed driving",
-            "Steering accuracy and linearity during mid-corner adjustments on constant-radius sweepers was outstanding, with small changes in steering angle producing precisely proportional changes in the vehicle's cornering line without any deadband or nonlinearity that would require the driver to consciously compensate for inconsistencies in the steering system's response characteristics",
-            "The damping calibration achieved an excellent balance between body control and ride comfort across the majority of road surfaces encountered during our evaluation, though we noted that at lower speeds over broken urban pavement, the compression damping felt slightly aggressive, transmitting more road texture through the suspension than was strictly necessary for adequate body motion control",
-            "When executing an emergency lane-change maneuver at the maximum speed achievable without electronic stability control intervention, the vehicle responded with impressive agility and composure, completing the directional change rapidly and settling immediately into the new lane without any residual yaw oscillation or the need for corrective steering inputs from the driver",
-            "The level of steering assistance at parking speeds was generous without feeling over-boosted, making low-speed maneuvers effortless while still retaining sufficient feedback through the rim to allow the driver to accurately judge the proximity of curbs and obstacles, striking an excellent balance that many manufacturers struggle to achieve in electrically assisted steering systems",
-            "NVH refinement at wide-open throttle acceleration from low engine speeds revealed an appealing, characterful engine note that was clearly audible in the cabin without being intrusive or unrefined, with the sound quality having been carefully tuned to emphasize the more pleasant combustion frequencies while suppressing the harsher, less melodious components of the engine's acoustic signature",
-            "The vehicle's behavior during wet-weather handling evaluation on the artificially watered skidpad was progressive and reassuring, with the breakaway characteristics remaining fundamentally similar to the dry handling behavior albeit at appropriately reduced grip levels, and the stability control calibration intervening early enough to prevent excessive slip angles while still allowing enthusiastic drivers to explore a modest degree of yaw before electronic intervention",
-            "Despite riding on relatively large-diameter wheels fitted with low-profile tires that typically compromise ride quality, the suspension tuning managed to deliver an acceptable level of impact comfort over the majority of road surfaces, though the combination of short sidewalls and firm spring rates inevitably resulted in some sharpness over square-edged bumps that would likely be fatiguing during extended journeys on poorly maintained secondary roads",
-            "The steering weighting during constant-radius cornering at moderate lateral accelerations felt entirely natural and well-judged, with the effort building progressively from the straight-ahead position and reaching a plateau that communicated the available grip reserve without becoming unnecessarily heavy or fatiguing during extended periods of spirited driving on demanding roads",
-            "When driving through a series of linked medium-speed corners with rapidly changing direction, the vehicle's yaw response was immediate and accurately proportional to the steering input, with the chassis rotating eagerly around the driver without any sensation of excessive inertia or reluctance to change direction, yet never feeling nervous or overly sensitive to small steering corrections",
-            "The body structure's torsional rigidity was clearly evident when traversing diagonal bumps and uneven surfaces that typically excite chassis flex, with no creaks, rattles, or perceptible body quiver transmitted into the cabin, demonstrating excellent structural engineering that provides a solid foundation for precise suspension tuning and contributes significantly to the overall sense of quality and durability",
-            "Road noise isolation over concrete highway surfaces, which typically generate the most challenging acoustic environment for tire cavity resonance, was well-managed with only a moderate increase in cabin noise levels compared to smooth asphalt, suggesting that the sound insulation package and tire selection were carefully optimized for the specific acoustic challenges presented by different road surface types",
-            "The accelerator pedal mapping during the initial portion of its travel was well-calibrated for smooth urban driving, providing a linear and predictable relationship between pedal angle and engine torque output that made it easy to execute smooth standing starts and maintain consistent speeds in heavy traffic without the jerkiness that often afflicts vehicles with overly aggressive throttle calibrations",
-            "Following an extended period of spirited driving on technically demanding roads, the brake pedal feel remained entirely consistent with no perceptible increase in pedal travel or reduction in initial bite, demonstrating that the brake fluid specification and cooling design were fully capable of managing the thermal loads generated during enthusiastic road driving without approaching the limits of the system's thermal capacity",
-            "The vehicle's roll behavior during steady-state cornering was progressive and well-controlled, with the initial roll angle building in a linear relationship to lateral acceleration that provided clear cues to the driver about the increasing cornering load, and the roll gradient remaining consistent throughout the corner without any sudden changes in body attitude that might undermine the driver's confidence in the chassis behavior",
-            "When evaluating the secondary ride on undulating rural roads at typical cruising speeds, the body motion over long-wave inputs was well-controlled with excellent wheel control that maintained consistent tire contact throughout the suspension travel, though there was a mild but perceptible pitching motion on particularly rhythmic sections of road that could become slightly unsettling during extended journeys",
-            "The electrically assisted power steering calibration demonstrated a notable absence of the synthetic, artificial feel that plagues many systems in this segment, with the assistance map clearly having been tuned by engineers who understand that steering feel is not merely about effort levels but about the quality and fidelity of the information transmitted from the tire contact patches to the driver's hands",
-            "Cabin isolation from wind noise at extra-urban speeds was exemplary, with only a subtle rustle from the door mirror area becoming audible above approximately one hundred forty kilometers per hour, and no perceptible whistles or air leaks from door seals or window frames even when traveling at velocities significantly in excess of typical highway cruising speeds",
-            "The damping characteristics during high-frequency, low-amplitude inputs such as those generated by coarse chip seal surfaces demonstrated excellent initial compliance that effectively absorbed the fine texture before it could be transmitted through to the occupants, while still maintaining sufficient body control to prevent the float sensation that overly soft compression damping can produce",
-            "When initiating turn-in aggressively with a rapid steering input designed to evaluate the transient response characteristics, the vehicle's front axle responded immediately without any perceptible delay or hesitation, generating lateral force that built quickly and progressively, while the rear axle followed the intended path faithfully without exhibiting any tendency toward excessive rotation or early slide",
-            "The overall integration of the various chassis subsystems was particularly impressive, with the steering, suspension, powertrain, and braking systems all operating in harmony to create a cohesive and satisfying driving experience that felt greater than the sum of its individual components, suggesting that significant development effort had been invested in fine-tuning the interactions between subsystems",
-            "During our evaluation of the vehicle's behavior when encountering mid-corner bumps under moderate lateral acceleration, the suspension demonstrated excellent bump absorption without any significant disruption to the cornering line, and the steering wheel remained largely undisturbed by the impact forces, indicating well-designed suspension geometry with minimal bump steer and favorable kingpin offset characteristics",
-            "The vehicle exhibited very good straight-line stability at all tested speeds, requiring only minimal steering corrections to maintain the intended lane position even when subjected to road camber changes, truck-induced bow waves on multi-lane highways, and gusty crosswinds on exposed sections of the evaluation route, contributing to a relaxed and fatigue-free long-distance driving experience",
-            "When evaluating the chassis balance during trail braking into a tightening-radius corner, the vehicle demonstrated a willingness to rotate slightly with the rear axle, helping to point the nose toward the apex without any sensation of instability, and the transition to power-on exit was seamless, with the rear axle settling into a stable attitude as torque was progressively applied",
-            "The shift quality of the dual-clutch transmission during low-speed urban driving, which is often the most challenging condition for this type of gearbox, was generally smooth and well-calibrated, with only occasional mild hesitation when transitioning from a rolling stop to acceleration, a characteristic that is common to most dual-clutch transmissions and was well within acceptable limits for the class",
-            "The vehicle's ability to absorb large, single-event impacts such as speed humps and deep potholes without generating harsh bottoming sensations or significant secondary body movements was commendable, with the suspension utilizing its full travel in a progressive and well-damped manner that prevented any abrupt force transmission to the occupants",
-            "When driving on a smooth, flowing road that allowed the chassis to settle into a consistent rhythm, the vehicle demonstrated a wonderfully balanced and engaging character that encouraged the driver to explore its capabilities, with the controls all operating in harmony and the feedback from each interface combining to create a rich and satisfying sensory experience",
-            "The brake pedal's initial response during light to moderate applications in normal driving conditions was well-calibrated, providing a reassuring firmness and immediate deceleration that inspired confidence, while the modulation during threshold braking allowed precise control of the vehicle's deceleration rate right up to the point of ABS intervention, which itself was smooth and relatively unobtrusive",
-            "Although the vehicle was fitted with run-flat tires that typically introduce additional ride harshness due to their reinforced sidewall construction, the suspension tuning had been carefully optimized to compensate, resulting in ride quality that, while not quite matching the best conventional-tire setups in the segment, was entirely acceptable given the practical benefits of continued mobility after a puncture",
-            "The vehicle's behavior during high-speed slalom testing revealed well-balanced transient response characteristics, with the chassis transitioning rapidly from one direction to the other without excessive body roll or yaw overshoot, and the steering providing accurate feedback about the available grip at each axle throughout the rapid directional changes",
-            "Throughout the entire evaluation, the vehicle exhibited a consistent and predictable dynamic character that did not change significantly with variations in road surface, ambient temperature, or driving style, demonstrating that the chassis engineering team had achieved a robust tuning that would deliver confidence-inspiring behavior across the full range of real-world operating conditions",
-            "The suspension's ability to maintain consistent tire contact over rapidly varying road surfaces was outstanding, with the dampers effectively controlling wheel movement over both compression and rebound strokes, ensuring that the tires remained in contact with the road surface even when traversing sections of pavement that would have caused many competitor vehicles to exhibit momentary losses of grip or directional stability",
-            "When driving enthusiastically on wet roads, the vehicle's handling balance remained fundamentally similar to its dry behavior, with the transition to understeer occurring at appropriately lower grip levels, and the stability control system providing a well-judged safety net that intervened progressively rather than abruptly, allowing the driver to explore the available grip with confidence",
-            "The steering weight during parking maneuvers was light enough to make low-speed operations effortless, yet the assistance faded smoothly as speed increased, providing appropriate weighting that contributed to the confident high-speed stability without any artificial step changes or inconsistencies in the assistance map that would require conscious adaptation by the driver",
-            "The vehicle's resistance to bump steer, which is the unwanted change in steering angle caused by suspension movement, was excellent, with the steering wheel remaining essentially undisturbed when traversing single-wheel bumps and road irregularities, indicating that the suspension geometry and steering linkage design had been carefully optimized to minimize this undesirable characteristic",
-            "When performing a maximum-effort standing start on a high-friction surface, the launch control system managed wheelspin effectively while still delivering strong acceleration, with the engine speed being held precisely at the optimal point for maximum tractive effort, and the shift from first to second gear was executed with minimal interruption to the forward momentum",
-            "The overall interior sound quality during relaxed cruising was dominated by a pleasant and muted mechanical harmony rather than any single intrusive noise source, with the tire, wind, and powertrain contributions being carefully balanced to create a premium acoustic environment that supported effortless conversation and high-quality audio system enjoyment",
-            "During aggressive driving on a closed handling circuit, the vehicle's brake-based torque vectoring system provided subtle but meaningful assistance in rotating the car toward the apex, reducing the understeer that would otherwise be present during power-on corner exit without the abrupt intervention or artificial feel that some torque vectoring systems can produce",
-            "The vehicle's ability to maintain a consistent and predictable contact patch load distribution during combined cornering and braking was commendable, with the chassis resisting the tendency to develop excessive understeer under these demanding conditions, a characteristic that reflects careful attention to suspension kinematics and the interaction between anti-dive geometry and lateral load transfer",
-            "When encountering mid-corner surface changes such as patches of different grip levels or transitions between asphalt types, the vehicle's response was measured and predictable, with the steering faithfully communicating the change in available grip and the chassis maintaining its line without any sudden or alarming changes in behavior that might catch an unwary driver by surprise",
-            "The gearshift paddles provided satisfying tactile feedback with a precise, metallic click action that communicated each gear change clearly to the driver, and the transmission's response to manual shift requests was satisfyingly quick, with the requested gear being engaged after only a brief delay that felt appropriate for a sporty but not track-focused application",
-            "When evaluating the vehicle's behavior on a long, constant-radius freeway on-ramp taken at progressively increasing speeds, the chassis initially exhibited mild understeer that transitioned to a neutral balance as speed and lateral acceleration increased, providing clear and unambiguous feedback about the approach to the limit without any sudden or disconcerting changes in the handling balance",
-            "The suspension's ability to absorb repeated impacts from closely spaced road irregularities, such as those found on worn concrete freeway sections with regular expansion joints, was good, with the dampers recovering fully between impacts and no evidence of packing down or reduced suspension travel as the frequency of the inputs increased, maintaining consistent ride quality throughout extended highway journeys",
-            "The steering torque feedback during corner exit with power applied was particularly noteworthy, with the self-aligning torque providing a natural and progressive unwinding action that communicated the reducing lateral force at the front axle as the steering angle was reduced, allowing the driver to precisely meter the steering release for a smooth and efficient corner exit",
-            "Throughout the evaluation route, the vehicle demonstrated excellent body control that successfully suppressed the pitching and heaving motions that can be induced by undulating road surfaces, with the suspension kinematics and damping working together to keep the body attitude consistent and the occupants comfortable even when traveling at elevated speeds over roads with significant vertical curvature",
-            "The brake system's ability to provide consistent, reliable stopping power in wet conditions was verified through repeated high-speed stops on a wetted surface, with the pad and disc combination demonstrating good water clearance characteristics and the ABS calibration effectively preventing wheel lockup while maintaining directional stability and achieving stopping distances appropriate for the vehicle's weight and tire specification",
-            "When evaluating the impact of different drive mode settings on the vehicle's dynamic character, the spread between the most comfort-oriented and most sport-oriented calibrations was meaningful and allowed the driver to tailor the vehicle's responses to their preferences and the driving conditions, with the sport setting providing noticeably sharper throttle response, heavier steering, and firmer damper settings without becoming excessively aggressive or unpleasant",
-            "The vehicle's composure during emergency braking while cornering, a particularly challenging scenario that combines high longitudinal and lateral tire forces, was exemplary, with the chassis maintaining its line faithfully and the stability control system intervening subtly to prevent any tendency toward excessive oversteer that might otherwise be induced by the rear axle load reduction during heavy deceleration",
-            "When driving on a smooth, high-grip surface that allowed the chassis to be explored right up to its dynamic limits, the vehicle demonstrated a beautifully balanced and engaging character with a slight rearward bias to the handling balance under power that allowed the driver to subtly adjust the cornering attitude with the accelerator pedal, providing an involving and rewarding experience for the enthusiastic driver",
-            "The overall refinement of the vehicle when considered holistically across all aspects of noise, vibration, and harshness was highly competitive within its class, with no single area standing out as significantly below expectations and several areas, particularly wind noise isolation and powertrain smoothness, exceeding the benchmarks established by the best vehicles in the segment",
-            "When evaluating the steering's on-center precision during extended highway driving, the system demonstrated excellent straight-line stability with a clearly defined center feel that did not require constant minor corrections, and the off-center response was linear and predictable, allowing precise lane positioning without the vagueness or nonlinearity that can make some vehicles feel imprecise and wandering at highway speeds",
-            "The vehicle's ability to maintain consistent damping performance during extended periods of enthusiastic driving was verified, with no evidence of damper fade or changes in body control characteristics even after prolonged exposure to the high-energy inputs generated by repeated aggressive cornering, braking, and acceleration cycles on demanding roads",
-            "During the low-speed ride evaluation over the deliberately challenging urban surfaces of our test route, which included cobblestones, raised ironworks, and uneven paving slabs, the suspension absorbed the majority of the surface texture effectively, though there was a distinct high-frequency tremor transmitted through the structure on the most severe surfaces that reminded the occupants of the vehicle's inherently sporting bias",
-            "The vehicle's yaw damping characteristics, which govern how quickly the chassis settles after a directional change, were well-calibrated to provide rapid stabilization without overshoot, resulting in a sensation of agility and responsiveness during quick transitions while still maintaining the composed and reassuring character that is essential for driver confidence during high-speed maneuvers",
-            "When ascending a steep gradient with a broken, uneven surface that challenged the traction control and suspension systems simultaneously, the vehicle maintained composed progress with minimal wheelspin and good body control, the electronic systems working harmoniously with the mechanical components to deliver forward motion without drama or excessive intervention",
-            "The tire and wheel package specified for this vehicle represented an excellent compromise between the competing demands of steering response, ride comfort, rolling resistance, and aesthetic appeal, with the chosen tire model providing good grip in both wet and dry conditions while generating acceptable levels of road noise and contributing positively to the vehicle's overall dynamic character",
-            "Throughout every phase of the evaluation, the consistency and predictability of the vehicle's responses to driver inputs stood out as a defining characteristic, with the chassis never surprising the driver with unexpected behavior and always responding in a manner that aligned with the expectations established during the initial familiarization period, a quality that is fundamental to building driver confidence and enabling the safe exploration of performance",
-            "The vehicle's regeneration and friction braking blend in the hybrid variant was particularly well-executed, with the transition from regenerative deceleration to friction braking being completely imperceptible in terms of pedal feel, and the overall brake response remaining linear and predictable regardless of the state of charge of the high-voltage battery or the proportion of braking effort being provided by each system",
-            "When pushing hard on a demanding road that required intense concentration and precise car control, the vehicle revealed a deeply satisfying depth of dynamic capability that rewarded the committed driver with a level of engagement and feedback often missing from modern vehicles, while still providing the comfort, refinement, and everyday usability expected of a premium vehicle in this segment",
-            "The evaluation concluded that this vehicle represents a well-rounded and carefully developed package that successfully balances the often conflicting requirements of ride comfort, handling precision, steering feel, and refinement, demonstrating that the engineering team clearly understood the needs and preferences of the target customer and executed the chassis tuning with skill and attention to detail",
-            "When driving at low speeds over uneven surfaces with significant steering angle applied, such as when maneuvering in a tight parking structure with broken concrete floors, the suspension and steering systems worked together harmoniously without generating any disconcerting kickback through the steering wheel or excessive body shudder that would betray a lack of structural rigidity or poorly resolved suspension bushing compliance characteristics",
-            "The vehicle demonstrated exceptionally well-judged traction control intervention during wet standing-start acceleration tests, allowing just enough wheel slip to maximize forward progress on low-friction surfaces without allowing the driven wheels to break into uncontrolled wheelspin that would have required the driver to modulate the accelerator pedal to regain forward momentum",
-            "Throughout the sustained high-speed evaluation on the demanding mountain passes of our test route, the brake system exhibited no signs of thermal degradation, with pedal travel, effort, and overall effectiveness remaining consistent and predictable, a testament to the effectiveness of the brake cooling package and the appropriate specification of friction materials for the vehicle's performance envelope and intended usage profile",
-            "The vehicle's ability to maintain consistent dynamic behavior as fuel load decreased from full to near-empty was commendable, with no perceptible shift in handling balance attributable to the changing weight distribution, indicating that the suspension geometry and spring rate selection were sufficiently robust to accommodate the range of operating masses encountered during normal use",
-            "When evaluating the steering's response to very small, high-frequency inputs around the straight-ahead position, the system demonstrated excellent resolution and minimal friction, transmitting useful information about the road surface texture without the nervousness or hyperactivity that can make some highly-strung vehicles feel darty and fatiguing during extended highway journeys",
-            "The vehicle exhibited excellent bump absorption characteristics when encountering unexpected mid-corner surface irregularities during committed driving, with the suspension effectively dissipating the impact energy without transmitting it to the chassis in a way that would alter the cornering line or unsettle the driver, a quality that contributes significantly to both real-world pace and driver confidence",
-            "The integration of the various electronic chassis control systems was seamlessly executed, with the stability control, traction control, torque vectoring, and anti-lock braking systems all operating harmoniously without any perceptible conflicts or inconsistencies in their intervention strategies, creating a cohesive safety net that supported rather than frustrated the driver's intentions",
-            "When performing repeated standing-start acceleration tests with the launch control system engaged, the consistency of the acceleration times across ten consecutive runs was noteworthy, with variation of less than two-tenths of a second, demonstrating that the powertrain and chassis electronic control systems were well-calibrated to deliver repeatable performance without excessive clutch or tire wear",
-            "The vehicle's ride quality over the standardized comfort evaluation route, which includes representative samples of urban, rural, and highway surfaces, was scored at the upper end of the competitive set, with particular praise directed at the suspension's ability to absorb large-amplitude, low-frequency inputs such as speed humps and road undulations while still providing the body control expected of a vehicle with sporting pretensions",
-            "The overall dynamic character of this vehicle can be summarized as engaging yet accessible, capable of rewarding the skilled driver with genuine feedback and adjustability at the limit while remaining stable, predictable, and unintimidating for less experienced drivers, striking a balance that few manufacturers manage to achieve and that represents an impressive engineering accomplishment",
-            "The regenerative braking calibration in the strongest energy recovery mode was initially quite aggressive and required a period of acclimatization to achieve smooth deceleration in urban traffic, though after familiarization, the ability to drive predominantly using only the accelerator pedal added a satisfying dimension to the driving experience and contributed meaningfully to overall energy efficiency",
-            "When traversing the cobblestone section of our evaluation route, which is designed to expose weaknesses in body structure rigidity and suspension refinement, the vehicle impressed with its solid, one-piece feeling and the absence of the secondary vibrations and trim resonances that often afflict vehicles in this segment when subjected to sustained high-frequency excitation from irregular road surfaces",
-            "The steering effort gradient as a function of lateral acceleration was carefully judged to provide meaningful feedback about the increasing cornering load without becoming unnecessarily heavy or introducing artificial resistance that would mask the genuine information being transmitted from the tire contact patches through the steering linkage and ultimately to the driver's fingertips",
-            "During highway cruising on rain-soaked surfaces with standing water in the wheel tracks, the vehicle tracked straight and true without any tendency toward tramlining or aquaplaning, the tire tread pattern and the chassis geometry working together to maintain consistent contact with the road surface and inspiring confidence in conditions that often reveal weaknesses in vehicle stability",
-            "The vehicle's dynamic behavior remained entirely consistent and predictable throughout the full duration of our extended evaluation, with no deterioration in damper performance, no change in steering feel as tires reached their optimal operating temperature window, and no degradation in brake performance even after multiple high-energy stops from elevated speeds on demanding downhill sections",
-            "When driving on a challenging road with frequent elevation changes that continuously altered the vehicle's vertical load distribution, the chassis maintained its composure without any tendency toward float over crests or excessive compression at the bottom of dips, allowing the driver to maintain a consistent rhythm and enjoy the flow of the road without being distracted by chassis behavior",
-            "The overall steering feel calibration represented one of the best examples of electrically assisted steering tuning we have encountered in recent evaluations, combining natural weighting across the speed range, genuine feedback from the road surface, and excellent precision around the straight-ahead position, qualities that are increasingly rare in an era of over-assisted, synthetically-weighted steering systems",
-            "The vehicle's suspension successfully navigated the difficult compromise between the body control required for confident high-speed driving and the compliance needed for acceptable low-speed ride comfort, achieving a balance that, while not quite class-leading in either individual attribute, delivered a well-rounded and satisfying dynamic character that will meet the expectations of the vast majority of buyers in this segment",
-            "In summary, the vehicle's dynamic performance represents a well-executed blend of the attributes that matter most to drivers who enjoy the act of driving while still demanding the comfort, refinement, and everyday usability that are essential for a vehicle intended to serve as primary transportation, and the chassis engineering team deserves significant credit for achieving this difficult balance"
-        */
-        // 合并所有语料
+        // 合并所有语料（超长句子已在 sentences.js 中删除）
         defaultSentences = [...defaultSentences, ...businessEnglishSentences, ...vehicleEvalSentences];
 
         function loadSentencePool() {
@@ -740,27 +619,9 @@
             saveHistory(sentenceHistory);
             incrementToday();
             if (typeof calYear !== 'undefined') renderCalendar(calYear, calMonth);
-
-            // 完成计数 + 庆祝
-            const count = incrementCompletion();
-            if (count % 10 === 0) triggerCelebration(count);
         }
 
-        // ==================== 完成计数与庆祝 ====================
-        function loadCompletionCount() {
-            const v = localStorage.getItem(STORAGE_KEY_COMPLETION);
-            return v ? parseInt(v, 10) || 0 : 0;
-        }
-        function saveCompletionCount(c) { localStorage.setItem(STORAGE_KEY_COMPLETION, String(c)); }
-        let completionCount = loadCompletionCount();
-
-        function incrementCompletion() {
-            completionCount++;
-            saveCompletionCount(completionCount);
-            return completionCount;
-        }
-
-        function triggerCelebration(count) {
+        function triggerConfetti(count) {
             const canvas = document.getElementById('confettiCanvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
@@ -966,6 +827,24 @@
         let recordingUrl = null;
         const audioPlayer = new Audio();
 
+        // ==================== 语音识别（STT） ====================
+        let recognition = null;
+        let sttTranscript = '';
+        let sttSupported = false;
+
+        function initSTT() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { sttSupported = false; return null; }
+            const rec = new SR();
+            rec.lang = 'en-US';
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+            sttSupported = true;
+            return rec;
+        }
+        recognition = initSTT();
+
         const recordBtn = document.getElementById('recordBtn');
         const playRecordingBtn = document.getElementById('playRecordingBtn');
 
@@ -993,8 +872,12 @@
                     playRecordingBtn.disabled = false;
                     stream.getTracks().forEach(track => track.stop());
                     showToast('✅ 录音完成，自动检查中…', 1500);
-                    // 录音结束后自动检查默写结果
-                    if (userInputEl.value.trim() && currentIndex !== null) {
+                    // 录音结束后，用 STT 结果填充输入框并自动检查
+                    if (currentIndex !== null) {
+                        if (sttTranscript.trim()) {
+                            userInputEl.value = sttTranscript.trim();
+                            autoResizeTextarea();
+                        }
                         setTimeout(() => checkAnswer(), 300);
                     }
                 };
@@ -1002,6 +885,42 @@
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
+                // 启动语音识别
+                sttTranscript = '';
+                if (recognition) {
+                    try {
+                        recognition.onresult = (event) => {
+                            let interim = '';
+                            let final = '';
+                            for (let i = event.resultIndex; i < event.results.length; i++) {
+                                const r = event.results[i];
+                                if (r.isFinal) { final += r[0].transcript; }
+                                else { interim += r[0].transcript; }
+                            }
+                            if (final) { sttTranscript += final + ' '; }
+                            const display = sttTranscript + interim;
+                            const sttEl = document.getElementById('sttStatus');
+                            if (sttEl) {
+                                sttEl.style.display = 'block';
+                                sttEl.textContent = '🎙 ' + (display.trim() || '正在聆听…');
+                            }
+                        };
+                        recognition.onerror = (e) => {
+                            console.warn('STT error:', e.error);
+                            if (e.error === 'not-allowed') showToast('❌ 请授权麦克风权限', 2000);
+                        };
+                        recognition.onend = () => {
+                            if (mediaRecorder && mediaRecorder.state === 'recording' && recognition) {
+                                try { recognition.start(); } catch (_) {}
+                            }
+                        };
+                        recognition.start();
+                    } catch (e) {
+                        console.warn('STT start failed:', e);
+                    }
+                } else {
+                    showToast('⚠️ 当前浏览器不支持语音识别，录音仅保存不回检', 2500);
+                }
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
                 console.error(err);
@@ -1011,8 +930,15 @@
 
         function stopRecordingUI() {
             if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
+            // 停止语音识别
+            if (recognition) {
+                try { recognition.stop(); } catch (_) {}
+            }
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
+            // 隐藏转写状态
+            const sttEl = document.getElementById('sttStatus');
+            if (sttEl) sttEl.style.display = 'none';
         }
 
         function toggleRecording() {
@@ -1082,6 +1008,7 @@
 
         function detachUtterance() {
             if (currentUtterance) {
+                if (currentUtterance._retryTimer) clearTimeout(currentUtterance._retryTimer);
                 currentUtterance.onstart = null; currentUtterance.onend = null; currentUtterance.onerror = null;
                 currentUtterance = null;
             }
@@ -1170,6 +1097,19 @@
 
             currentUtterance = utterance;
             window.speechSynthesis.speak(utterance);
+
+            // Chrome 偶发 speak 被静默忽略：若 150ms 后仍未开始，重试一次
+            const retryTimer = setTimeout(() => {
+                if (isPlaying && currentUtterance === utterance && !window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    setTimeout(() => {
+                        if (isPlaying && currentUtterance === utterance) {
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    }, 30);
+                }
+            }, 150);
+            utterance._retryTimer = retryTimer;
         }
 
         function startPlayback(fromChar) {
@@ -1198,8 +1138,8 @@
             isPlaying = true;
             updatePlayPauseButton();
 
-            window.speechSynthesis.cancel();
-            speakNextSentence();
+            // 用微延迟规避 Chrome 的 cancel/speak 竞态
+            setTimeout(() => speakNextSentence(), 50);
         }
 
         function updateProgress() {
@@ -1215,7 +1155,13 @@
 
         function handlePlayPause() {
             if (currentIndex === null || !sentencePool.length) { showToast('没有句子', 2000); return; }
-            if (!isPlaying && !isPaused) { startPlayback(0); }
+            if (!isPlaying && !isPaused) {
+                // 若 speechSynthesis 处于残留 speaking/pending 状态，先清理
+                if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                    window.speechSynthesis.cancel();
+                }
+                startPlayback(0);
+            }
             else if (isPlaying) {
                 const elapsed = (Date.now() - startTime) / 1000;
                 const rate = Math.max(0.5, playbackSpeed) * 14;
@@ -1239,7 +1185,6 @@
         }
 
         playPauseBtn.addEventListener('click', (e) => { e.preventDefault(); handlePlayPause(); });
-        playPauseBtn.addEventListener('touchend', (e) => { e.preventDefault(); handlePlayPause(); });
 
         progressBar.addEventListener('mousedown', () => { isDragging = true; });
         progressBar.addEventListener('touchstart', () => { isDragging = true; });
@@ -1304,39 +1249,71 @@
 
         function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
 
+        // LCS 比对：返回 [correctIdx, userIdx] 匹配对
+        function computeLCS(a, b) {
+            const m = a.length, n = b.length;
+            const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (a[i-1] === b[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+                    else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                }
+            }
+            const pairs = [];
+            let i = m, j = n;
+            while (i > 0 && j > 0) {
+                if (a[i-1] === b[j-1]) { pairs.push([i-1, j-1]); i--; j--; }
+                else if (dp[i-1][j] >= dp[i][j-1]) { i--; }
+                else { j--; }
+            }
+            return pairs.reverse();
+        }
+
         async function checkAnswer() {
             if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
             const correct = sentencePool[currentIndex].trim();
             if (!rawUser) { resultArea.innerHTML = '<span class="result-empty">⚠️ 请先输入答案。</span>'; return; }
+
             const userWords = rawUser.split(/\s+/);
             const correctWords = correct.split(/\s+/);
             const normUser = userWords.map(normalizeWord);
             const normCorrect = correctWords.map(normalizeWord);
-            let html = '';
-            let cIdx = 0, uIdx = 0;
-            while (cIdx < normCorrect.length && uIdx < normUser.length) {
-                const userClean = normUser[uIdx];
-                const correctClean = normCorrect[cIdx];
-                if (userClean === correctClean) {
-                    html += `<span class="correct">${escapeHtml(userWords[uIdx])}</span> `;
-                    cIdx++; uIdx++;
+
+            const pairs = computeLCS(normCorrect, normUser);
+            const matchedCorrect = new Set(pairs.map(p => p[0]));
+            const matchedUser = new Set(pairs.map(p => p[1]));
+
+            // 用户输入行：绿=匹配, 红=多余/错误
+            let userHtml = '';
+            for (let j = 0; j < userWords.length; j++) {
+                if (matchedUser.has(j)) {
+                    userHtml += `<span class="correct">${escapeHtml(userWords[j])}</span> `;
                 } else {
-                    let foundFuture = false;
-                    for (let k = cIdx + 1; k < normCorrect.length; k++) {
-                        if (userClean === normCorrect[k]) { foundFuture = true; break; }
-                    }
-                    if (foundFuture) { cIdx++; }
-                    else { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
+                    userHtml += `<span class="wrong">${escapeHtml(userWords[j])}</span> `;
                 }
             }
-            while (uIdx < normUser.length) { html += `<span class="wrong">${escapeHtml(userWords[uIdx])}</span> `; uIdx++; }
-            const perfect = normUser.join(' ') === normCorrect.join(' ');
 
-            // 显示翻译结果
-            resultArea.innerHTML = `📝 <strong>你的答案：</strong><br>${html.trim()}<br><br>` +
-                (perfect ? '🎉 <strong>完全正确！</strong>' : '💡 还有差距，仔细听原音再试试。') +
-                `<br>✅ <strong>正确答案：</strong>${escapeHtml(correct)}` +
+            // 参考答案行：绿=用户写对, 橙=缺失
+            let correctHtml = '';
+            for (let i = 0; i < correctWords.length; i++) {
+                if (matchedCorrect.has(i)) {
+                    correctHtml += `<span class="correct">${escapeHtml(correctWords[i])}</span> `;
+                } else {
+                    correctHtml += `<span class="missed">${escapeHtml(correctWords[i])}</span> `;
+                }
+            }
+
+            const correctCount = pairs.length;
+            const missedCount = correctWords.length - correctCount;
+            const extraCount = userWords.length - correctCount;
+            const perfect = missedCount === 0 && extraCount === 0;
+
+            resultArea.innerHTML =
+                `📝 <strong>你的输入：</strong><br>${userHtml.trim() || '<span class="result-empty">（空）</span>'}<br><br>` +
+                `✅ <strong>参考答案：</strong><br>${correctHtml.trim()}<br><br>` +
+                `📊 <strong>统计：</strong>✅ ${correctCount} 词正确 ｜ ⚠️ ${missedCount} 词缺失 ｜ ❌ ${extraCount} 词错误/多余` +
+                (perfect ? '<br>🎉 <strong>完全正确！</strong>' : '<br>💡 还有差距，仔细听原音再试试。') +
                 `<br><span id="translationLine" style="color:#888;">🌐 翻译中...</span>`;
 
             // 异步获取翻译
@@ -1347,25 +1324,12 @@
                 if (!zh) tlEl.style.display = 'none';
             }
             updateHistory(correct, rawUser);
-            userInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (perfect && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
             userInputEl.focus();
         }
 
         function checkAndShowAnswer() { checkAnswer(); }
-
-        function addNewSentence() {
-            const inp = document.getElementById('newSentenceInput');
-            const t = inp.value.trim();
-            if (!t) { showToast('请输入有效的英语句子', 2000); return; }
-            if (!sentencePool.includes(t)) { sentencePool.push(t); saveSentencePool(sentencePool); }
-            inp.value = '';
-            if (currentIndex === null && sentencePool.length === 1) {
-                currentIndex = 0; clearInputAndResult(); resetTextareaHeight();
-                totalChars = t.length; estimatedDuration = Math.max(1, totalChars / (Math.max(0.5, playbackSpeed) * 14));
-                totalTimeDisplay.textContent = formatTime(estimatedDuration); updatePlayPauseButton();
-            }
-            showToast('✅ 句子已添加！', 1800);
-        }
 
         function showHistory() {
             const history = loadHistory();
@@ -1402,12 +1366,12 @@
         userInputEl.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); checkAnswer(); }
         });
-        document.getElementById('newSentenceInput').addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); addNewSentence(); }
-        });
 
         // 初始化
         window.onload = () => {
+            // 预热 SpeechSynthesis，解决 Chrome 静默失败
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
             const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (savedSpeed) {
                 playbackSpeed = parseFloat(savedSpeed);
