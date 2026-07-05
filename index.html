@@ -132,28 +132,12 @@
             margin: 8px 0; border-left: 3px solid #C49B9B;
         }
 
-        /* ===== STT 设置面板 ===== */
-        .settings-toggle {
-            display: block; margin: 0 auto 8px; background: none; border: 1px solid #D5D0CB;
-            color: #A0A0A0; padding: 3px 12px; font-size: 0.75em; cursor: pointer;
-            border-radius: 12px; font-weight: 500;
+        /* ===== 录音波形 ===== */
+        .wave-canvas {
+            display: none; width: 100%; height: 56px; margin: 4px 0 8px;
+            border-radius: var(--radius-xs); background: #fff;
+            box-shadow: var(--shadow);
         }
-        .settings-panel {
-            display: none; background: #fff; border-radius: var(--radius-sm);
-            padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow);
-            font-size: 0.82em;
-        }
-        .settings-panel.active { display: block; }
-        .settings-panel label { display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
-        .settings-panel input[type="text"], .settings-panel input[type="password"] {
-            width: 100%; padding: 7px 10px; margin-bottom: 8px; font-size: 0.9em;
-            border: 1px solid #D5D0CB; border-radius: 6px; background: #F8F7F5; box-sizing: border-box;
-        }
-        .settings-panel .btn-save {
-            background: #8795A5; color: #fff; padding: 7px 16px; font-size: 0.85em;
-            border-radius: 6px; border: none; cursor: pointer; font-weight: 600;
-        }
-        .settings-panel .btn-save:active { opacity: 0.8; }
 
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -284,17 +268,6 @@
     <div class="page active" id="page-dictation">
     <h2 class="page-title">🎧 小毛快练</h2>
     <p class="subtitle"></p>
-    <button class="settings-toggle" id="settingsToggle" onclick="toggleSettings()">⚙️ STT 设置</button>
-    <div class="settings-panel" id="settingsPanel">
-        <label>🔑 API Key</label>
-        <input type="password" id="sttApiKey" placeholder="sk-...（OpenAI / 兼容接口）">
-        <label style="margin-top:4px;">📡 接口地址（可选）</label>
-        <input type="text" id="sttApiUrl" placeholder="默认 OpenAI Whisper，可填兼容地址">
-        <div style="display:flex;align-items:center;gap:10px;">
-            <button class="btn-save" onclick="saveSettings()">保存</button>
-            <span id="settingsMsg" style="font-size:0.85em;color:#9CAF88;"></span>
-        </div>
-    </div>
 
     <div class="speed-card">
         <label>🐢 语速</label>
@@ -325,6 +298,7 @@
         <button type="button" class="btn-play-recording" id="playRecordingBtn" onclick="playRecording()" disabled>🔊 播放录音</button>
     </div>
 
+    <canvas class="wave-canvas" id="waveCanvas" width="600" height="56"></canvas>
 
     <div class="scoring-result" id="scoringResult" style="display:none;"></div>
 
@@ -390,7 +364,6 @@
         const STORAGE_KEY_HISTORY = 'sentenceHistory_v3';
         const STORAGE_KEY_TRANSLATE = 'translateCache_v1';
         const STORAGE_KEY_CALENDAR = 'dailyStats_v1';
-        const STORAGE_KEY_STT = 'sttSettings_v1';
 
         let defaultSentences = [
             "The main aim in motor vehicle racing is to achieve an overall vehicle configuration, which abides by the rules of a given class, which can cover a given race track in a minimal time, when piloted by a driver utilizing techniques within their capabilities",
@@ -855,7 +828,12 @@
         let recordingUrl = null;
         let isScoringMode = false;
         const audioPlayer = new Audio();
-        let sttSettings = { apiKey: '', apiUrl: '' };
+
+        // ==================== Web Audio 分析 ====================
+        let audioCtx = null;
+        let analyserNode = null;
+        let pcmChunks = [];
+        let waveAnimId = null;
 
         // ==================== 语音识别 ====================
         let recognition = null;
@@ -934,21 +912,23 @@
                             }
                         } else {
                             if (isScoringMode) {
-                                // 优先尝试云端 STT
-                                if (sttSettings.apiKey && recordedBlob && recordedBlob.size > 0) {
-                                    showToast('🔄 云端转写中…', 3000);
-                                    const blob = recordedBlob;
-                                    (async () => {
-                                        try {
-                                            const t = await transcribeWithAPI(blob);
-                                            if (t) { scorePronunciation(t, sentencePool[currentIndex]); isScoringMode = false; return; }
-                                        } catch (e) { console.error('STT API:', e); }
-                                        showToast('⚠️ 云端转写失败，使用键盘语音', 3000);
-                                        showKeyboardFallback();
-                                    })();
+                                // 本地音频分析评分
+                                if (pcmChunks.length > 0) {
+                                    const a = analyzeAudio(pcmChunks, audioCtx ? audioCtx.sampleRate : 44100);
+                                    if (a && a.totalSec > 0.3) {
+                                        const score = computeAudioScore(a, estimatedDuration);
+                                        showAudioScore(a, score, estimatedDuration);
+                                    } else {
+                                        const scoringEl = document.getElementById('scoringResult');
+                                        scoringEl.innerHTML = '<span style="color:#999;">⚠️ 未检测到有效语音，请靠近麦克风重试</span>';
+                                        scoringEl.style.display = 'block';
+                                    }
                                 } else {
-                                    showKeyboardFallback();
+                                    const scoringEl = document.getElementById('scoringResult');
+                                    scoringEl.innerHTML = '<span style="color:#999;">⚠️ 录音数据为空，请重试</span>';
+                                    scoringEl.style.display = 'block';
                                 }
+                                isScoringMode = false;
                             } else {
                                 showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
                                 userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
@@ -973,6 +953,26 @@
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
+
+                // 启动 Web Audio 分析管线
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioCtx.createMediaStreamSource(stream);
+                    analyserNode = audioCtx.createAnalyser();
+                    analyserNode.fftSize = 2048;
+                    source.connect(analyserNode);
+                    // PCM 采集（ScriptProcessor）
+                    const proc = audioCtx.createScriptProcessor(4096, 1, 1);
+                    pcmChunks = [];
+                    proc.onaudioprocess = (e) => {
+                        pcmChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+                    };
+                    source.connect(proc);
+                    proc.connect(audioCtx.destination);
+                    document.getElementById('waveCanvas').style.display = 'block';
+                    drawWaveform();
+                } catch (e) { console.warn('AudioContext 启动失败:', e); }
+
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
                 console.error(err);
@@ -984,6 +984,10 @@
         function stopRecordingUI() {
             if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
             if (recognition) { try { recognition.stop(); } catch (_) {} }
+            // 停止波形动画 + 关闭 AudioContext
+            if (waveAnimId) { cancelAnimationFrame(waveAnimId); waveAnimId = null; }
+            if (audioCtx && audioCtx.state !== 'closed') { audioCtx.close(); audioCtx = null; analyserNode = null; }
+            document.getElementById('waveCanvas').style.display = 'none';
             recordBtn.textContent = '🎤 录音';
             recordBtn.classList.remove('recording');
         }
@@ -1005,70 +1009,147 @@
             audioPlayer.play().catch(e => { console.error(e); showToast('❌ 播放失败', 2500); });
         }
 
-        // ==================== 云端 STT ====================
-        function loadSttSettings() {
-            try {
-                const s = localStorage.getItem(STORAGE_KEY_STT);
-                if (s) sttSettings = JSON.parse(s);
-            } catch(e) {}
-            document.getElementById('sttApiKey').value = sttSettings.apiKey || '';
-            document.getElementById('sttApiUrl').value = sttSettings.apiUrl || '';
-        }
-        function saveSettings() {
-            sttSettings.apiKey = document.getElementById('sttApiKey').value.trim();
-            sttSettings.apiUrl = document.getElementById('sttApiUrl').value.trim();
-            localStorage.setItem(STORAGE_KEY_STT, JSON.stringify(sttSettings));
-            document.getElementById('settingsMsg').textContent = '✅ 已保存';
-            setTimeout(() => { document.getElementById('settingsMsg').textContent = ''; }, 2000);
-        }
-        function toggleSettings() {
-            document.getElementById('settingsPanel').classList.toggle('active');
-        }
-        async function transcribeWithAPI(audioBlob) {
-            const apiUrl = sttSettings.apiUrl || 'https://api.openai.com/v1/audio/transcriptions';
-            const ext = (audioBlob.type || '').includes('webm') ? 'webm' : 'm4a';
-            const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.' + ext);
-            formData.append('model', 'whisper-1');
-            formData.append('language', 'en');
-            const resp = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + sttSettings.apiKey },
-                body: formData
-            });
-            if (!resp.ok) {
-                const errText = await resp.text();
-                throw new Error('API ' + resp.status + ': ' + errText.slice(0, 200));
+        // ==================== 实时波形绘制 ====================
+        function drawWaveform() {
+            if (!analyserNode) return;
+            const canvas = document.getElementById('waveCanvas');
+            const ctx = canvas.getContext('2d');
+            const bufLen = analyserNode.fftSize;
+            const dataArr = new Uint8Array(bufLen);
+
+            function draw() {
+                if (!analyserNode) return;
+                waveAnimId = requestAnimationFrame(draw);
+                const w = canvas.width = canvas.offsetWidth;
+                const h = canvas.height;
+                analyserNode.getByteTimeDomainData(dataArr);
+
+                // 背景
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, w, h);
+
+                // 波形曲线
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#8795A5';
+                ctx.beginPath();
+                const sliceW = w / bufLen;
+                for (let i = 0; i < bufLen; i++) {
+                    const v = dataArr[i] / 128.0;
+                    const y = (v * h) / 2;
+                    if (i === 0) ctx.moveTo(0, y);
+                    else ctx.lineTo(i * sliceW, y);
+                }
+                ctx.stroke();
+
+                // RMS 音量指示条（右侧）
+                let sumSq = 0;
+                for (let i = 0; i < bufLen; i++) { const n = (dataArr[i] - 128) / 128; sumSq += n * n; }
+                const rms = Math.sqrt(sumSq / bufLen);
+                const barW = 3, barH = Math.max(2, rms * h * 0.85);
+                const barColor = rms < 0.08 ? '#B0B0B0' : rms < 0.25 ? '#9CAF88' : rms < 0.5 ? '#D4A843' : '#C49B9B';
+                ctx.fillStyle = barColor;
+                ctx.fillRect(w - barW - 6, (h - barH) / 2, barW, barH);
             }
-            const data = await resp.json();
-            return (data.text || '').trim();
+            draw();
         }
-        function showKeyboardFallback() {
+
+        // ==================== 本地音频分析 ====================
+        function encodeWAV(samples, sampleRate) {
+            const numCh = 1, bps = 16, blockAlign = numCh * bps / 8;
+            const dataLen = samples.length * blockAlign;
+            const buf = new ArrayBuffer(44 + dataLen), v = new DataView(buf);
+            const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+            w(0, 'RIFF'); v.setUint32(4, 36 + dataLen, true); w(8, 'WAVE');
+            w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+            v.setUint16(22, numCh, true); v.setUint32(24, sampleRate, true);
+            v.setUint32(28, sampleRate * numCh * bps / 8, true);
+            v.setUint16(32, blockAlign, true); v.setUint16(34, bps, true);
+            w(36, 'data'); v.setUint32(40, dataLen, true);
+            let o = 44;
+            for (let i = 0; i < samples.length; i++) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2;
+            }
+            return new Blob([buf], { type: 'audio/wav' });
+        }
+
+        function analyzeAudio(chunks, sampleRate) {
+            const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+            if (totalLen === 0) return null;
+            const samples = new Float32Array(totalLen);
+            let off = 0;
+            for (const c of chunks) { samples.set(c, off); off += c.length; }
+
+            const frameLen = Math.floor(sampleRate * 0.04);
+            const rmsArr = [];
+            for (let i = 0; i < totalLen; i += frameLen) {
+                let ss = 0; const end = Math.min(i + frameLen, totalLen);
+                for (let j = i; j < end; j++) ss += samples[j] * samples[j];
+                rmsArr.push(Math.sqrt(ss / (end - i)));
+            }
+            const maxRms = Math.max(...rmsArr, 0.0001);
+            const thresh = maxRms * 0.08;
+            let spF = 0, paF = 0, paC = 0, inP = true;
+            const spRms = [];
+            for (const r of rmsArr) {
+                if (r > thresh) { spF++; if (inP && paF > 0) { paC++; inP = false; } spRms.push(r); }
+                else { paF++; inP = true; }
+            }
+            const totalF = rmsArr.length, totalSec = totalLen / sampleRate;
+            const spRatio = spF / totalF, spSec = spRatio * totalSec, paSec = (1 - spRatio) * totalSec;
+            const avgVol = spRms.length ? spRms.reduce((a, b) => a + b, 0) / spRms.length : 0;
+            const volVar = spRms.length ? spRms.reduce((s, r) => s + (r - avgVol) * (r - avgVol), 0) / spRms.length : 0;
+            const volStd = Math.sqrt(volVar);
+
+            // 基频 F0（自相关，50-400Hz）
+            let f0 = 0;
+            if (spRms.length > 0) {
+                const seg = samples.slice(Math.floor(totalLen * 0.2), Math.floor(totalLen * 0.6));
+                const minLag = Math.floor(sampleRate / 400), maxLag = Math.floor(sampleRate / 50);
+                let bestC = -Infinity, bestL = 0;
+                for (let lag = minLag; lag <= Math.min(maxLag, seg.length - 1); lag++) {
+                    let corr = 0;
+                    for (let i = 0; i < seg.length - lag; i++) corr += seg[i] * seg[i + lag];
+                    if (corr > bestC) { bestC = corr; bestL = lag; }
+                }
+                if (bestL > 0) f0 = sampleRate / bestL;
+            }
+            return { totalSec, spRatio, spSec, paSec, paC, avgVol, volStd, f0, maxRms, sampleRate, totalLen };
+        }
+
+        function computeAudioScore(a, ttsDur) {
+            const { totalSec, spRatio, paC, avgVol, volStd, spSec } = a;
+            let rateS = 70;
+            if (ttsDur > 0) { const r = spSec / ttsDur; rateS = r > 0.7 && r < 1.3 ? 100 : r > 0.5 && r < 1.6 ? 70 : 40; }
+            const ppm = totalSec > 0 ? paC / (totalSec / 60) : 0;
+            let pauseS = ppm < 6 ? 100 : ppm < 12 ? 75 : ppm < 20 ? 50 : 30;
+            let ratioS = spRatio > 0.6 && spRatio < 0.9 ? 100 : spRatio > 0.4 ? 70 : 40;
+            const cv = avgVol > 0.001 ? volStd / avgVol : 1;
+            let volS = cv < 0.6 ? 100 : cv < 1.2 ? 70 : cv < 2.0 ? 45 : 25;
+            let levelS = avgVol > 0.04 && avgVol < 0.5 ? 100 : avgVol > 0.02 ? 70 : 40;
+            return {
+                total: Math.round(rateS * 0.30 + pauseS * 0.25 + ratioS * 0.15 + volS * 0.20 + levelS * 0.10),
+                rateS, pauseS, ratioS, volS, levelS, ppm
+            };
+        }
+
+        function showAudioScore(a, score, ttsDur) {
+            const stars = score.total >= 95 ? '⭐⭐⭐⭐⭐' : score.total >= 85 ? '⭐⭐⭐⭐' : score.total >= 70 ? '⭐⭐⭐' : score.total >= 50 ? '⭐⭐' : '⭐';
             const scoringEl = document.getElementById('scoringResult');
-            const original = sentencePool[currentIndex];
             scoringEl.innerHTML =
-                `<div style="text-align:center;margin-bottom:8px;">📱 <strong>请朗读以下原文</strong></div>
-                <div style="font-size:0.85em;color:#7A7A7A;margin-bottom:10px;text-align:center;">点击下方输入框 → 按键盘右下角 🎤 → 朗读 → 自动评分</div>
-                <div style="background:#F3F0ED;padding:10px 14px;border-radius:8px;line-height:1.8;font-size:0.9em;word-break:break-word;">${escapeHtml(original)}</div>`;
+                `<div style="margin-bottom:6px;">
+                    🎤 <strong>流利度评分: ${score.total}%</strong> ${stars}
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:3px 14px;font-size:0.78em;color:#7A7A7A;line-height:1.6;">
+                    <span>🗣 语速: ${a.spSec.toFixed(1)}s${ttsDur > 0 ? ' / 参考'+ttsDur.toFixed(1)+'s' : ''} (${score.rateS}%)</span>
+                    <span>⏸ 停顿: ${a.paC}次 (${score.pauseS}%)</span>
+                    <span>📊 连贯: ${Math.round(a.spRatio*100)}% (${score.ratioS}%)</span>
+                    <span>🔊 音量: ${score.volS}%</span>
+                    <span>📈 语调: ${a.f0 > 0 ? a.f0.toFixed(0)+'Hz' : '—'} (${score.levelS}%)</span>
+                </div>`;
             scoringEl.style.display = 'block';
             scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            userInputEl.placeholder = '按键盘 🎤 朗读，自动评分…';
-            userInputEl.focus();
-            const onInput = () => {
-                if (userInputEl.value.trim()) {
-                    userInputEl.removeEventListener('input', onInput);
-                    userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                    scorePronunciation(userInputEl.value.trim(), sentencePool[currentIndex]);
-                    userInputEl.value = '';
-                    isScoringMode = false;
-                }
-            };
-            userInputEl.addEventListener('input', onInput);
-            setTimeout(() => {
-                userInputEl.removeEventListener('input', onInput);
-                userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
-                isScoringMode = false;
-            }, 20000);
+            if (score.total >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
         }
 
         // ==================== 听写逻辑 ====================
@@ -1562,7 +1643,6 @@
             }
             speedSlider.value = playbackSpeed;
             speedValueEl.textContent = playbackSpeed.toFixed(2) + 'x';
-            loadSttSettings();
 
             // 初始化日历变量
             const now = new Date();
@@ -1589,6 +1669,8 @@
             window.speechSynthesis.cancel();
             if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
             if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+            if (waveAnimId) cancelAnimationFrame(waveAnimId);
+            if (audioCtx && audioCtx.state !== 'closed') audioCtx.close();
         });
     </script>
 </body>
