@@ -851,6 +851,27 @@
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('❌ 当前浏览器不支持录音功能', 2500); return;
             }
+
+            // 先启动 STT（抢在 MediaRecorder 占用麦克风之前）
+            sttTranscript = '';
+            if (recognition) {
+                recognition.onresult = (event) => {
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            sttTranscript += event.results[i][0].transcript + ' ';
+                        }
+                    }
+                };
+                recognition.onend = () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        try { recognition.start(); } catch (_) {}
+                    }
+                };
+                recognition.onerror = () => {}; // 静默降级
+                try { recognition.start(); } catch (_) {}
+                await new Promise(r => setTimeout(r, 100)); // 给 STT 短暂启动窗口
+            }
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const mimeType = getSupportedMimeType();
@@ -863,6 +884,7 @@
                     recordingUrl = URL.createObjectURL(recordedBlob);
                     playRecordingBtn.disabled = false;
                     stream.getTracks().forEach(track => track.stop());
+                    if (recognition) { try { recognition.stop(); } catch (_) {} }
                     if (currentIndex !== null) {
                         if (sttTranscript.trim()) {
                             if (isScoringMode) {
@@ -876,8 +898,16 @@
                             }
                         } else {
                             if (isScoringMode) {
-                                showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
-                                userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动评分';
+                                // iOS/无STT：在评分区展示原文和引导，聚焦输入框等待键盘语音
+                                const scoringEl = document.getElementById('scoringResult');
+                                const original = sentencePool[currentIndex];
+                                scoringEl.innerHTML =
+                                    `<div style="text-align:center;margin-bottom:8px;">📱 <strong>请朗读以下原文</strong></div>
+                                    <div style="font-size:0.85em;color:#7A7A7A;margin-bottom:10px;text-align:center;">点击下方输入框 → 按键盘右下角 🎤 → 朗读 → 自动评分</div>
+                                    <div style="background:#F3F0ED;padding:10px 14px;border-radius:8px;line-height:1.8;font-size:0.9em;word-break:break-word;">${escapeHtml(original)}</div>`;
+                                scoringEl.style.display = 'block';
+                                scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                userInputEl.placeholder = '按键盘 🎤 朗读，自动评分…';
                                 userInputEl.focus();
                                 const onInput = () => {
                                     if (userInputEl.value.trim()) {
@@ -893,7 +923,7 @@
                                     userInputEl.removeEventListener('input', onInput);
                                     userInputEl.placeholder = '在这里默写…（Enter 检查，Shift+Enter 换行）';
                                     isScoringMode = false;
-                                }, 15000);
+                                }, 20000);
                             } else {
                                 showToast('📱 点击输入框，再点键盘右下角 🎤 语音输入', 3500);
                                 userInputEl.placeholder = '📱 点键盘 🎤 语音输入 → 自动检查';
@@ -918,27 +948,10 @@
                 mediaRecorder.start();
                 recordBtn.textContent = '⏹ 停止录音';
                 recordBtn.classList.add('recording');
-                // 启动语音转写
-                sttTranscript = '';
-                if (recognition) {
-                    recognition.onresult = (event) => {
-                        for (let i = event.resultIndex; i < event.results.length; i++) {
-                            if (event.results[i].isFinal) {
-                                sttTranscript += event.results[i][0].transcript + ' ';
-                            }
-                        }
-                    };
-                    recognition.onend = () => {
-                        if (mediaRecorder && mediaRecorder.state === 'recording') {
-                            try { recognition.start(); } catch (_) {}
-                        }
-                    };
-                    recognition.onerror = () => {};
-                    try { recognition.start(); } catch (_) {}
-                }
                 showToast('🎤 录音中…', 1500);
             } catch (err) {
                 console.error(err);
+                if (recognition) { try { recognition.stop(); } catch (_) {} }
                 showToast('❌ 无法访问麦克风，请检查权限设置', 2500);
             }
         }
