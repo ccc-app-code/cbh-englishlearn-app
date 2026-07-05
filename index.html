@@ -1660,18 +1660,6 @@
             if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
         }
 
-            scoringEl.style.display = 'block';
-            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            updateHistory(original, transcript);
-            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
-        }
-
-            scoringEl.style.display = 'block';
-            scoringEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            updateHistory(original, transcript);
-            if (percentage >= 85 && typeof triggerConfetti === 'function') triggerConfetti(Object.keys(sentenceHistory).length);
-        }
-
         async function checkAnswer() {
             if (currentIndex === null) return;
             const rawUser = userInputEl.value.trim();
